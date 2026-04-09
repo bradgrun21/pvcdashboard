@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palm Valley Church — Holiday Attendance Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<style>
+  :root {
+    --bg: #ffffff; --card: #f7f8fa; --border: #e2e4e9;
+    --text: #1a1a1a; --muted: #6b7280; --accent: #4a7f97;
+    --mission: #4a7f97; --edinburg: #7b6fa6; --spanish: #c47a2e;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+  header { padding:32px 40px 16px; text-align:center; }
+  header p { color:var(--muted); margin-top:6px; font-size:15px; }
+
+  /* ── Tab Navigation ── */
+  .tab-nav { display:flex; justify-content:center; gap:12px; padding:16px 40px 0; flex-wrap:wrap; border-bottom:1px solid var(--border); }
+  .tab-btn {
+    padding:10px 24px; border-radius:20px; border:2px solid var(--border);
+    background:var(--card); color:var(--muted); cursor:pointer;
+    font-size:14px; font-weight:600; transition:all .2s;
+  }
+  .tab-btn:hover { border-color:var(--accent); color:var(--text); }
+  .tab-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+  .controls { display:flex; justify-content:center; gap:10px; padding:12px 40px 24px; flex-wrap:wrap; }
+  .controls button {
+    padding:8px 18px; border-radius:8px; border:1px solid var(--border);
+    background:var(--card); color:var(--muted); cursor:pointer;
+    font-size:13px; font-weight:500; transition:all .2s;
+  }
+  .controls button:hover { border-color:var(--accent); color:var(--text); }
+  .controls button.active { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600; }
+
+  .kpi-section { max-width:1440px; margin:0 auto; padding:0 40px; }
+  .kpi-section h3 { font-size:14px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; margin-top:20px; }
+  .kpi-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-bottom:8px; }
+  .kpi { background:var(--card); border-radius:12px; padding:16px; border:1px solid var(--border); text-align:center; }
+  .kpi .value { font-size:28px; font-weight:700; }
+  .kpi .value.mission { color:var(--mission); }
+  .kpi .value.edinburg { color:var(--edinburg); }
+  .kpi .value.spanish { color:var(--spanish); }
+  .kpi .value.total { color:var(--accent); }
+  .kpi .label { font-size:12px; color:var(--muted); margin-top:3px; }
+  .kpi .change { font-size:13px; margin-top:4px; font-weight:600; }
+  .kpi .change.up { color:#2e7d5b; }
+  .kpi .change.down { color:#c0392b; }
+  .kpi .change.neutral { color:var(--muted); }
+
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; padding:24px 40px 40px; max-width:1440px; margin:0 auto; }
+  .card { background:var(--card); border-radius:16px; padding:24px; border:1px solid var(--border); }
+  .card.full { grid-column:1/-1; }
+  .card h2 { font-size:16px; font-weight:600; margin-bottom:4px; color:var(--text); }
+  .card .subtitle { font-size:13px; color:var(--muted); margin-bottom:16px; }
+  .chart-wrap { position:relative; width:100%; }
+  .chart-wrap.tall { height:420px; }
+  .chart-wrap.medium { height:360px; }
+
+  select.year-select, select.growth-select {
+    padding:6px 12px; border-radius:6px; border:1px solid var(--border);
+    background:#fff; color:var(--text); font-size:13px; cursor:pointer;
+    margin-left:8px; vertical-align:middle;
+  }
+  select.year-select:focus, select.growth-select:focus { outline:none; border-color:var(--accent); }
+  .svc-controls, .growth-controls { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+  .svc-controls label, .growth-controls label { font-size:13px; color:var(--muted); font-weight:500; }
+
+  .campus-section { margin-top:8px; }
+  .campus-section h3 { font-size:15px; font-weight:600; margin:20px 0 8px; padding-left:8px; border-left:3px solid var(--muted); }
+  .campus-section h3.mission-label { border-color:var(--mission); }
+  .campus-section h3.edinburg-label { border-color:var(--edinburg); }
+  .campus-section h3.spanish-label { border-color:var(--spanish); }
+
+  /* ── Tab Visibility ── */
+  #holidaySection { display:block; }
+  #eventRegSection { display:none; }
+  #eventRegSection.active { display:block; }
+  #dreamTeamSection { display:none; }
+  #dreamTeamSection.active { display:block; }
+  #holidaySection.hidden { display:none; }
+
+  /* ── Dream Team Specific ── */
+  .funnel-bar { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .funnel-bar .bar-label { width:180px; font-size:13px; font-weight:500; text-align:right; color:var(--text); flex-shrink:0; }
+  .funnel-bar .bar-track { flex:1; height:36px; background:#eee; border-radius:8px; overflow:hidden; position:relative; }
+  .funnel-bar .bar-fill { height:100%; border-radius:8px; display:flex; align-items:center; padding-left:12px; font-size:13px; font-weight:700; color:#fff; transition:width .6s ease; min-width:40px; }
+  .funnel-bar .bar-value { font-size:14px; font-weight:700; width:80px; text-align:left; color:var(--text); flex-shrink:0; }
+  .conversion-card { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-top:12px; }
+  .conversion-card .campus-block { background:#fff; border:1px solid var(--border); border-radius:12px; padding:20px; text-align:center; }
+  .conversion-card .campus-block .campus-name { font-size:14px; font-weight:600; margin-bottom:8px; }
+  .conversion-card .campus-block .big-num { font-size:36px; font-weight:800; }
+  .conversion-card .campus-block .detail { font-size:12px; color:var(--muted); margin-top:4px; }
+  .dt-table { width:100%; border-collapse:collapse; margin-top:12px; }
+  .dt-table th { text-align:left; padding:10px 12px; font-size:12px; color:var(--muted); border-bottom:2px solid var(--border); text-transform:uppercase; letter-spacing:.5px; }
+  .dt-table td { padding:10px 12px; border-bottom:1px solid var(--border); font-size:13px; }
+  .dt-table td.number { text-align:right; font-variant-numeric:tabular-nums; }
+  .dt-table tr:hover { background:#f0f4f8; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700; }
+  .badge.high { background:#d4edda; color:#155724; }
+  .badge.mid { background:#fff3cd; color:#856404; }
+  .badge.low { background:#f8d7da; color:#721c24; }
+  .dt-table tbody tr.event-row { cursor:pointer; }
+.dt-table tbody tr.event-row:hover { background:#e8f0f4; }
+.dt-table tbody tr.event-row td:first-child::before { content:'▶ '; font-size:10px; color:var(--muted); transition:transform .2s; display:inline-block; margin-right:4px; }
+.dt-table tbody tr.event-row.expanded td:first-child::before { content:'▼ '; }
+.person-rows { display:none; }
+.person-rows.visible { display:table-row-group; }
+.person-row td { padding:6px 12px 6px 28px; font-size:12px; border-bottom:1px solid #f0f0f0; color:var(--muted); }
+.person-row td:first-child { padding-left:32px; }
+.person-row .serving-badge { display:inline-block; padding:1px 6px; border-radius:8px; font-size:10px; font-weight:600; background:#d4edda; color:#155724; }
+  
+  @media (max-width:900px) {
+    .conversion-card { grid-template-columns:1fr; }
+    .funnel-bar .bar-label { width:100px; font-size:11px; }
+  }
+
+  .event-table { width:100%; border-collapse:collapse; margin-top:12px; }
+  .event-table th { background:var(--card); border-bottom:2px solid var(--border); padding:12px; text-align:left; font-size:13px; font-weight:600; color:var(--muted); }
+  .event-table td { padding:12px; border-bottom:1px solid var(--border); font-size:13px; }
+  .event-table tr:hover { background:var(--card); }
+  .event-table .name { font-weight:600; color:var(--text); }
+  .event-table .number { text-align:right; color:var(--accent); }
+  .event-table .cancel-rate { color:#c0392b; }
+
+  @media (max-width:900px) {
+    .grid { grid-template-columns:1fr; padding:0 16px 24px; }
+    .kpi-section { padding:0 16px; }
+    header { padding:24px 16px 12px; }
+    .controls { padding:8px 16px 16px; }
+    .tab-nav { padding:12px 16px 0; }
+  }
+
+  /* ── PDF Download Button ── */
+  #pdfBtn {
+    display:inline-flex; align-items:center; gap:7px;
+    padding:9px 20px; border-radius:8px;
+    background:#1a1a1a; color:#fff; border:none;
+    font-size:13px; font-weight:600; cursor:pointer;
+    transition:background .2s; margin-top:12px;
+    box-shadow:0 1px 4px rgba(0,0,0,.15);
+  }
+  #pdfBtn:hover { background:#333; }
+  #pdfBtn svg { flex-shrink:0; }
+
+  /* ── Print / PDF styles ── */
+  @media print {
+    @page { margin:10mm 12mm; size:A4 landscape; }
+
+    /* Hide interactive controls and tabs */
+    #pdfBtn, #attModeToggle, #yearSelector, .controls, .tab-nav,
+    .svc-controls, .growth-controls { display:none !important; }
+
+    body { background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+    /* Only print active tab content */
+    #holidaySection.hidden, #eventRegSection:not(.active), #dreamTeamSection:not(.active) { display:none !important; }
+
+    /* Header compact */
+    header { padding:8px 12px 6px !important; }
+    header img { height:36px !important; }
+    header p { font-size:13px !important; margin-top:3px !important; }
+
+    /* KPI section */
+    .kpi-section { padding:0 12px !important; }
+    .kpi-section h3 { margin-top:10px !important; margin-bottom:6px !important; font-size:12px !important; }
+    .kpi-row { gap:8px !important; margin-bottom:4px !important; }
+    .kpi { padding:10px 8px !important; }
+    .kpi .value { font-size:22px !important; }
+    .kpi .label { font-size:11px !important; }
+    .kpi .change { font-size:11px !important; }
+
+    /* Force grid to block — kills the 2-col layout entirely */
+    .grid { display:block !important; padding:0 12px !important; }
+
+    /* Each card gets its own page */
+    .card {
+      display:block !important;
+      width:100% !important;
+      box-sizing:border-box !important;
+      box-shadow:none !important;
+      border:1px solid #ddd !important;
+      border-radius:8px !important;
+      padding:16px !important;
+      margin:0 !important;
+      page-break-before:always !important;
+      break-before:page !important;
+      page-break-inside:avoid !important;
+      break-inside:avoid !important;
+    }
+    .card:first-child { page-break-before:auto !important; break-before:auto !important; }
+
+    .card h2 { font-size:15px !important; margin-bottom:2px !important; }
+    .card .subtitle { font-size:12px !important; margin-bottom:10px !important; }
+
+    /* Charts fill available height */
+    .chart-wrap { position:relative !important; width:100% !important; }
+    .chart-wrap.tall { height:390px !important; }
+    .chart-wrap.medium { height:350px !important; }
+
+    /* Sub-sections inside full-width cards */
+    .campus-section { margin-top:6px !important; }
+    .campus-section h3 { font-size:13px !important; margin:10px 0 6px !important; }
+    .campus-section + .campus-section {
+      page-break-before:always !important;
+      break-before:page !important;
+    }
+
+    /* Event table printing */
+    .event-table { page-break-inside:avoid !important; }
+    .event-table th, .event-table td { padding:8px !important; font-size:11px !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <img src="https://palmvalleychurch.com/wp-content/uploads/2022/09/LogoBlack-1.png" alt="Palm Valley Church" style="height:48px; margin-bottom:12px;">
+  <p id="headerTitle">Holiday Attendance Dashboard — 2020–2026</p>
+  <div id="yearSelector" style="margin-top:14px; display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;"></div>
+  <div id="attModeToggle" style="margin-top:10px; display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:4px;"></div>
+  <div style="margin-top:4px;">
+    <button id="pdfBtn" onclick="window.print()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Download PDF
+    </button>
+  </div>
+</header>
+
+<!-- ── Tab Navigation ── -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('holiday')">Holiday Attendance</button>
+  <button class="tab-btn" onclick="switchTab('event')">Event Registrations</button>
+  <button class="tab-btn" onclick="switchTab('dreamteam')">Dream Team</button>
+</div>
+
+<!-- ── HOLIDAY ATTENDANCE TAB ── -->
+<div id="holidaySection">
+  <div class="controls" id="holidayFilter"></div>
+  <div class="kpi-section" id="kpiSection"></div>
+  <div class="grid" id="mainGrid"></div>
+</div>
+
+<!-- ── EVENT REGISTRATIONS TAB ── -->
+<div id="eventRegSection">
+  <div class="kpi-section" id="eventKpiSection"></div>
+  <div class="grid" id="eventGrid"></div>
+</div>
+
+<!-- ── DREAM TEAM TAB ── -->
+<div id="dreamTeamSection">
+  <div class="kpi-section" id="dtKpiSection"></div>
+  <div class="grid" id="dtGrid"></div>
+</div>
+
+<script>
+Chart.register(ChartDataLabels);
+
+function switchTab(tab) {
+  const holidaySection = document.getElementById('holidaySection');
+  const eventRegSection = document.getElementById('eventRegSection');
+  const dreamTeamSection = document.getElementById('dreamTeamSection');
+  const tabBtns = document.querySelectorAll('.tab-btn');
+
+  // Hide all
+  holidaySection.classList.add('hidden');
+  eventRegSection.classList.remove('active');
+  dreamTeamSection.classList.remove('active');
+  tabBtns.forEach(b => b.classList.remove('active'));
+
+  if (tab === 'holiday') {
+    holidaySection.classList.remove('hidden');
+    document.getElementById('headerTitle').textContent = 'Holiday Attendance Dashboard — 2020–2026';
+    tabBtns[0].classList.add('active');
+  } else if (tab === 'event') {
+    eventRegSection.classList.add('active');
+    document.getElementById('headerTitle').textContent = 'Event Registrations Dashboard';
+    tabBtns[1].classList.add('active');
+  } else if (tab === 'dreamteam') {
+    dreamTeamSection.classList.add('active');
+    document.getElementById('headerTitle').textContent = 'Dream Team — Growth Track Step 3 Pipeline';
+    tabBtns[2].classList.add('active');
+  }
+}
+
+const raw = [
+  {h:"2020 Christmas Eve",d:"12/23/2020",y:"2020",c:"Mission",s:"1st Service",t:"5:00 PM",a:460,ta:null,r:0,w:"Wed"},
+  {h:"2020 Christmas Eve",d:"12/23/2020",y:"2020",c:"Mission",s:"2nd Service",t:"7:00 PM",a:493,ta:null,r:0,w:"Wed"},
+  {h:"2020 Christmas Eve",d:"12/24/2020",y:"2020",c:"Mission",s:"1st Service",t:"3:00 PM",a:478,ta:null,r:0,w:"Thu"},
+  {h:"2020 Christmas Eve",d:"12/24/2020",y:"2020",c:"Mission",s:"2nd Service",t:"5:00 PM",a:662,ta:null,r:0,w:"Thu"},
+  {h:"2020 Christmas Eve",d:"12/24/2020",y:"2020",c:"Mission",s:"3rd Service",t:"7:00 PM",a:529,ta:null,r:0,w:"Thu"},
+  {h:"2021 Good Friday",d:"4/2/2021",y:"2021",c:"Mission",s:"1st Service",t:"5:00 PM",a:758,ta:null,r:0,w:"Fri"},
+  {h:"2021 Good Friday",d:"4/2/2021",y:"2021",c:"Mission",s:"2nd Service",t:"7:00 PM",a:635,ta:null,r:0,w:"Fri"},
+  {h:"2021 Easter",d:"4/4/2021",y:"2021",c:"Mission",s:"1st Service",t:"10:00 AM",a:1375,ta:null,r:0,w:"Sun"},
+  {h:"2021 Easter",d:"4/4/2021",y:"2021",c:"Mission",s:"2nd Service",t:"11:45 AM",a:1334,ta:null,r:0,w:"Sun"},
+  {h:"2022 Good Friday",d:"4/15/2022",y:"2022",c:"Mission",s:"1st Service",t:"5:00 PM",a:1029,ta:null,r:0,w:"Fri"},
+  {h:"2022 Good Friday",d:"4/15/2022",y:"2022",c:"Mission",s:"2nd Service",t:"7:00 PM",a:895,ta:null,r:0,w:"Fri"},
+  {h:"2022 Easter",d:"4/17/2022",y:"2022",c:"Mission",s:"1st Service",t:"10:00 AM",a:1970,ta:null,r:0,w:"Sun"},
+  {h:"2022 Easter",d:"4/17/2022",y:"2022",c:"Mission",s:"2nd Service",t:"11:45 AM",a:1713,ta:null,r:0,w:"Sun"},
+  {h:"2022 Christmas Eve",d:"12/23/2022",y:"2022",c:"Mission",s:"1st Service",t:"7:00 PM",a:1426,ta:null,r:0,w:"Fri"},
+  {h:"2022 Christmas Eve",d:"12/24/2022",y:"2022",c:"Mission",s:"1st Service",t:"5:00 PM",a:2000,ta:null,r:0,w:"Sat"},
+  {h:"2022 Christmas Eve",d:"12/24/2022",y:"2022",c:"Mission",s:"2nd Service",t:"7:00 PM",a:1394,ta:null,r:0,w:"Sat"},
+  {h:"2022 Christmas Eve",d:"12/25/2022",y:"2022",c:"Mission",s:"1st Service",t:"10:00 AM",a:1411,ta:null,r:0,w:"Sun"},
+  {h:"2022 Christmas Eve",d:"12/24/2022",y:"2022",c:"Edinburg",s:"1st Service",t:"5:00 PM",a:110,ta:null,r:0,w:"Sat"},
+  {h:"2023 Good Friday",d:"4/7/2023",y:"2023",c:"Mission",s:"1st Service",t:"5:00 PM",a:1647,ta:null,r:0,w:"Fri"},
+  {h:"2023 Good Friday",d:"4/7/2023",y:"2023",c:"Mission",s:"2nd Service",t:"7:00 PM",a:1272,ta:null,r:0,w:"Fri"},
+  {h:"2023 Easter",d:"4/9/2023",y:"2023",c:"Mission",s:"1st Service",t:"9:00 AM",a:1335,ta:null,r:0,w:"Sun"},
+  {h:"2023 Easter",d:"4/9/2023",y:"2023",c:"Mission",s:"2nd Service",t:"10:30 AM",a:1953,ta:null,r:0,w:"Sun"},
+  {h:"2023 Easter",d:"4/9/2023",y:"2023",c:"Mission",s:"3rd Service",t:"12:00 PM",a:1962,ta:null,r:0,w:"Sun"},
+  {h:"2023 Easter",d:"4/9/2023",y:"2023",c:"Edinburg",s:"1st Service",t:"11:00 AM",a:402,ta:null,r:0,w:"Sun"},
+  {h:"2023 Christmas Eve",d:"12/24/2023",y:"2023",c:"Mission",s:"1st Service",t:"9:00 AM",a:1464,ta:null,r:0,w:"Sun"},
+  {h:"2023 Christmas Eve",d:"12/24/2023",y:"2023",c:"Mission",s:"2nd Service",t:"10:30 AM",a:1434,ta:null,r:0,w:"Sun"},
+  {h:"2023 Christmas Eve",d:"12/24/2023",y:"2023",c:"Mission",s:"3rd Service",t:"12:00 PM",a:1383,ta:null,r:0,w:"Sun"},
+  {h:"2023 Christmas Eve",d:"12/24/2023",y:"2023",c:"Mission",s:"4th Service",t:"4:00 PM",a:1626,ta:null,r:0,w:"Sun"},
+  {h:"2023 Christmas Eve",d:"12/24/2023",y:"2023",c:"Mission",s:"5th Service",t:"6:00 PM",a:1661,ta:null,r:0,w:"Sun"},
+  {h:"2023 Christmas Eve",d:"12/24/2023",y:"2023",c:"Edinburg",s:"1st Service",t:"10:30 AM",a:248,ta:null,r:0,w:"Sun"},
+  {h:"2023 Christmas Eve",d:"12/24/2023",y:"2023",c:"Edinburg",s:"2nd Service",t:"12:00 PM",a:204,ta:null,r:0,w:"Sun"},
+  {h:"2024 Good Friday",d:"3/29/2024",y:"2024",c:"Mission",s:"1st Service",t:"5:00 PM",a:1812,ta:null,r:0,w:"Fri"},
+  {h:"2024 Good Friday",d:"3/29/2024",y:"2024",c:"Mission",s:"2nd Service",t:"7:00 PM",a:1640,ta:null,r:0,w:"Fri"},
+  {h:"2024 Easter",d:"3/30/2024",y:"2024",c:"Mission",s:"1st Service",t:"4:00 PM",a:813,ta:null,r:0,w:"Sat"},
+  {h:"2024 Easter",d:"3/30/2024",y:"2024",c:"Mission",s:"2nd Service",t:"6:00 PM",a:733,ta:null,r:0,w:"Sat"},
+  {h:"2024 Easter",d:"3/31/2024",y:"2024",c:"Mission",s:"1st Service",t:"9:00 AM",a:1791,ta:null,r:0,w:"Sun"},
+  {h:"2024 Easter",d:"3/31/2024",y:"2024",c:"Mission",s:"2nd Service",t:"10:30 AM",a:2232,ta:null,r:0,w:"Sun"},
+  {h:"2024 Easter",d:"3/31/2024",y:"2024",c:"Mission",s:"3rd Service",t:"12:00 PM",a:1996,ta:null,r:0,w:"Sun"},
+  {h:"2024 Good Friday",d:"3/29/2024",y:"2024",c:"Edinburg",s:"1st Service",t:"5:00 PM",a:281,ta:null,r:0,w:"Fri"},
+  {h:"2024 Easter",d:"3/31/2024",y:"2024",c:"Edinburg",s:"1st Service",t:"10:00 AM",a:261,ta:null,r:0,w:"Sun"},
+  {h:"2024 Easter",d:"3/31/2024",y:"2024",c:"Edinburg",s:"2nd Service",t:"11:45 AM",a:301,ta:null,r:0,w:"Sun"},
+  {h:"2024 Good Friday",d:"3/29/2024",y:"2024",c:"Spanish",s:"1st Service",t:"3:00 PM",a:323,ta:null,r:0,w:"Fri"},
+  {h:"2024 Easter",d:"3/31/2024",y:"2024",c:"Spanish",s:"1st Service",t:"3:00 PM",a:599,ta:null,r:0,w:"Sun"},
+  {h:"2024 Christmas Eve",d:"12/23/2024",y:"2024",c:"Mission",s:"1st Service",t:"7:00 PM",a:1661,ta:null,r:0,w:"Mon"},
+  {h:"2024 Christmas Eve",d:"12/24/2024",y:"2024",c:"Mission",s:"1st Service",t:"3:00 PM",a:1818,ta:null,r:0,w:"Tue"},
+  {h:"2024 Christmas Eve",d:"12/24/2024",y:"2024",c:"Mission",s:"2nd Service",t:"5:00 PM",a:2125,ta:null,r:0,w:"Tue"},
+  {h:"2024 Christmas Eve",d:"12/24/2024",y:"2024",c:"Mission",s:"3rd Service",t:"7:00 PM",a:1450,ta:null,r:0,w:"Tue"},
+  {h:"2024 Christmas Eve",d:"12/23/2024",y:"2024",c:"Edinburg",s:"1st Service",t:"6:00 PM",a:587,ta:null,r:0,w:"Mon"},
+  {h:"2024 Christmas Eve",d:"12/24/2024",y:"2024",c:"Edinburg",s:"1st Service",t:"4:00 PM",a:543,ta:null,r:0,w:"Tue"},
+  {h:"2024 Christmas Eve",d:"12/24/2024",y:"2024",c:"Edinburg",s:"2nd Service",t:"6:00 PM",a:674,ta:null,r:0,w:"Tue"},
+  {h:"2024 Christmas Eve",d:"12/22/2024",y:"2024",c:"Spanish",s:"1st Service",t:"3:00 PM",a:643,ta:null,r:0,w:"Sun"},
+  {h:"2025 Good Friday",d:"4/18/2025",y:"2025",c:"Mission",s:"1st Service",t:"5:00 PM",a:1846,ta:2162,r:2168,w:"Fri"},
+  {h:"2025 Good Friday",d:"4/18/2025",y:"2025",c:"Mission",s:"2nd Service",t:"6:30 PM",a:1680,ta:2075,r:2198,w:"Fri"},
+  {h:"2025 Easter",d:"4/19/2025",y:"2025",c:"Mission",s:"1st Service",t:"4:30 PM",a:589,ta:765,r:733,w:"Sat"},
+  {h:"2025 Easter",d:"4/19/2025",y:"2025",c:"Mission",s:"2nd Service",t:"6:00 PM",a:416,ta:557,r:644,w:"Sat"},
+  {h:"2025 Easter",d:"4/20/2025",y:"2025",c:"Mission",s:"1st Service",t:"8:00 AM",a:674,ta:856,r:580,w:"Sun"},
+  {h:"2025 Easter",d:"4/20/2025",y:"2025",c:"Mission",s:"2nd Service",t:"9:30 AM",a:1768,ta:2177,r:1915,w:"Sun"},
+  {h:"2025 Easter",d:"4/20/2025",y:"2025",c:"Mission",s:"3rd Service",t:"11:00 AM",a:2332,ta:2755,r:2039,w:"Sun"},
+  {h:"2025 Easter",d:"4/20/2025",y:"2025",c:"Mission",s:"4th Service",t:"12:30 PM",a:1904,ta:2330,r:1512,w:"Sun"},
+  {h:"2025 Good Friday",d:"4/18/2025",y:"2025",c:"Edinburg",s:"1st Service",t:"5:30 PM",a:645,ta:855,r:748,w:"Fri"},
+  {h:"2025 Good Friday",d:"4/18/2025",y:"2025",c:"Edinburg",s:"2nd Service",t:"7:00 PM",a:590,ta:772,r:590,w:"Fri"},
+  {h:"2025 Easter",d:"4/19/2025",y:"2025",c:"Edinburg",s:"1st Service",t:"6:00 PM",a:329,ta:465,r:402,w:"Sat"},
+  {h:"2025 Easter",d:"4/20/2025",y:"2025",c:"Edinburg",s:"1st Service",t:"9:00 AM",a:455,ta:596,r:536,w:"Sun"},
+  {h:"2025 Easter",d:"4/20/2025",y:"2025",c:"Edinburg",s:"2nd Service",t:"10:30 AM",a:1004,ta:1251,r:818,w:"Sun"},
+  {h:"2025 Easter",d:"4/20/2025",y:"2025",c:"Edinburg",s:"3rd Service",t:"12:00 PM",a:691,ta:903,r:579,w:"Sun"},
+  {h:"2025 Good Friday",d:"4/18/2025",y:"2025",c:"Spanish",s:"1st Service",t:"8:00 PM",a:545,ta:674,r:615,w:"Fri"},
+  {h:"2025 Easter",d:"4/20/2025",y:"2025",c:"Spanish",s:"1st Service",t:"2:00 PM",a:853,ta:1024,r:380,w:"Sun"},
+  {h:"2025 Christmas Eve",d:"12/23/2025",y:"2025",c:"Edinburg",s:"1st Service",t:"7:00 PM",a:830,ta:null,r:1171,w:"Tue"},
+  {h:"2025 Christmas Eve",d:"12/24/2025",y:"2025",c:"Edinburg",s:"1st Service",t:"3:00 PM",a:586,ta:null,r:726,w:"Wed"},
+  {h:"2025 Christmas Eve",d:"12/24/2025",y:"2025",c:"Edinburg",s:"2nd Service",t:"5:00 PM",a:611,ta:null,r:673,w:"Wed"},
+  {h:"2025 Christmas Eve",d:"12/24/2025",y:"2025",c:"Edinburg",s:"3rd Service",t:"7:00 PM",a:639,ta:null,r:748,w:"Wed"},
+  {h:"2025 Christmas Eve",d:"12/23/2025",y:"2025",c:"Mission",s:"1st Service",t:"5:00 PM",a:885,ta:null,r:1381,w:"Tue"},
+  {h:"2025 Christmas Eve",d:"12/23/2025",y:"2025",c:"Mission",s:"2nd Service",t:"7:00 PM",a:1206,ta:null,r:1992,w:"Tue"},
+  {h:"2025 Christmas Eve",d:"12/24/2025",y:"2025",c:"Mission",s:"1st Service",t:"3:00 PM",a:1661,ta:null,r:2167,w:"Wed"},
+  {h:"2025 Christmas Eve",d:"12/24/2025",y:"2025",c:"Mission",s:"2nd Service",t:"5:00 PM",a:1836,ta:null,r:1961,w:"Wed"},
+  {h:"2025 Christmas Eve",d:"12/24/2025",y:"2025",c:"Mission",s:"3rd Service",t:"7:00 PM",a:1604,ta:null,r:1775,w:"Wed"},
+  {h:"2025 Christmas Eve",d:"12/21/2025",y:"2025",c:"Spanish",s:"1st Service",t:"7:00 PM",a:892,ta:null,r:687,w:"Sun"},
+  {h:"2026 Good Friday",d:"4/3/2026",y:"2026",c:"Mission",s:"1st Service",t:"4:30 PM",a:1347,ta:1667,r:1517,w:"Fri"},
+  {h:"2026 Good Friday",d:"4/3/2026",y:"2026",c:"Mission",s:"2nd Service",t:"6:00 PM",a:1313,ta:1675,r:1331,w:"Fri"},
+  {h:"2026 Good Friday",d:"4/3/2026",y:"2026",c:"Mission",s:"3rd Service",t:"7:30 PM",a:1169,ta:1458,r:969,w:"Fri"},
+  {h:"2026 Good Friday",d:"4/3/2026",y:"2026",c:"Edinburg",s:"1st Service",t:"5:00 PM",a:689,ta:888,r:695,w:"Fri"},
+  {h:"2026 Good Friday",d:"4/3/2026",y:"2026",c:"Edinburg",s:"2nd Service",t:"6:30 PM",a:645,ta:861,r:606,w:"Fri"},
+  {h:"2026 Good Friday",d:"4/3/2026",y:"2026",c:"Edinburg",s:"3rd Service",t:"8:00 PM",a:381,ta:508,r:355,w:"Fri"},
+  {h:"2026 Good Friday",d:"4/3/2026",y:"2026",c:"Spanish",s:"1st Service",t:"6:00 PM",a:278,ta:316,r:306,w:"Fri"},
+  {h:"2026 Good Friday",d:"4/3/2026",y:"2026",c:"Spanish",s:"2nd Service",t:"7:30 PM",a:247,ta:283,r:153,w:"Fri"},
+  {h:"2026 Easter",d:"4/4/2026",y:"2026",c:"Mission",s:"1st Service",t:"5:00 PM",a:747,ta:901,r:736,w:"Sat"},
+  {h:"2026 Easter",d:"4/5/2026",y:"2026",c:"Mission",s:"1st Service",t:"8:00 AM",a:415,ta:552,r:411,w:"Sun"},
+  {h:"2026 Easter",d:"4/5/2026",y:"2026",c:"Mission",s:"2nd Service",t:"9:30 AM",a:1050,ta:1313,r:1164,w:"Sun"},
+  {h:"2026 Easter",d:"4/5/2026",y:"2026",c:"Mission",s:"3rd Service",t:"11:00 AM",a:1588,ta:1931,r:1491,w:"Sun"},
+  {h:"2026 Easter",d:"4/5/2026",y:"2026",c:"Mission",s:"4th Service",t:"12:30 PM",a:1767,ta:2111,r:955,w:"Sun"},
+  {h:"2026 Easter",d:"4/5/2026",y:"2026",c:"Edinburg",s:"1st Service",t:"8:30 AM",a:365,ta:489,r:400,w:"Sun"},
+  {h:"2026 Easter",d:"4/5/2026",y:"2026",c:"Edinburg",s:"2nd Service",t:"10:00 AM",a:706,ta:916,r:674,w:"Sun"},
+  {h:"2026 Easter",d:"4/5/2026",y:"2026",c:"Edinburg",s:"3rd Service",t:"11:30 AM",a:760,ta:960,r:647,w:"Sun"},
+  {h:"2026 Easter",d:"4/5/2026",y:"2026",c:"Edinburg",s:"4th Service",t:"1:00 PM",a:565,ta:745,r:312,w:"Sun"},
+  {h:"2026 Easter",d:"4/5/2026",y:"2026",c:"Spanish",s:"1st Service",t:"2:30 PM",a:746,ta:909,r:314,w:"Sun"}
+];
+
+const data = raw.map(r => ({
+  holiday:r.h, date:r.d, year:r.y, campus:r.c,
+  service:r.s, time:r.t, attendance:r.a, totalAttendance:r.ta, rsvp:r.r, day:r.w
+})).filter(r => r.attendance > 0);
+
+const campusColors = { Mission:'#4a7f97', Edinburg:'#7b6fa6', Spanish:'#c47a2e' };
+const campusOrder = ['Mission','Edinburg','Spanish'];
+
+let attMode = 'auditorium';
+
+function holidayType(h) { return h.replace(/^\d{4}\s+/,''); }
+function num(n) { return n.toLocaleString(); }
+function numShort(n) { return n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/,'')+'k' : n.toString(); }
+
+function attVal(r) {
+  if (attMode === 'total' && r.totalAttendance !== null) return r.totalAttendance;
+  return r.attendance;
+}
+
+function sumAtt(rows) { return rows.reduce((s,r) => s + attVal(r), 0); }
+function sumAuditorium(rows) { return rows.reduce((s,r) => s + r.attendance, 0); }
+function sumTotal(rows) { return rows.reduce((s,r) => s + (r.totalAttendance || 0), 0); }
+function sumRsvp(rows) { return rows.reduce((s,r) => s + r.rsvp, 0); }
+
+function aggregate(rows, keys) {
+  const map = {};
+  rows.forEach(r => {
+    const k = keys.map(key => key === 'ht' ? holidayType(r.holiday) : r[key]).join('|');
+    if (!map[k]) map[k] = { ...r, attendance:0, totalAttendance:0, rsvp:0, ht: holidayType(r.holiday) };
+    map[k].attendance += r.attendance;
+    map[k].totalAttendance += (r.totalAttendance || 0);
+    map[k].rsvp += r.rsvp;
+  });
+  return Object.values(map);
+}
+
+const dlDefaults = {
+  anchor:'end', align:'end', color:'#444', font:{size:10, weight:'600'},
+  formatter: v => v > 0 ? numShort(v) : '',
+  display: ctx => ctx.dataset.data[ctx.dataIndex] > 0
+};
+
+let activeHoliday = 'All';
+let selectedYear = null;
+let svcSelectedYear = null;
+let growthMode = 'campus';
+let growthSelection = 'Mission';
+let charts = {};
+
+(function buildYearSelector() {
+  const allYears = [...new Set(data.map(r => r.year))].sort();
+  selectedYear = allYears[allYears.length - 1];
+  svcSelectedYear = selectedYear;
+  const container = document.getElementById('yearSelector');
+  allYears.forEach(y => {
+    const btn = document.createElement('button');
+    btn.textContent = y;
+    btn.dataset.year = y;
+    btn.style.cssText = 'padding:6px 16px; border-radius:20px; border:2px solid var(--border); background:var(--card); color:var(--muted); cursor:pointer; font-size:14px; font-weight:600; transition:all .2s;';
+    btn.onclick = () => {
+      selectedYear = y;
+      svcSelectedYear = y;
+      render();
+    };
+    container.appendChild(btn);
+  });
+})();
+
+(function buildAttModeToggle() {
+  const container = document.getElementById('attModeToggle');
+  if (!container) return;
+  [{v:'auditorium', label:'Auditorium Attendance'},{v:'total', label:'Total Attendance'}].forEach(opt => {
+    const btn = document.createElement('button');
+    btn.textContent = opt.label;
+    btn.dataset.mode = opt.v;
+    btn.style.cssText = 'padding:6px 18px; border-radius:20px; border:2px solid var(--border); background:var(--card); color:var(--muted); cursor:pointer; font-size:13px; font-weight:600; transition:all .2s; margin:0 4px;';
+    btn.onclick = () => {
+      attMode = opt.v;
+      container.querySelectorAll('button').forEach(b => {
+        const active = b.dataset.mode === attMode;
+        b.style.background = active ? '#2e7d5b' : 'var(--card)';
+        b.style.color = active ? '#fff' : 'var(--muted)';
+        b.style.borderColor = active ? '#2e7d5b' : 'var(--border)';
+      });
+      render();
+    };
+    const isActive = opt.v === attMode;
+    btn.style.background = isActive ? '#2e7d5b' : 'var(--card)';
+    btn.style.color = isActive ? '#fff' : 'var(--muted)';
+    btn.style.borderColor = isActive ? '#2e7d5b' : 'var(--border)';
+    container.appendChild(btn);
+  });
+  const note = document.createElement('span');
+  note.style.cssText = 'font-size:11px; color:var(--muted); margin-left:8px; font-style:italic;';
+  note.textContent = '* Total Attendance tracked from 2025 Good Friday onward';
+  container.appendChild(note);
+})();
+
+Chart.defaults.color = '#6b7280';
+Chart.defaults.borderColor = '#e5e7eb';
+Chart.defaults.font.family = "'Segoe UI',system-ui,sans-serif";
+Chart.defaults.plugins.datalabels = { display: false };
+
+const filterEl = document.getElementById('holidayFilter');
+['All','Good Friday','Easter','Christmas Eve'].forEach(h => {
+  const btn = document.createElement('button');
+  btn.textContent = h === 'All' ? 'All Holidays' : h;
+  btn.dataset.holiday = h;
+  btn.onclick = () => { activeHoliday = h; render(); };
+  filterEl.appendChild(btn);
+});
+
+function filtered() {
+  if (activeHoliday === 'All') return data;
+  return data.filter(r => holidayType(r.holiday) === activeHoliday);
+}
+
+function destroyAll() { Object.values(charts).forEach(c => { if (c && c.destroy) c.destroy(); }); charts = {}; }
+
+function makeCanvas(id, cls) {
+  const wrap = document.createElement('div');
+  wrap.className = 'chart-wrap ' + (cls || 'tall');
+  const canvas = document.createElement('canvas');
+  canvas.id = id;
+  wrap.appendChild(canvas);
+  return { wrap, canvas };
+}
+
+function card(title, subtitle, full) {
+  const div = document.createElement('div');
+  div.className = 'card' + (full ? ' full' : '');
+  div.innerHTML = `<h2>${title}</h2><div class="subtitle">${subtitle}</div>`;
+  return div;
+}
+
+function render() {
+  destroyAll();
+  const d = filtered();
+  const grid = document.getElementById('mainGrid');
+  grid.innerHTML = '';
+  filterEl.querySelectorAll('button').forEach(b =>
+    b.classList.toggle('active', b.dataset.holiday === activeHoliday)
+  );
+  document.getElementById('yearSelector').querySelectorAll('button').forEach(b => {
+    const isActive = b.dataset.year === selectedYear;
+    b.style.background = isActive ? 'var(--accent)' : 'var(--card)';
+    b.style.color = isActive ? '#fff' : 'var(--muted)';
+    b.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
+  });
+  renderKPIs(d);
+  renderYoYChart(d, grid);
+  renderVsChart(d, grid);
+  renderRsvpChart(d, grid);
+  renderServiceVsLYChart(d, grid);
+  renderCampusSubCharts(d, grid);
+  renderGrowthChart(grid);
+}
+
+function renderKPIs(d) {
+  const section = document.getElementById('kpiSection');
+  section.innerHTML = '';
+  const latestYr = selectedYear;
+  const prevYr = String(+latestYr - 1);
+
+  const t2 = sumAtt(d.filter(r=>r.year===latestYr));
+  const t1 = sumAtt(d.filter(r=>r.year===prevYr));
+  const rsvp2 = sumRsvp(d.filter(r=>r.year===latestYr&&r.rsvp>0));
+  const act2 = sumAtt(d.filter(r=>r.year===latestYr&&r.rsvp>0));
+  const yoy = t1>0 ? ((t2-t1)/t1*100).toFixed(1) : null;
+  const rsvpAcc = rsvp2>0 ? (act2/rsvp2*100).toFixed(1) : null;
+
+  let html = `<h3>Overall</h3><div class="kpi-row">
+    <div class="kpi"><div class="value total">${num(t2)}</div><div class="label">${latestYr} Total</div>
+      ${yoy!==null?`<div class="change ${yoy>=0?'up':'down'}">${yoy>=0?'▲':'▼'} ${Math.abs(yoy)}% vs ${prevYr}</div>`:''}</div>
+    <div class="kpi"><div class="value total">${num(t1)}</div><div class="label">${prevYr} Total</div></div>
+    <div class="kpi"><div class="value total">${rsvp2>0?num(rsvp2):'—'}</div><div class="label">${latestYr} RSVPs</div></div>
+    <div class="kpi"><div class="value total">${rsvpAcc?rsvpAcc+'%':'—'}</div><div class="label">RSVP Show Rate</div>
+      ${rsvpAcc?`<div class="change ${rsvpAcc>=100?'up':'neutral'}">${rsvpAcc>=100?'More showed':'Fewer showed'}</div>`:''}</div>
+  </div>`;
+
+  campusOrder.forEach(campus => {
+    const cd = d.filter(r=>r.campus===campus);
+    if (cd.length === 0) return;
+    const c2 = sumAtt(cd.filter(r=>r.year===latestYr));
+    const c1 = sumAtt(cd.filter(r=>r.year===prevYr));
+    const cr = sumRsvp(cd.filter(r=>r.year===latestYr&&r.rsvp>0));
+    const ca = sumAtt(cd.filter(r=>r.year===latestYr&&r.rsvp>0));
+    const cyoy = c1>0 ? ((c2-c1)/c1*100).toFixed(1) : null;
+    const cra = cr>0 ? (ca/cr*100).toFixed(1) : null;
+    const cls = campus.toLowerCase();
+    html += `<h3>${campus}</h3><div class="kpi-row">
+      <div class="kpi"><div class="value ${cls}">${num(c2)}</div><div class="label">${latestYr}</div>
+        ${cyoy!==null?`<div class="change ${cyoy>=0?'up':'down'}">${cyoy>=0?'▲':'▼'} ${Math.abs(cyoy)}%</div>`:''}</div>
+      <div class="kpi"><div class="value ${cls}">${num(c1)}</div><div class="label">${prevYr}</div></div>
+      <div class="kpi"><div class="value ${cls}">${cr>0?num(cr):'—'}</div><div class="label">RSVPs</div></div>
+      <div class="kpi"><div class="value ${cls}">${cra?cra+'%':'—'}</div><div class="label">Show Rate</div></div>
+    </div>`;
+  });
+  section.innerHTML = html;
+}
+
+function renderYoYChart(d, grid) {
+  const modeLabel = attMode === 'total' ? 'Total Attendance' : 'Auditorium Attendance';
+  const c = card(`Year-over-Year ${modeLabel}`,'Grouped by year', true);
+  const {wrap, canvas} = makeCanvas('yoyChart','tall');
+  c.appendChild(wrap); grid.appendChild(c);
+  const byYC = aggregate(d, ['year','campus']);
+  const years = [...new Set(byYC.map(r=>r.year))].sort();
+  const campuses = campusOrder.filter(cp => byYC.some(r=>r.campus===cp));
+  const getVal = m => m ? (attMode==='total' && m.totalAttendance > 0 ? m.totalAttendance : m.attendance) : 0;
+  charts.yoy = new Chart(canvas, {
+    type:'bar',
+    data:{ labels:years, datasets:campuses.map(cp => ({
+      label:cp,
+      data:years.map(y => { const m=byYC.find(r=>r.year===y&&r.campus===cp); return getVal(m); }),
+      backgroundColor:campusColors[cp], borderRadius:6, barPercentage:0.7, categoryPercentage:0.8
+    }))},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'top',labels:{usePointStyle:true,pointStyle:'rectRounded',color:'#333'}},
+        datalabels:{...dlDefaults}
+      },
+      scales:{y:{beginAtZero:true,ticks:{callback:v=>num(v)},grid:{color:'#f0f0f0'}},x:{grid:{display:false}}}
+    }
+  });
+}
+
+function renderVsChart(d, grid) {
+  const yr = selectedYear;
+  const prevYr = String(+yr - 1);
+  const mLabel = attMode === 'total' ? 'Total Attendance' : 'Auditorium Attendance';
+  const c = card(`${yr} vs ${prevYr}`,'Campus Breakdown');
+  const {wrap, canvas} = makeCanvas('vsChart','medium');
+  c.appendChild(wrap); grid.appendChild(c);
+  const dPrev = aggregate(d.filter(r=>r.year===prevYr),['campus']);
+  const dCur = aggregate(d.filter(r=>r.year===yr),['campus']);
+  const campuses = campusOrder.filter(cp => dPrev.some(r=>r.campus===cp)||dCur.some(r=>r.campus===cp));
+  if (campuses.length === 0) return;
+  const gv = m => m ? (attMode==='total' && m.totalAttendance > 0 ? m.totalAttendance : m.attendance) : 0;
+  charts.vs = new Chart(canvas, {
+    type:'bar',
+    data:{ labels:campuses, datasets:[
+      {label:prevYr,data:campuses.map(cp=>{const m=dPrev.find(r=>r.campus===cp);return gv(m);}),backgroundColor:'#bcc3ce',borderRadius:6,barPercentage:0.6},
+      {label:yr,data:campuses.map(cp=>{const m=dCur.find(r=>r.campus===cp);return gv(m);}),backgroundColor:'#4a7f97',borderRadius:6,barPercentage:0.6}
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{usePointStyle:true,pointStyle:'rectRounded',color:'#333'}},datalabels:{...dlDefaults}},
+      scales:{y:{beginAtZero:true,ticks:{callback:v=>num(v)},grid:{color:'#f0f0f0'}},x:{grid:{display:false}}}
+    }
+  });
+}
+
+function renderRsvpChart(d, grid) {
+  const yr = selectedYear;
+  const rd = aggregate(d.filter(r=>r.year===yr&&r.rsvp>0),['campus']);
+  if (rd.length === 0) return;
+  const c = card(`RSVP vs Auditorium (${yr})`, 'RSVP compared to Auditorium only');
+  const {wrap, canvas} = makeCanvas('rsvpChart','medium');
+  c.appendChild(wrap); grid.appendChild(c);
+  const campuses = campusOrder.filter(cp=>rd.some(r=>r.campus===cp));
+  charts.rsvp = new Chart(canvas, {
+    type:'bar',
+    data:{ labels:campuses, datasets:[
+      {label:'RSVP',data:campuses.map(cp=>{const m=rd.find(r=>r.campus===cp);return m?m.rsvp:0;}),backgroundColor:'#bcc3ce',borderRadius:6,barPercentage:0.6},
+      {label:'Auditorium',data:campuses.map(cp=>{const m=rd.find(r=>r.campus===cp);return m?m.attendance:0;}),backgroundColor:'#2e7d5b',borderRadius:6,barPercentage:0.6}
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{usePointStyle:true,pointStyle:'rectRounded',color:'#333'}},datalabels:{...dlDefaults}},
+      scales:{y:{beginAtZero:true,ticks:{callback:v=>num(v)},grid:{color:'#f0f0f0'}},x:{grid:{display:false}}}
+    }
+  });
+}
+
+function renderServiceVsLYChart(d, grid) {
+  const c = card('Service-by-Service Breakdown','Select a year to see every service by campus and holiday', true);
+  grid.appendChild(c);
+  const allYears = [...new Set(d.map(r => r.year))].sort();
+  const controls = document.createElement('div');
+  controls.className = 'svc-controls';
+  controls.innerHTML = `<label>Select Year:</label>`;
+  const sel = document.createElement('select');
+  sel.className = 'year-select';
+  allYears.forEach(y => { const o=document.createElement('option'); o.value=y; o.textContent=y; if(y===svcSelectedYear)o.selected=true; sel.appendChild(o); });
+  if (!allYears.includes(svcSelectedYear)) { svcSelectedYear = selectedYear || allYears[allYears.length-1]; sel.value = svcSelectedYear; }
+  sel.onchange = () => { svcSelectedYear = sel.value; render(); };
+  controls.appendChild(sel);
+  c.appendChild(controls);
+  const container = document.createElement('div');
+  c.appendChild(container);
+  const yr = svcSelectedYear;
+  campusOrder.forEach(campus => {
+    const cd = d.filter(r => r.campus === campus && r.year === yr);
+    if (cd.length === 0) return;
+    const hts = [...new Set(cd.map(r => holidayType(r.holiday)))];
+    hts.forEach(ht => {
+      const rows = cd.filter(r => holidayType(r.holiday) === ht).sort((a,b) => new Date(a.date+' '+a.time) - new Date(b.date+' '+b.time));
+      if (rows.length === 0) return;
+      const section = document.createElement('div');
+      section.className = 'campus-section';
+      section.innerHTML = `<h3 class="${campus.toLowerCase()}-label">${campus} — ${ht} (${yr})</h3>`;
+      const {wrap, canvas} = makeCanvas(`svc_${campus}_${ht}_${yr}`.replace(/\s/g,''), 'medium');
+      section.appendChild(wrap); container.appendChild(section);
+      const labels = rows.map(r => `${r.day} ${r.service}\n${r.time}`);
+      const attData = rows.map(r => attVal(r));
+      const rsvpData = rows.map(r => r.rsvp);
+      const hasRsvp = rsvpData.some(v => v > 0);
+      const datasets = [{label: attMode === 'total' ? 'Total' : 'Auditorium',data:attData,backgroundColor:campusColors[campus],borderRadius:6,barPercentage:hasRsvp?0.6:0.7}];
+      if (hasRsvp) datasets.unshift({label:'RSVP',data:rsvpData,backgroundColor:'#bcc3ce',borderRadius:6,barPercentage:0.6});
+      charts[`svc_${campus}_${ht}_${yr}`] = new Chart(canvas, {
+        type:'bar', data:{labels,datasets},
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          plugins:{legend:{position:'top',labels:{usePointStyle:true,pointStyle:'rectRounded',color:'#333'}},datalabels:{...dlDefaults}},
+          scales:{y:{beginAtZero:true,ticks:{callback:v=>num(v)},grid:{color:'#f0f0f0'}},x:{grid:{display:false},ticks:{font:{size:11}}}}
+        }
+      });
+    });
+  });
+}
+
+function renderCampusSubCharts(d, grid) {
+  campusOrder.forEach(campus => {
+    const cd = d.filter(r => r.campus === campus);
+    if (cd.length === 0) return;
+    const hts = [...new Set(cd.map(r => holidayType(r.holiday)))];
+    const years = [...new Set(cd.map(r => r.year))].sort();
+    const c = card(`${campus} — Attendance by Service`,'Every service stacked by year', true);
+    grid.appendChild(c);
+    hts.forEach(ht => {
+      const htRows = cd.filter(r => holidayType(r.holiday) === ht);
+      if (htRows.length === 0) return;
+      const section = document.createElement('div');
+      section.className = 'campus-section';
+      section.innerHTML = `<h3 class="${campus.toLowerCase()}-label">${ht}</h3>`;
+      const {wrap, canvas} = makeCanvas(`sub_${campus}_${ht}`.replace(/\s/g,''), 'tall');
+      section.appendChild(wrap); c.appendChild(section);
+      const byYear = {};
+      years.forEach(y => { byYear[y] = htRows.filter(r=>r.year===y).sort((a,b)=>new Date(a.date+' '+a.time)-new Date(b.date+' '+b.time)); });
+      const maxSvc = Math.max(...Object.values(byYear).map(a=>a.length));
+      const palette = ['#4a7f97','#7b6fa6','#c47a2e','#2e7d5b','#c0392b','#d4a017','#8e44ad','#2980b9'];
+      const datasets = [];
+      for (let i = 0; i < maxSvc; i++) {
+        datasets.push({
+          label:`Service ${i+1}`,
+          data:years.map(y=>byYear[y][i]?attVal(byYear[y][i]):0),
+          backgroundColor:palette[i%palette.length]+'cc', borderRadius:4, barPercentage:0.7, categoryPercentage:0.8
+        });
+      }
+      charts[`sub_${campus}_${ht}`] = new Chart(canvas, {
+        type:'bar', data:{labels:years, datasets},
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          plugins:{
+            legend:{position:'top',labels:{usePointStyle:true,pointStyle:'rectRounded',font:{size:11},color:'#333'}},
+            datalabels:{anchor:'center',align:'center',color:'#fff',font:{size:9,weight:'bold'},formatter:v=>v>0?numShort(v):'',display:ctx=>ctx.dataset.data[ctx.dataIndex]>200}
+          },
+          scales:{y:{beginAtZero:true,stacked:true,ticks:{callback:v=>num(v)},grid:{color:'#f0f0f0'}},x:{stacked:true,grid:{display:false}}}
+        }
+      });
+    });
+  });
+}
+
+function renderGrowthChart(grid) {
+  const c = card('Growth Trajectory — All Years','Filter by campus or holiday', true);
+  grid.appendChild(c);
+
+  const controls = document.createElement('div');
+  controls.className = 'growth-controls';
+
+  const modeLabel = document.createElement('label');
+  modeLabel.textContent = 'View by:';
+  controls.appendChild(modeLabel);
+
+  const modeSel = document.createElement('select');
+  modeSel.className = 'growth-select';
+  [{v:'campus',t:'Campus'},{v:'holiday',t:'Holiday'}].forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o.v; opt.textContent = o.t;
+    if (o.v === growthMode) opt.selected = true;
+    modeSel.appendChild(opt);
+  });
+
+  const valLabel = document.createElement('label');
+  valLabel.textContent = 'Select:';
+  valLabel.style.marginLeft = '16px';
+
+  const valSel = document.createElement('select');
+  valSel.className = 'growth-select';
+
+  function populateValSel() {
+    valSel.innerHTML = '';
+    const options = growthMode === 'campus'
+      ? campusOrder.filter(cp => data.some(r => r.campus === cp))
+      : [...new Set(data.map(r => holidayType(r.holiday)))];
+    options.forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o; opt.textContent = o;
+      if (o === growthSelection) opt.selected = true;
+      valSel.appendChild(opt);
+    });
+    if (!options.includes(growthSelection)) {
+      growthSelection = options[0] || '';
+      valSel.value = growthSelection;
+    }
+  }
+
+  modeSel.onchange = () => {
+    growthMode = modeSel.value;
+    growthSelection = growthMode === 'campus' ? 'Mission' : 'Good Friday';
+    populateValSel();
+    renderGrowthChartInner(container);
+  };
+  valSel.onchange = () => {
+    growthSelection = valSel.value;
+    renderGrowthChartInner(container);
+  };
+
+  populateValSel();
+  controls.appendChild(modeSel);
+  controls.appendChild(valLabel);
+  controls.appendChild(valSel);
+  c.appendChild(controls);
+
+  const container = document.createElement('div');
+  c.appendChild(container);
+  renderGrowthChartInner(container);
+}
+
+function renderGrowthChartInner(container) {
+  container.innerHTML = '';
+  if (charts.growth) { charts.growth.destroy(); delete charts.growth; }
+
+  const {wrap, canvas} = makeCanvas('growthChart','tall');
+  container.appendChild(wrap);
+
+  const allYears = [...new Set(data.map(r=>r.year))].sort();
+  const hTypes = [...new Set(data.map(r=>holidayType(r.holiday)))];
+  const dashMap = {'Good Friday':[],'Easter':[5,5],'Christmas Eve':[2,3]};
+  const mLabel = attMode === 'total' ? 'Total Attendance' : 'Auditorium Attendance';
+
+  const gv = m => m ? (attMode==='total' && m.totalAttendance > 0 ? m.totalAttendance : m.attendance) : null;
+
+  let datasets = [];
+
+  if (growthMode === 'campus') {
+    const campus = growthSelection;
+    const gd = aggregate(data.filter(r => r.campus === campus), ['year','ht']);
+    hTypes.forEach(ht => {
+      const pts = allYears.map(y => { const m=gd.find(r=>r.year===y&&r.ht===ht); return m ? gv(m) : null; });
+      if (pts.some(p=>p!==null)) {
+        const color = ht==='Good Friday'?'#4a7f97':ht==='Easter'?'#2e7d5b':'#c47a2e';
+        datasets.push({
+          label:ht, data:pts, borderColor:color, backgroundColor:color+'33',
+          borderDash:dashMap[ht]||[], pointRadius:5, pointHoverRadius:8, tension:0.3, spanGaps:true, fill:false
+        });
+      }
+    });
+  } else {
+    const ht = growthSelection;
+    const gd = aggregate(data.filter(r => holidayType(r.holiday) === ht), ['year','campus']);
+    campusOrder.forEach(cp => {
+      const pts = allYears.map(y => { const m=gd.find(r=>r.year===y&&r.campus===cp); return m ? gv(m) : null; });
+      if (pts.some(p=>p!==null)) {
+        datasets.push({
+          label:cp, data:pts, borderColor:campusColors[cp], backgroundColor:campusColors[cp]+'33',
+          borderDash:[], pointRadius:5, pointHoverRadius:8, tension:0.3, spanGaps:true, fill:false
+        });
+      }
+    });
+  }
+
+  charts.growth = new Chart(canvas, {
+    type:'line', data:{labels:allYears, datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        datalabels:{display:false},
+        legend:{position:'right', align:'start',labels:{usePointStyle:true, color:'#1a1a1a', padding:14, font:{size:12,weight:'600'}}}
+      },
+      scales:{y:{beginAtZero:true,ticks:{callback:v=>num(v)},grid:{color:'#f0f0f0'}},x:{grid:{display:false}}}
+    }
+  });
+}
+
+// EVENT REGISTRATIONS
+const eventData = [
+  {name:"Mission: Sisterhood Night March 2026",total:1907,active:1907,canceled:0},
+  {name:"Edinburg: Sisterhood Night March 2026",total:1036,active:1036,canceled:0},
+  {name:"Sisterhood en Español - Marzo 2026",total:446,active:446,canceled:0},
+  {name:"Brotherhood",total:433,active:433,canceled:0},
+  {name:"Summer Camp 2026",total:349,active:322,canceled:27},
+  {name:"Splendor Conference 2026",total:338,active:334,canceled:4},
+  {name:"Practicing The Way: Spring 2026",total:290,active:266,canceled:24},
+  {name:"Worship & Production Team Night",total:230,active:228,canceled:2},
+  {name:"Girls Night | Mission Campus",total:220,active:219,canceled:1},
+  {name:"Mission Rooted: Spring 2026",total:204,active:121,canceled:83},
+  {name:"Edinburg Rooted: Spring 2026",total:183,active:149,canceled:34},
+  {name:"Edinburg: ReEngage Spring 2026",total:134,active:98,canceled:14},
+  {name:"Mission: ReEngage Spring 2026",total:132,active:100,canceled:20},
+  {name:"Mission Baptism Class (September 28, 2025)",total:114,active:114,canceled:0},
+  {name:"Mission: Growth Track Step 1 (January)",total:113,active:112,canceled:1},
+  {name:"Mission Griefshare: Spring 2026",total:111,active:80,canceled:31},
+  {name:"Mission Growth Track Step 1 (October)",total:109,active:107,canceled:2},
+  {name:"Rooted en Español: Primavera 2026",total:105,active:76,canceled:14},
+  {name:"Mission: Growth Track Step 2 (January)",total:91,active:90,canceled:1},
+  {name:"Girls Night | Edinburg Campus",total:89,active:89,canceled:0},
+  {name:"Mission Growth Track Step 1 (November)",total:88,active:83,canceled:5},
+  {name:"Mission Growth Track Step 1 (March)",total:87,active:76,canceled:11},
+  {name:"Edinburg: Growth Track Step 1 (January)",total:86,active:84,canceled:2},
+  {name:"Re:Generation Spring 2026",total:83,active:83,canceled:0},
+  {name:"Mission Growth Track Step 2 (October)",total:81,active:74,canceled:7},
+  {name:"Baby Dedications November 2025",total:78,active:76,canceled:2},
+  {name:"Mission: Growth Track Step 3 (January)",total:76,active:73,canceled:3},
+  {name:"Edinburg Growth Track Step 1 (October)",total:73,active:71,canceled:2},
+  {name:"Mission Growth Track Step 2 (November)",total:73,active:72,canceled:1},
+  {name:"Edinburg Growth Track Step 2 (November)",total:71,active:71,canceled:0}
+];
+
+function getCampusColor(eventName) {
+  if (eventName.startsWith('Mission')) return '#4a7f97';
+  if (eventName.startsWith('Edinburg')) return '#7b6fa6';
+  if (eventName.includes('Español') || eventName.includes('en Español')) return '#c47a2e';
+  return '#6b7280';
+}
+
+function getEventCategory(eventName) {
+  const lower = eventName.toLowerCase();
+  if (lower.includes('growth track') || lower.includes('vía de crecimiento')) return 'Growth Track';
+  if (lower.includes('sisterhood') || lower.includes('brotherhood') || lower.includes('girls night')) return 'Special Events';
+  if (lower.includes('rooted') || lower.includes('reengage') || lower.includes('practicing the way') || lower.includes('griefshare') || lower.includes('re:generation')) return 'Programs';
+  if (lower.includes('baptism')) return 'Baptisms';
+  if (lower.includes('summer camp') || lower.includes('splendor conference')) return 'Camp & Conference';
+  return 'Other';
+}
+
+function renderEventRegistrations() {
+  const kpiSection = document.getElementById('eventKpiSection');
+  const grid = document.getElementById('eventGrid');
+  kpiSection.innerHTML = '';
+  grid.innerHTML = '';
+
+  ['eventTop20','eventCategory','eventCampus'].forEach(chartId => {
+    if (charts[chartId]) {
+      charts[chartId].destroy();
+      delete charts[chartId];
+    }
+  });
+
+  const kpiHtml = `<h3>Summary</h3><div class="kpi-row">
+    <div class="kpi"><div class="value total">170</div><div class="label">Total Events</div></div>
+    <div class="kpi"><div class="value total">${num(9660)}</div><div class="label">Total Registrations</div></div>
+    <div class="kpi"><div class="value total">${num(9210)}</div><div class="label">Active Registrations</div></div>
+    <div class="kpi"><div class="value total">${num(386)}</div><div class="label">Canceled</div></div>
+    <div class="kpi"><div class="value total">4.0%</div><div class="label">Cancel Rate</div></div>
+  </div>`;
+  kpiSection.innerHTML = kpiHtml;
+
+  const top20 = eventData.slice(0, 20);
+  const c1 = card('Top 20 Events by Registrations', 'Color-coded by campus');
+  const {wrap: wrap1, canvas: canvas1} = makeCanvas('eventTop20', 'tall');
+  c1.appendChild(wrap1);
+  grid.appendChild(c1);
+
+  const labels1 = top20.map(e => e.name);
+  const data1 = top20.map(e => e.total);
+  const colors1 = top20.map(e => getCampusColor(e.name));
+
+  charts.eventTop20 = new Chart(canvas1, {
+    type: 'bar',
+    data: {labels: labels1, datasets: [{label: 'Total', data: data1, backgroundColor: colors1, borderRadius: 6, barPercentage: 0.8}]},
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'rectRounded' } },
+        datalabels: { anchor: 'end', align: 'end', color: '#444', font: { size: 10, weight: '600' }, formatter: v => num(v), display: true }
+      },
+      scales: {
+        x: { beginAtZero: true, ticks: { callback: v => num(v) }, grid: { color: '#f0f0f0' } },
+        y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+
+  const categoryMap = {};
+  eventData.forEach(event => {
+    const cat = getEventCategory(event.name);
+    if (!categoryMap[cat]) categoryMap[cat] = 0;
+    categoryMap[cat] += event.total;
+  });
+
+  const categoryLabels = ['Growth Track', 'Special Events', 'Programs', 'Baptisms', 'Camp & Conference', 'Other'];
+  const categoryValues = categoryLabels.map(cat => categoryMap[cat] || 0);
+  const categoryColors = ['#4a7f97', '#7b6fa6', '#c47a2e', '#2e7d5b', '#c0392b', '#6b7280'];
+
+  const c2 = card('Registrations by Category', 'Distribution across event types');
+  const {wrap: wrap2, canvas: canvas2} = makeCanvas('eventCategory', 'medium');
+  c2.appendChild(wrap2);
+  grid.appendChild(c2);
+
+  charts.eventCategory = new Chart(canvas2, {
+    type: 'doughnut',
+    data: {labels: categoryLabels, datasets: [{data: categoryValues, backgroundColor: categoryColors, borderColor: '#fff', borderWidth: 2}]},
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { usePointStyle: true, color: '#1a1a1a', padding: 14, font: { size: 12 } } },
+        datalabels: { formatter: (v, ctx) => { const total = ctx.dataset.data.reduce((a, b) => a + b, 0); return ((v / total) * 100).toFixed(0) + '%'; }, color: '#fff', font: { weight: 'bold', size: 12 } }
+      }
+    }
+  });
+
+  const campusStats = { Mission: { total: 0, active: 0 }, Edinburg: { total: 0, active: 0 }, Spanish: { total: 0, active: 0 } };
+  eventData.forEach(event => {
+    let campus = 'Mission';
+    if (event.name.startsWith('Edinburg')) campus = 'Edinburg';
+    else if (event.name.includes('Español') || event.name.includes('en Español')) campus = 'Spanish';
+    campusStats[campus].total += event.total;
+    campusStats[campus].active += event.active;
+  });
+
+  const campusLabels = ['Mission', 'Edinburg', 'Spanish'];
+  const campusTotalData = campusLabels.map(c => campusStats[c].total);
+  const campusActiveData = campusLabels.map(c => campusStats[c].active);
+
+  const c3 = card('Registrations by Campus', 'Total vs Active');
+  const {wrap: wrap3, canvas: canvas3} = makeCanvas('eventCampus', 'medium');
+  c3.appendChild(wrap3);
+  grid.appendChild(c3);
+
+  charts.eventCampus = new Chart(canvas3, {
+    type: 'bar',
+    data: {
+      labels: campusLabels,
+      datasets: [
+        { label: 'Total', data: campusTotalData, backgroundColor: '#bcc3ce', borderRadius: 6, barPercentage: 0.6 },
+        { label: 'Active', data: campusActiveData, backgroundColor: '#4a7f97', borderRadius: 6, barPercentage: 0.6 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'rectRounded', color: '#333' } },
+        datalabels: { anchor: 'end', align: 'end', color: '#444', font: { size: 10, weight: '600' }, formatter: v => num(v), display: true }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { callback: v => num(v) }, grid: { color: '#f0f0f0' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  const top30 = eventData.slice(0, 30);
+  const c4 = card('Top 30 Events', 'Complete listing with details');
+  c4.classList.add('full');
+
+  let tableHtml = '<table class="event-table"><thead><tr><th>Event Name</th><th class="number">Total</th><th class="number">Active</th><th class="number">Canceled</th><th class="number">Cancel Rate</th></tr></thead><tbody>';
+  top30.forEach(event => {
+    const cancelRate = event.total > 0 ? ((event.canceled / event.total) * 100).toFixed(1) : 0;
+    tableHtml += `<tr><td class="name">${event.name}</td><td class="number">${event.total}</td><td class="number">${event.active}</td><td class="number">${event.canceled}</td><td class="number cancel-rate">${cancelRate}%</td></tr>`;
+  });
+  tableHtml += '</tbody></table>';
+  tableHtml += '<div class="subtitle" style="margin-top:16px;">Data from Planning Center Online via Qlik · PCO People Dashboard</div>';
+
+  c4.appendChild(document.createElement('div'));
+  c4.lastChild.innerHTML = tableHtml;
+  grid.appendChild(c4);
+}
+
+// ══════════════════════════════════════════
+// ── DREAM TEAM DATA (from Qlik PCO People Dashboard) ──
+// ══════════════════════════════════════════
+const dtStep3Events = [
+  {name:"Mission: Growth Track Step 3 (January)",registrants:73,serving:13,pct:17.8,campus:"Mission"},
+  {name:"Edinburg: Growth Track Step 3 (January)",registrants:57,serving:20,pct:35.1,campus:"Edinburg"},
+  {name:"Edinburg Growth Track Step 3 (November)",registrants:57,serving:17,pct:29.8,campus:"Edinburg"},
+  {name:"Mission Growth Track Step 3 (November)",registrants:56,serving:13,pct:23.2,campus:"Mission"},
+  {name:"Mission Growth Track Step 3 (October)",registrants:55,serving:9,pct:16.4,campus:"Mission"},
+  {name:"Mission Growth Track Step 3 (March)",registrants:49,serving:1,pct:2.0,campus:"Mission"},
+  {name:"Edinburg Growth Track Step 3 (March)",registrants:43,serving:3,pct:7.0,campus:"Edinburg"},
+  {name:"Edinburg Growth Track Step 3 (October)",registrants:28,serving:10,pct:35.7,campus:"Edinburg"},
+  {name:"Vía de Crecimiento Paso 3 (Enero 2026)",registrants:22,serving:13,pct:59.1,campus:"Spanish"},
+  {name:"Vía de Crecimiento Paso 3 (Marzo 2026)",registrants:16,serving:0,pct:0,campus:"Spanish"},
+  {name:"Vía de Crecimiento Paso 3 (Noviembre)",registrants:13,serving:4,pct:30.8,campus:"Spanish"},
+  {name:"Vía de Crecimiento Paso 3 (Octubre)",registrants:9,serving:6,pct:66.7,campus:"Spanish"},
+  {name:"Mission Growth Track Step 3 (April)",registrants:3,serving:0,pct:0,campus:"Mission"}
+];
+
+const dtPositions = [
+  {position:"Kids Leader",count:23},
+  {position:"Greeter",count:11},
+  {position:"Ujier/Anfitrión",count:10},
+  {position:"Usher",count:9},
+  {position:"Leader",count:7},
+  {position:"Kiosk",count:6},
+  {position:"Team Member",count:6},
+  {position:"Dream Team",count:5},
+  {position:"Parking",count:5},
+  {position:"ALL Leaders",count:4},
+  {position:"Check In",count:4},
+  {position:"Leaders",count:4},
+  {position:"North Building Greeter",count:4},
+  {position:"Safety",count:4}
+];
+
+const dtServiceTypes = [
+  {type:"Weekend Service - Edinburg",count:22},
+  {type:"Domingo",count:13},
+  {type:"Easter Services",count:9},
+  {type:"E: High School Wednesday",count:8},
+  {type:"Pre-K 2&3",count:7},
+  {type:"1 Year Olds",count:6},
+  {type:"M: High School Wednesday",count:6},
+  {type:"M: Weekend Services - Greeter Team",count:6},
+  {type:"M: YOUTH CONNECTIONS TEAM",count:6},
+  {type:"M: Weekend Services",count:5}
+];
+
+const dtPeople = {
+  "Edinburg Growth Track Step 3 (March)": [
+    {name:"Adriel Prieto",phone:"(956) 249-9180",lastScheduled:null},
+    {name:"Alejandra Ramirez",phone:"(956) 342-7108",lastScheduled:null},
+    {name:"Alexa Godoy",phone:"(956) 599-8766",lastScheduled:null},
+    {name:"Alister Hoots",phone:"(956) 715-1861",lastScheduled:null},
+    {name:"Alondra Soto",phone:"(956) 457-4147",lastScheduled:null},
+    {name:"Amanda Ramirez",phone:"(956) 212-1208",lastScheduled:null},
+    {name:"Analyn Garcia",phone:"(956) 478-0678",lastScheduled:null},
+    {name:"Annette Saenz",phone:"(956) 502-8361",lastScheduled:null},
+    {name:"Ariana Cantu",phone:"(956) 715-1861",lastScheduled:null},
+    {name:"Aylaia Sifuentes",phone:"(956) 862-8943",lastScheduled:null},
+    {name:"Christian Elizondo",phone:"(956) 340-0868",lastScheduled:null},
+    {name:"Claudia Guerrero",phone:"(956) 358-0225",lastScheduled:null},
+    {name:"Dalton Garza",phone:"(956) 422-0827",lastScheduled:null},
+    {name:"Daniel Prieto",phone:"(956) 505-1180",lastScheduled:null},
+    {name:"Diamond Del Toro",phone:"(956) 398-7171",lastScheduled:null},
+    {name:"Dylielah Trevino",phone:"(956) 563-2907",lastScheduled:null},
+    {name:"Eddie Barrera",phone:"(956) 957-8872",lastScheduled:null},
+    {name:"Eliana Cantu",phone:"(956) 340-2371",lastScheduled:null},
+    {name:"Erick Tellez",phone:"(951) 370-4020",lastScheduled:null},
+    {name:"Gabriella Ramirez",phone:"(956) 342-5741",lastScheduled:null},
+    {name:"Galilea Gonzalez",phone:"(956) 358-0225",lastScheduled:null},
+    {name:"Joe Prieto",phone:"(956) 505-1180",lastScheduled:null},
+    {name:"Joshua Brown",phone:"(956) 240-3954",lastScheduled:null},
+    {name:"Kimberly Reyes",phone:"(956) 261-2140",lastScheduled:null},
+    {name:"Kimberly Vandusen",phone:"(970) 390-2147",lastScheduled:null},
+    {name:"Lupita Arredondo",phone:"(956) 739-1152",lastScheduled:null},
+    {name:"Marcella Gaona",phone:"(956) 534-0125",lastScheduled:null},
+    {name:"Marcella Rodriguez",phone:"(956) 457-4147",lastScheduled:"04/12/2026"},
+    {name:"Maria Alonso",phone:"(956) 342-1253",lastScheduled:null},
+    {name:"Maria Prieto",phone:"(956) 249-9180",lastScheduled:null},
+    {name:"Mateo Montelongo",phone:"(956) 862-8943",lastScheduled:null},
+    {name:"Melina Aguirre",phone:"(956) 619-2764",lastScheduled:"04/15/2026"},
+    {name:"Nailim Ponce",phone:"(956) 249-6833",lastScheduled:null},
+    {name:"Raquel Garza",phone:"(956) 563-3961",lastScheduled:null},
+    {name:"Richard Soderberg",phone:"(920) 851-4927",lastScheduled:null},
+    {name:"Robert Correa",phone:"(956) 821-8401",lastScheduled:null},
+    {name:"Roberto Donaire",phone:"(956) 605-3000",lastScheduled:"03/29/2026"},
+    {name:"Rocky Ramirez",phone:"(956) 648-0674",lastScheduled:null},
+    {name:"Roldan Castillo",phone:"(956) 502-8361",lastScheduled:null},
+    {name:"Royce Castillo",phone:"(956) 502-8361",lastScheduled:null},
+    {name:"Tabitha Garza",phone:"(956) 422-0827",lastScheduled:null},
+    {name:"Vanessa Montelongo",phone:"(956) 532-6455",lastScheduled:null},
+    {name:"Zeferino Arjona",phone:"(956) 534-0125",lastScheduled:null},
+  ],
+  "Edinburg Growth Track Step 3 (November)": [
+    {name:"Amanda Pedraza",phone:"(956) 289-3161",lastScheduled:"04/26/2026"},
+    {name:"Ana Satterfield",phone:"(956) 393-9695",lastScheduled:"03/29/2026"},
+    {name:"Angie Wing",phone:"(956) 776-3587",lastScheduled:null},
+    {name:"Apryl Gonzalez",phone:"(956) 369-6952",lastScheduled:null},
+    {name:"Arturo Prado",phone:"(956) 292-1077",lastScheduled:"04/22/2026"},
+    {name:"Ayden Guzman",phone:null,lastScheduled:null},
+    {name:"Benito Gonzalez, III",phone:"(956) 369-6952",lastScheduled:null},
+    {name:"Braxton Barrera",phone:"(361) 267-4511",lastScheduled:null},
+    {name:"Camila Morales",phone:"(956) 789-8697",lastScheduled:null},
+    {name:"Carlos Tamez",phone:"(956) 270-1821",lastScheduled:"04/29/2026"},
+    {name:"Catalina Diaz",phone:"(956) 533-3964",lastScheduled:null},
+    {name:"Chloe Guzman",phone:"(689) 200-3469",lastScheduled:null},
+    {name:"Cort Tunall",phone:"(306) 604-9927",lastScheduled:null},
+    {name:"Cynthia Vela",phone:"(956) 792-8121",lastScheduled:"04/26/2026"},
+    {name:"Danettzy Gonzalez",phone:"(956) 330-3478",lastScheduled:"05/19/2026"},
+    {name:"Dennis Diaz",phone:"(956) 369-6638",lastScheduled:null},
+    {name:"Diego Giron",phone:"(956) 358-9303",lastScheduled:null},
+    {name:"Eddie Salinas",phone:"(956) 802-6292",lastScheduled:null},
+    {name:"Edward Valdez",phone:"(956) 961-2824",lastScheduled:null},
+    {name:"Elise Ramirez",phone:"(956) 205-8791",lastScheduled:"03/23/2026"},
+    {name:"Elissa Garcia",phone:"(361) 267-4511",lastScheduled:null},
+    {name:"Ella Ruiz",phone:"(956) 540-8187",lastScheduled:null},
+    {name:"Emma Barrera",phone:"(361) 267-4511",lastScheduled:null},
+    {name:"Estefania Villarreal",phone:"(956) 466-0825",lastScheduled:"04/26/2026"},
+    {name:"Evelyn Luna",phone:"(830) 273-8953",lastScheduled:null},
+    {name:"Gabriella Fialkowski",phone:"(719) 291-8886",lastScheduled:null},
+    {name:"Gizella Fialkowski",phone:"(956) 617-0010",lastScheduled:null},
+    {name:"Hannah Gonzalez",phone:"(956) 369-6952",lastScheduled:null},
+    {name:"Irma Garza",phone:"(956) 451-4165",lastScheduled:null},
+    {name:"Isaiah Rios",phone:"(407) 655-8084",lastScheduled:"03/29/2026"},
+    {name:"Jaxson Parks",phone:"(361) 834-1704",lastScheduled:null},
+    {name:"Jhossep Gil",phone:"(956) 970-0690",lastScheduled:null},
+    {name:"Joe Derek Vecchio",phone:"(956) 732-7331",lastScheduled:"03/30/2026"},
+    {name:"Joshua Parks",phone:"(361) 834-1704",lastScheduled:null},
+    {name:"Kamila Reyes",phone:"(956) 292-5777",lastScheduled:null},
+    {name:"Karina Parks",phone:"(956) 467-2246",lastScheduled:null},
+    {name:"Kiana Ramirez",phone:"(956) 292-5777",lastScheduled:null},
+    {name:"Lamonica Tamez",phone:"(956) 270-2540",lastScheduled:"04/29/2026"},
+    {name:"Leticia Banda",phone:"(214) 643-2544",lastScheduled:"03/22/2026"},
+    {name:"Lily Lopez",phone:"(956) 249-1702",lastScheduled:null},
+    {name:"Maggie Beas",phone:"(956) 358-9303",lastScheduled:"05/03/2026"},
+    {name:"Mateo Ramirez",phone:"(956) 619-2764",lastScheduled:null},
+    {name:"Matthew Elizalde",phone:"(956) 457-1715",lastScheduled:"04/29/2026"},
+    {name:"Melina Aguirre",phone:"(956) 619-2764",lastScheduled:"04/15/2026"},
+    {name:"Mia Vela",phone:"(956) 414-7282",lastScheduled:"05/19/2026"},
+    {name:"Michelle Muniz",phone:"(956) 451-8153",lastScheduled:null},
+    {name:"Nehemias Gonzalez",phone:"(956) 369-6952",lastScheduled:null},
+    {name:"Neyda Ramirez",phone:"(956) 534-1924",lastScheduled:null},
+    {name:"Priscilla Ramirez",phone:"(956) 540-8187",lastScheduled:null},
+    {name:"Randy Ayala",phone:"(956) 363-3932",lastScheduled:null},
+  ],
+  "Edinburg Growth Track Step 3 (October)": [
+    {name:"Aaron Puente",phone:"(956) 289-0146",lastScheduled:"04/05/2026"},
+    {name:"Abril Osorio",phone:"(956) 578-9174",lastScheduled:"05/03/2026"},
+    {name:"Adia Reyna",phone:"(956) 342-8904",lastScheduled:"04/26/2026"},
+    {name:"Alyson Vasquez",phone:"(956) 929-5733",lastScheduled:null},
+    {name:"Andrew Vasquez",phone:"(956) 929-5733",lastScheduled:null},
+    {name:"Ariana De La Fuente",phone:"(956) 414-2967",lastScheduled:"04/23/2026"},
+    {name:"Ayomikun Ashiru",phone:"(956) 616-8552",lastScheduled:"03/29/2026"},
+    {name:"Belen Ceres",phone:"(956) 429-7008",lastScheduled:null},
+    {name:"Brenda Escaname",phone:"(956) 340-3765",lastScheduled:null},
+    {name:"Claudio Rodriguez",phone:"(956) 215-6522",lastScheduled:null},
+    {name:"Edith Cruz",phone:"(956) 720-2792",lastScheduled:null},
+    {name:"Isabelle Perez",phone:"(956) 573-5701",lastScheduled:null},
+    {name:"Ismael Beltran",phone:"(941) 224-0887",lastScheduled:"03/29/2026"},
+    {name:"Jessica Barrera",phone:"(956) 225-5731",lastScheduled:null},
+    {name:"Jorge Ruiz",phone:"(956) 600-1976",lastScheduled:"03/04/2026"},
+    {name:"Kadence Barrera",phone:"(956) 342-8010",lastScheduled:"04/26/2026"},
+    {name:"Karyme Garcia",phone:"(956) 348-9234",lastScheduled:null},
+    {name:"Leylani Luna",phone:"(956) 573-5701",lastScheduled:null},
+    {name:"Mario Cruz",phone:"(956) 900-1234",lastScheduled:null},
+    {name:"Marla Luce",phone:"(956) 369-3300",lastScheduled:null},
+    {name:"Mathew Brulloths",phone:"(956) 252-3614",lastScheduled:"04/23/2026"},
+    {name:"Motunrayo Ashiru",phone:"(956) 655-6774",lastScheduled:null},
+    {name:"Sara Palacio",phone:"(956) 457-1100",lastScheduled:null},
+    {name:"Yliana Gomez",phone:"(956) 219-3154",lastScheduled:"03/29/2026"},
+  ],
+  "Edinburg: Growth Track Step 3 (January)": [
+    {name:"Abby Valdez",phone:"(956) 673-7070",lastScheduled:"04/26/2026"},
+    {name:"Alan Alfaro",phone:"(956) 393-1805",lastScheduled:null},
+    {name:"Alexis Chavez",phone:"(956) 460-4389",lastScheduled:null},
+    {name:"Alyssa Ruiz",phone:"(915) 496-7070",lastScheduled:"04/05/2026"},
+    {name:"Angel Rivera",phone:"(956) 279-4394",lastScheduled:"03/15/2026"},
+    {name:"Aracelie Arreola",phone:"(956) 648-5838",lastScheduled:null},
+    {name:"Ariana De La Fuente",phone:"(956) 414-2967",lastScheduled:"04/23/2026"},
+    {name:"Ava Crimmings",phone:"(682) 201-7788",lastScheduled:null},
+    {name:"Carlos Contreras",phone:"(956) 227-0071",lastScheduled:null},
+    {name:"Celeste Maldonado",phone:"(956) 279-1114",lastScheduled:null},
+    {name:"Cynthia Rodriguez",phone:"(956) 510-6720",lastScheduled:"03/30/2026"},
+    {name:"Deandra Lopez",phone:"(956) 684-9433",lastScheduled:"04/26/2026"},
+    {name:"Diego Alonzo",phone:"(956) 313-4151",lastScheduled:null},
+    {name:"Doris Barocio",phone:"(956) 562-2300",lastScheduled:null},
+    {name:"Edward Valdez",phone:"(956) 961-2824",lastScheduled:null},
+    {name:"Estefania Villarreal",phone:"(956) 466-0825",lastScheduled:"04/26/2026"},
+    {name:"Frank Leal",phone:"9565601513",lastScheduled:null},
+    {name:"Irving Alfaro",phone:"(956) 270-8681",lastScheduled:"04/05/2026"},
+    {name:"Isaac Gomez",phone:"(956) 777-0787",lastScheduled:null},
+    {name:"Ismerai Alfaro",phone:"(956) 329-0721",lastScheduled:null},
+    {name:"Jackie Ybarra",phone:"(956) 454-9229",lastScheduled:"04/19/2026"},
+    {name:"Jaime Rodriguez",phone:"(956) 607-7606",lastScheduled:null},
+    {name:"Jaziel Díaz",phone:"(956) 466-0825",lastScheduled:null},
+    {name:"Jazmin Alfaro",phone:"(956) 369-3939",lastScheduled:"04/05/2026"},
+    {name:"Jennifer Rivera",phone:"(956) 478-4742",lastScheduled:null},
+    {name:"Jeremy Colbert",phone:"(941) 577-2667",lastScheduled:"03/29/2026"},
+    {name:"Jhossep Gil",phone:"(956) 970-0690",lastScheduled:null},
+    {name:"Jonathan Momplaisir",phone:"(956) 342-9886",lastScheduled:null},
+    {name:"Jose Garces",phone:"(956) 789-2087",lastScheduled:"04/29/2026"},
+    {name:"Kamila Salinas",phone:"(956) 731-7793",lastScheduled:"05/19/2026"},
+    {name:"Kenya Rodriguez",phone:"(956) 330-7380",lastScheduled:null},
+    {name:"Lizbeth Gonzalez",phone:"(956) 478-8543",lastScheduled:null},
+    {name:"Lubella Rodriguez",phone:"(956) 984-9173",lastScheduled:null},
+    {name:"Lucero Rodriguez",phone:"(956) 966-0550",lastScheduled:null},
+    {name:"Luke Garcia",phone:"(956) 966-0550",lastScheduled:null},
+    {name:"Maria Del Consuelo Garza",phone:"(956) 533-4200",lastScheduled:"03/22/2026"},
+    {name:"Martha Garza",phone:"(956) 732-7640",lastScheduled:null},
+    {name:"Mason Garcia",phone:"(956) 966-0550",lastScheduled:null},
+    {name:"Matthew Garcia",phone:"(956) 929-8592",lastScheduled:null},
+    {name:"Melissa Vera Leal",phone:"(956) 289-9450",lastScheduled:null},
+    {name:"Neyda Ramirez",phone:"(956) 534-1924",lastScheduled:null},
+    {name:"Oscar Ruiz",phone:"(915) 309-8676",lastScheduled:null},
+    {name:"Raquel Garza",phone:"(956) 563-3961",lastScheduled:null},
+    {name:"Raquel Perez",phone:"(956) 315-3459",lastScheduled:"05/03/2026"},
+    {name:"Reena Rodriguez",phone:"(956) 451-7415",lastScheduled:null},
+    {name:"Roberto Donaire",phone:"(956) 605-3000",lastScheduled:"03/29/2026"},
+    {name:"Rosy Garces",phone:"(956) 802-2526",lastScheduled:"04/29/2026"},
+    {name:"Samantha De La Cruz",phone:"(956) 598-1443",lastScheduled:null},
+    {name:"Sandra Gonzalez",phone:"(956) 358-9941",lastScheduled:"04/26/2026"},
+    {name:"Stacy Garcia",phone:"(956) 252-6820",lastScheduled:null},
+  ],
+  "Mission Growth Track Step 3 (April)": [
+    {name:"Bradley Castellanos",phone:"(956) 388-0028",lastScheduled:null},
+    {name:"Jamie Andrews",phone:"(816) 797-8554",lastScheduled:null},
+    {name:"Leigh Richburg",phone:"(956) 343-7762",lastScheduled:null},
+  ],
+  "Mission Growth Track Step 3 (March)": [
+    {name:"Aaron Cruz",phone:"(956) 867-0549",lastScheduled:null},
+    {name:"Adam Fruge",phone:"(956) 740-8084",lastScheduled:null},
+    {name:"Adrianna Aguilar",phone:"(956) 244-2376",lastScheduled:"04/26/2026"},
+    {name:"Alexa Garza",phone:"(956) 292-8049",lastScheduled:null},
+    {name:"Annie Gutierrez",phone:"(956) 732-9635",lastScheduled:null},
+    {name:"Ashley Sarmiento",phone:"(956) 534-1840",lastScheduled:null},
+    {name:"Ava Rose Cantu",phone:null,lastScheduled:null},
+    {name:"Caleb Aguilar",phone:"(956) 600-0196",lastScheduled:null},
+    {name:"CamilaRose Cantu",phone:null,lastScheduled:null},
+    {name:"Cynthia Hernandez",phone:"(956) 313-3139",lastScheduled:null},
+    {name:"Daniel Garcia",phone:"(956) 587-8191",lastScheduled:null},
+    {name:"Daniel Rocha",phone:"(956) 472-0523",lastScheduled:null},
+    {name:"Daniela Zorrilla",phone:"(956) 466-5652",lastScheduled:null},
+    {name:"Danny Cuellar",phone:"(956) 227-2519",lastScheduled:null},
+    {name:"EllaRose Cantu",phone:null,lastScheduled:null},
+    {name:"Emily Mata",phone:"(956) 667-9019",lastScheduled:null},
+    {name:"Ezekiel Pena",phone:"(956) 534-4245",lastScheduled:null},
+    {name:"Gaia Cantu",phone:"(956) 793-7672",lastScheduled:null},
+    {name:"Garrett Fruge",phone:"(956) 642-6286",lastScheduled:null},
+    {name:"Isabel Sotelo",phone:"(956) 769-5920",lastScheduled:null},
+    {name:"Israel Rubio",phone:"(956) 680-7578",lastScheduled:null},
+    {name:"Jacob Gonzalez",phone:"(956) 600-2052",lastScheduled:null},
+    {name:"Jessica Garza",phone:"(956) 874-8721",lastScheduled:null},
+    {name:"JJ Rodriguez",phone:"(956) 438-4978",lastScheduled:null},
+    {name:"Joaquin Quintanilla",phone:"(956) 414-2385",lastScheduled:null},
+    {name:"Jonathan Zieske",phone:"(956) 240-9923",lastScheduled:null},
+    {name:"Josue Salazar",phone:"(956) 638-7279",lastScheduled:null},
+    {name:"Kareli Eliserio",phone:"(956) 515-8604",lastScheduled:null},
+    {name:"Karen Cantu",phone:"(956) 890-0750",lastScheduled:null},
+    {name:"Karla Davila",phone:"(956) 353-4999",lastScheduled:null},
+    {name:"Lexi Rodriguez",phone:"(956) 336-5833",lastScheduled:null},
+    {name:"Luke Esparza",phone:"(956) 400-1617",lastScheduled:null},
+    {name:"Maribel Rangel",phone:"(713) 501-8752",lastScheduled:null},
+    {name:"Matthew Martinez",phone:"(956) 215-4975",lastScheduled:null},
+    {name:"Melisa Espinosa",phone:"(956) 888-9896",lastScheduled:null},
+    {name:"Mikel Aguinaga",phone:"(956) 354-8383",lastScheduled:null},
+    {name:"Mindy Hall",phone:"(956) 240-1641",lastScheduled:null},
+    {name:"Natalie Cisneros",phone:"(956) 566-4458",lastScheduled:null},
+    {name:"Nidia Quintanilla",phone:"(956) 648-5183",lastScheduled:null},
+    {name:"Priscilla Martinez",phone:"(956) 640-1532",lastScheduled:null},
+    {name:"Rebecca Fruge",phone:"(956) 642-6286",lastScheduled:null},
+    {name:"Savannah Cantu",phone:"(956) 827-1312",lastScheduled:null},
+    {name:"Stephanie Anzaldua",phone:"(956) 295-7852",lastScheduled:null},
+    {name:"Suzette Cruz",phone:"(956) 789-9083",lastScheduled:null},
+    {name:"Valerie Mireles",phone:"(956) 435-2519",lastScheduled:null},
+    {name:"Vida De Leon",phone:"(956) 322-6761",lastScheduled:null},
+  ],
+  "Mission Growth Track Step 3 (November)": [
+    {name:"Aaron Olivarez",phone:"(956) 445-3533",lastScheduled:null},
+    {name:"Abigail Garcia",phone:"(956) 599-1845",lastScheduled:null},
+    {name:"Adlin Rodriguez",phone:"(956) 599-1845",lastScheduled:null},
+    {name:"Adrian Mendoza",phone:"(956) 780-6307",lastScheduled:null},
+    {name:"Alberto Bazan",phone:"(956) 478-7516",lastScheduled:null},
+    {name:"Aliyah Silva",phone:"(956) 533-9042",lastScheduled:"03/29/2026"},
+    {name:"Alyssa Hanshaw",phone:"(956) 225-9927",lastScheduled:"03/29/2026"},
+    {name:"Audriana Mendoza",phone:"(956) 599-1845",lastScheduled:null},
+    {name:"Azarel Mendoza",phone:"(956) 599-1845",lastScheduled:null},
+    {name:"Benito Salinas",phone:"(956) 877-6734",lastScheduled:null},
+    {name:"Beto Diaz",phone:"(956) 328-9557",lastScheduled:"05/06/2026"},
+    {name:"Blake Hilburn",phone:"(404) 587-0467",lastScheduled:null},
+    {name:"Brandon Garza",phone:"(956) 960-8987",lastScheduled:null},
+    {name:"Brian Lilley",phone:"(956) 342-3751",lastScheduled:null},
+    {name:"Brian Scofield",phone:"(956) 529-9911",lastScheduled:null},
+    {name:"Brianna Aguirre",phone:"(956) 222-0164",lastScheduled:"04/23/2026"},
+    {name:"Cadence Arenas",phone:"(956) 538-9792",lastScheduled:null},
+    {name:"David Rutledge",phone:"(956) 467-7223",lastScheduled:"04/12/2026"},
+    {name:"Deb Scofield",phone:"(956) 897-5933",lastScheduled:"03/29/2026"},
+    {name:"Diandra Salinas",phone:"(956) 638-2585",lastScheduled:null},
+    {name:"Diego Alonzo",phone:"(956) 313-4151",lastScheduled:null},
+    {name:"Elizabeth Gutierrez",phone:"(956) 991-0241",lastScheduled:null},
+    {name:"Enrique Lopez",phone:"(956) 313-5224",lastScheduled:"04/05/2026"},
+    {name:"Esther Gilkerson",phone:"(920) 840-9746",lastScheduled:"04/15/2026"},
+    {name:"Freddie Islas",phone:"(956) 375-8676",lastScheduled:null},
+    {name:"Genesis Garza",phone:"(956) 422-0926",lastScheduled:null},
+    {name:"Gracen Garza",phone:"(956) 379-2482",lastScheduled:null},
+    {name:"Jaylinn Quintanilla",phone:"(956) 354-1008",lastScheduled:null},
+    {name:"Jessica Morales",phone:"(956) 354-1008",lastScheduled:null},
+    {name:"Jose Salinas",phone:"(956) 862-1075",lastScheduled:null},
+    {name:"Julio Cortes",phone:"(469) 265-5586",lastScheduled:null},
+    {name:"Leah Raquel Cantu",phone:"(956) 460-6974",lastScheduled:null},
+    {name:"Maribel Morena",phone:"(956) 844-3712",lastScheduled:null},
+    {name:"Marisa Garza",phone:"(956) 566-1244",lastScheduled:"03/29/2026"},
+    {name:"Marisa Marroquin",phone:"(956) 639-3992",lastScheduled:null},
+    {name:"Maryanny Alvarez",phone:null,lastScheduled:null},
+    {name:"Michael Gonzalez",phone:"(956) 438-6466",lastScheduled:null},
+    {name:"Miguel Perez",phone:"(956) 445-3532",lastScheduled:"03/29/2026"},
+    {name:"Niki McGaugh",phone:"(956) 358-3068",lastScheduled:null},
+    {name:"Norma Munoz",phone:"(956) 256-3556",lastScheduled:null},
+    {name:"O'Shea Rodriguez",phone:"(956) 599-1845",lastScheduled:null},
+    {name:"Preston King",phone:"(956) 458-4232",lastScheduled:"03/29/2026"},
+    {name:"Rodrigo Rangel",phone:"(956) 589-0393",lastScheduled:null},
+    {name:"Roman Villarreal",phone:"(956) 458-5127",lastScheduled:"04/26/2026"},
+    {name:"Ruth Marron",phone:"(956) 777-5941",lastScheduled:null},
+    {name:"Samantha Reyes",phone:"(956) 960-3096",lastScheduled:null},
+    {name:"Steven Ruiz",phone:"(956) 624-9097",lastScheduled:null},
+    {name:"Toni King",phone:"(954) 657-1966",lastScheduled:"03/29/2026"},
+  ],
+  "Mission Growth Track Step 3 (October)": [
+    {name:"Adam Rodriguez",phone:"(956) 400-5283",lastScheduled:null},
+    {name:"Aiden Medina",phone:"(956) 222-3095",lastScheduled:null},
+    {name:"Aksel Acuna",phone:"(956) 595-7737",lastScheduled:null},
+    {name:"Aliah Maldonado",phone:"(956) 429-8456",lastScheduled:null},
+    {name:"Anahi Cuellar",phone:"(956) 731-9486",lastScheduled:null},
+    {name:"Analicia Acuna",phone:"(956) 595-7737",lastScheduled:null},
+    {name:"Andre Acuna",phone:"(956) 207-9107",lastScheduled:null},
+    {name:"Anessa Acuna",phone:"(956) 595-7737",lastScheduled:null},
+    {name:"Archi Reyna",phone:"(956) 483-1625",lastScheduled:null},
+    {name:"Ashley Johnson",phone:"(956) 358-5479",lastScheduled:null},
+    {name:"Brady Lanham",phone:"(509) 307-8950",lastScheduled:null},
+    {name:"Carlos Medina",phone:"(956) 232-6187",lastScheduled:null},
+    {name:"Carmen De La Garza",phone:"(956) 432-6220",lastScheduled:null},
+    {name:"Daisy Tijerina",phone:"(956) 778-0851",lastScheduled:null},
+    {name:"Dawne Varlack",phone:"(956) 358-2104",lastScheduled:"03/29/2026"},
+    {name:"Eliu Herrera",phone:"(956) 240-7614",lastScheduled:null},
+    {name:"Emily Garcia",phone:"(956) 416-7377",lastScheduled:null},
+    {name:"Emma Guevara",phone:"(956) 607-7033",lastScheduled:"03/29/2026"},
+    {name:"Isabelle Perez",phone:"(956) 573-5701",lastScheduled:null},
+    {name:"Jaime De La Garza",phone:"(956) 205-5374",lastScheduled:null},
+    {name:"Janitza Garza",phone:"(956) 648-1946",lastScheduled:"04/04/2026"},
+    {name:"Jayden Varlack",phone:"(956) 358-1095",lastScheduled:null},
+    {name:"Jennifer Killebrew",phone:"(956) 897-5325",lastScheduled:null},
+    {name:"Jesai Gomez",phone:"(956) 340-3922",lastScheduled:null},
+    {name:"Jesse Espinoza",phone:"(956) 222-9253",lastScheduled:null},
+    {name:"Jonah Castillo",phone:"(956) 351-2297",lastScheduled:null},
+    {name:"Jorge Ruiz",phone:"(956) 600-1976",lastScheduled:"03/04/2026"},
+    {name:"Jose Luna",phone:"(956) 309-6863",lastScheduled:null},
+    {name:"Juan Aparicio",phone:"(956) 478-2253",lastScheduled:null},
+    {name:"Juan D Rodriguez",phone:"(956) 874-4834",lastScheduled:null},
+    {name:"Kassandra Garcia",phone:"(956) 422-4821",lastScheduled:null},
+    {name:"Linda Woods",phone:"(956) 475-5197",lastScheduled:null},
+    {name:"Lluvi Leal",phone:"(956) 890-1831",lastScheduled:null},
+    {name:"Luis Rivera",phone:"(956) 261-8791",lastScheduled:null},
+    {name:"Marcy Medina",phone:"(956) 222-3095",lastScheduled:"04/26/2026"},
+    {name:"Matt Gilkerson",phone:"(920) 268-6802",lastScheduled:"03/22/2026"},
+    {name:"Michelle Hopkins",phone:"(956) 328-0014",lastScheduled:null},
+    {name:"Moises Robledo",phone:"(956) 680-3050",lastScheduled:null},
+    {name:"Monica Guevara",phone:"(956) 607-7038",lastScheduled:null},
+    {name:"Norma Alaniz",phone:"(956) 933-2775",lastScheduled:null},
+    {name:"Omar Mendoza",phone:"(956) 458-5458",lastScheduled:"04/26/2026"},
+    {name:"Regina Adriano",phone:"(956) 515-3925",lastScheduled:null},
+    {name:"Rob DePuy",phone:"(956) 888-2154",lastScheduled:null},
+    {name:"Ruth Garcia",phone:"(956) 340-7126",lastScheduled:"03/10/2026"},
+    {name:"Samantha Cantu",phone:"(956) 586-9262",lastScheduled:"04/22/2026"},
+    {name:"Samantha Reyes",phone:"(956) 960-3096",lastScheduled:null},
+    {name:"Sean O'Connor",phone:"(956) 451-6314",lastScheduled:null},
+    {name:"Shae O'Connor",phone:"(956) 563-7423",lastScheduled:null},
+    {name:"Skywind Lair",phone:"(210) 765-9775",lastScheduled:null},
+    {name:"Starla O'Connor",phone:"(956) 648-5421",lastScheduled:null},
+  ],
+  "Mission: Growth Track Step 3 (January)": [
+    {name:"Abehni Batres",phone:"(956) 888-2016",lastScheduled:null},
+    {name:"Abel Riojas",phone:"(956) 624-4042",lastScheduled:null},
+    {name:"Adam Fruge",phone:"(956) 740-8084",lastScheduled:null},
+    {name:"Adrian Sanchez",phone:"(956) 533-1376",lastScheduled:null},
+    {name:"Alec Espericueta",phone:"(956) 638-1453",lastScheduled:null},
+    {name:"Araceli De La Garza",phone:"(956) 821-0829",lastScheduled:"03/08/2026"},
+    {name:"Ava Rose Cantu",phone:null,lastScheduled:null},
+    {name:"Ayleah Guerra",phone:"(956) 566-3698",lastScheduled:null},
+    {name:"Bella Hernandez",phone:"(956) 359-7714",lastScheduled:"04/26/2026"},
+    {name:"Brad Szejn",phone:"(608) 563-0318",lastScheduled:null},
+    {name:"Brooklyn Flores",phone:"(956) 759-0260",lastScheduled:null},
+    {name:"CamilaRose Cantu",phone:null,lastScheduled:null},
+    {name:"Candelario Vela",phone:"(956) 763-1875",lastScheduled:"03/04/2026"},
+    {name:"Chantelle Aguirre",phone:"(956) 759-0260",lastScheduled:"04/26/2026"},
+    {name:"Chris Rangel",phone:"(956) 975-4720",lastScheduled:null},
+    {name:"Connor Colgan",phone:"(956) 569-2013",lastScheduled:"04/22/2026"},
+    {name:"Dalia Rodriguez",phone:"(956) 648-4927",lastScheduled:null},
+    {name:"Damian Alvarado",phone:"(956) 376-1293",lastScheduled:null},
+    {name:"Diana Pena",phone:"(956) 416-8127",lastScheduled:null},
+    {name:"Diana Vela",phone:"(956) 337-5006",lastScheduled:"03/04/2026"},
+    {name:"Diego Riojas",phone:"(956) 595-7582",lastScheduled:null},
+    {name:"Donna Sosa",phone:"(956) 376-1293",lastScheduled:null},
+    {name:"Dulce Maria Cortina",phone:null,lastScheduled:null},
+    {name:"EllaRose Cantu",phone:null,lastScheduled:null},
+    {name:"Glinda Pacheco",phone:"(956) 789-7445",lastScheduled:null},
+    {name:"Hector Guzman",phone:"(956) 240-7162",lastScheduled:null},
+    {name:"Homero Cardenas",phone:"(956) 424-2403",lastScheduled:null},
+    {name:"Isaac Dominguez",phone:"(956) 603-7337",lastScheduled:null},
+    {name:"Isaac Jurado",phone:"(956) 609-0744",lastScheduled:null},
+    {name:"Jane Mais",phone:"(319) 270-6247",lastScheduled:null},
+    {name:"Jason Ybarra",phone:"(956) 309-7705",lastScheduled:null},
+    {name:"JesiRae Guerra",phone:"(956) 437-0704",lastScheduled:null},
+    {name:"Juanita Avila",phone:"(956) 250-7523",lastScheduled:null},
+    {name:"Julio Cortes",phone:"(469) 265-5586",lastScheduled:null},
+    {name:"Katherine Colgan",phone:"(501) 425-5077",lastScheduled:null},
+    {name:"KC Parks",phone:"(940) 372-3579",lastScheduled:null},
+    {name:"Kelly Colgan",phone:"(479) 263-0134",lastScheduled:null},
+    {name:"Kevin Garcia",phone:"(956) 529-8474",lastScheduled:null},
+    {name:"Laykin Keller",phone:"(957) 457-8229",lastScheduled:null},
+    {name:"Lenny Mais",phone:"(319) 389-3059",lastScheduled:null},
+    {name:"Lisa Escobar",phone:"(956) 422-0910",lastScheduled:null},
+    {name:"Lucy Salazar",phone:"(956) 929-2445",lastScheduled:null},
+    {name:"Lucy Williamson",phone:"(956) 655-4882",lastScheduled:null},
+    {name:"Maribel Reyes",phone:"(956) 400-0892",lastScheduled:null},
+    {name:"Marisol Schultz",phone:"(512) 577-7714",lastScheduled:"03/22/2026"},
+    {name:"Mark Teschler",phone:"(979) 373-1395",lastScheduled:null},
+    {name:"Melyssa Berczik",phone:"(956) 624-9834",lastScheduled:"03/29/2026"},
+    {name:"Mirla Cuellar",phone:"(956) 222-8023",lastScheduled:null},
+    {name:"Nicholas Cuellar",phone:"(956) 975-4002",lastScheduled:null},
+  ],
+  "Vía de Crecimiento Paso 3 (Enero 2026)": [
+    {name:"Agustin Lozada",phone:"(956) 926-9760",lastScheduled:null},
+    {name:"Alberto Cabada",phone:"(210) 765-3811",lastScheduled:"04/05/2026"},
+    {name:"Alexis Avalos",phone:"(956) 258-8293",lastScheduled:"03/22/2026"},
+    {name:"Alicia Perez",phone:"(956) 279-9233",lastScheduled:"03/22/2026"},
+    {name:"Alma Moreno",phone:"(956) 995-3739",lastScheduled:null},
+    {name:"Amalee Moreno",phone:"(956) 529-0268",lastScheduled:null},
+    {name:"Amanda Arres",phone:"(956) 600-9206",lastScheduled:"03/22/2026"},
+    {name:"Ana Cuevas",phone:"(956) 400-3581",lastScheduled:"03/22/2026"},
+    {name:"Barbara Cantu",phone:"(956) 445-6986",lastScheduled:"04/29/2026"},
+    {name:"Christian Campos",phone:"(956) 258-6555",lastScheduled:"04/03/2026"},
+    {name:"Claudia Garcia-Silva",phone:"(956) 600-0556",lastScheduled:"04/05/2026"},
+    {name:"Edgar Aviles",phone:"(956) 703-6991",lastScheduled:null},
+    {name:"Jose Reynosa",phone:"(956) 222-3890",lastScheduled:"03/29/2026"},
+    {name:"Josefina Guerra",phone:"(956) 600-2892",lastScheduled:"04/05/2026"},
+    {name:"Julio Cesar Perez",phone:"(956) 600-9205",lastScheduled:null},
+    {name:"Liza Chavez",phone:"(956) 215-1526",lastScheduled:null},
+    {name:"Magaly Robbins",phone:"(531) 248-6806",lastScheduled:null},
+    {name:"Magdalena Alvarado",phone:"(956) 562-0216",lastScheduled:"04/03/2026"},
+    {name:"Maria Ramirez",phone:"(956) 518-2609",lastScheduled:"03/22/2026"},
+    {name:"Marilla Salazar",phone:"(956) 569-7810",lastScheduled:null},
+    {name:"Monica Lozada",phone:"(956) 404-5200",lastScheduled:null},
+    {name:"Rosendo Cabello",phone:"(956) 400-6675",lastScheduled:"03/22/2026"},
+  ],
+  "Vía de Crecimiento Paso 3 (Marzo 2026)": [
+    {name:"Alonso Gomez",phone:"(956) 222-8795",lastScheduled:null},
+    {name:"Antonio Ruiz",phone:"(956) 680-0183",lastScheduled:null},
+    {name:"Barbara Maldonado",phone:"(956) 445-6986",lastScheduled:null},
+    {name:"Cesar Lopez",phone:"(956) 495-7366",lastScheduled:null},
+    {name:"Gissell Amaya-Hernandez",phone:"(956) 599-8525",lastScheduled:null},
+    {name:"Gladis De Dios",phone:"(956) 766-5558",lastScheduled:null},
+    {name:"Joel Martinez, Jr.",phone:"(956) 890-3199",lastScheduled:null},
+    {name:"Maria Diaz",phone:"+52 899 210 2345",lastScheduled:null},
+    {name:"Maria Perez",phone:"(956) 328-8214",lastScheduled:null},
+    {name:"Marilu Gomez",phone:"(956) 844-7345",lastScheduled:null},
+    {name:"Mercedes Garza",phone:"(956) 373-8350",lastScheduled:null},
+    {name:"Nicole Martinez",phone:"(956) 321-4094",lastScheduled:null},
+    {name:"Priscilla Ramon",phone:"(956) 274-5091",lastScheduled:null},
+    {name:"Rosalinda Garza",phone:"(956) 207-8281",lastScheduled:null},
+    {name:"Silvia Cantu",phone:"(956) 890-5732",lastScheduled:null},
+    {name:"Veronica Luna",phone:"(956) 205-3306",lastScheduled:null},
+  ],
+  "Vía de Crecimiento Paso 3 (Noviembre)": [
+    {name:"Andrea Monroy",phone:"(956) 888-4654",lastScheduled:"04/08/2026"},
+    {name:"Antonio Naim",phone:"(956) 360-2081",lastScheduled:null},
+    {name:"Antonio Naim, Jr.",phone:"(956) 561-8379",lastScheduled:null},
+    {name:"Barbara Cantu",phone:"(956) 445-6986",lastScheduled:"04/29/2026"},
+    {name:"Cristina Gonzalez",phone:"(956) 777-2776",lastScheduled:"04/16/2026"},
+    {name:"Deyanira Segura",phone:"(956) 821-3771",lastScheduled:null},
+    {name:"Fabian Bravo",phone:"(210) 891-9043",lastScheduled:null},
+    {name:"Graciela Bravo",phone:"(956) 460-0881",lastScheduled:null},
+    {name:"Jesse Hernandez",phone:"(210) 459-1198",lastScheduled:null},
+    {name:"Karyme Garza",phone:"(956) 692-9992",lastScheduled:"03/22/2026"},
+    {name:"Keyla Ramirez",phone:"(956) 732-1219",lastScheduled:null},
+    {name:"Rosario Dominguez",phone:"(956) 270-3444",lastScheduled:null},
+    {name:"Thalia Alvarez",phone:"(956) 530-6553",lastScheduled:null},
+  ],
+  "Vía de Crecimiento Paso 3 (Octubre)": [
+    {name:"Amayrani Garcia",phone:"(956) 328-8129",lastScheduled:null},
+    {name:"Artemio Alanis",phone:"(956) 445-6593",lastScheduled:"03/22/2026"},
+    {name:"Carla Velasquez",phone:"(956) 445-7795",lastScheduled:null},
+    {name:"Claudia Garcia-Silva",phone:"(956) 600-0556",lastScheduled:"04/05/2026"},
+    {name:"Ines Monroy",phone:"(956) 360-6926",lastScheduled:"04/08/2026"},
+    {name:"Jesus Perales",phone:"(956) 960-2279",lastScheduled:"03/29/2026"},
+    {name:"Jose Bazan",phone:"(956) 353-5400",lastScheduled:null},
+    {name:"Martha Ayala",phone:"(956) 445-4496",lastScheduled:"04/05/2026"},
+    {name:"Rafael Noriega",phone:"(956) 800-9175",lastScheduled:"03/22/2026"},
+  ],
+};
+
+
+
+function renderDreamTeam() {
+  const kpiSection = document.getElementById('dtKpiSection');
+  const grid = document.getElementById('dtGrid');
+  kpiSection.innerHTML = '';
+  grid.innerHTML = '';
+
+  // Destroy old charts
+  ['dtFunnel','dtByEvent','dtPositions','dtServiceTypes'].forEach(id => {
+    if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+  });
+
+  const totalReg = dtStep3Events.reduce((s,e) => s + e.registrants, 0);
+  const totalServing = dtStep3Events.reduce((s,e) => s + e.serving, 0);
+  const notServing = totalReg - totalServing;
+  const overallPct = (totalServing / totalReg * 100).toFixed(1);
+
+  // KPIs
+  kpiSection.innerHTML = `
+    <h3>Growth Track Step 3 → Dream Team Pipeline</h3>
+    <div class="kpi-row">
+      <div class="kpi"><div class="value total">${num(totalReg)}</div><div class="label">Step 3 Completions</div><div class="change neutral">All campuses combined</div></div>
+      <div class="kpi"><div class="value" style="color:#2e7d5b">${num(totalServing)}</div><div class="label">Now on Dream Team</div><div class="change up">Currently scheduled to serve</div></div>
+      <div class="kpi"><div class="value" style="color:#c0392b">${num(notServing)}</div><div class="label">Not Serving</div><div class="change down">No service record found</div></div>
+      <div class="kpi"><div class="value total">${overallPct}%</div><div class="label">Conversion Rate</div><div class="change ${overallPct >= 25 ? 'up' : 'neutral'}">Step 3 → Dream Team</div></div>
+    </div>`;
+
+  // ── Card 1: Funnel Visualization ──
+  const c1 = card('Step 3 → Dream Team Funnel','How many Step 3 completions became active volunteers?', true);
+  const funnelHtml = `
+    <div style="max-width:800px; margin:20px auto;">
+      <div class="funnel-bar">
+        <div class="bar-label">Completed Step 3</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%; background:var(--accent);">${num(totalReg)}</div></div>
+        <div class="bar-value">${num(totalReg)}</div>
+      </div>
+      <div class="funnel-bar">
+        <div class="bar-label">Serving on Dream Team</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(totalServing/totalReg*100).toFixed(0)}%; background:#2e7d5b;">${num(totalServing)}</div></div>
+        <div class="bar-value">${num(totalServing)} (${overallPct}%)</div>
+      </div>
+      <div class="funnel-bar">
+        <div class="bar-label">Not Serving</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(notServing/totalReg*100).toFixed(0)}%; background:#c0392b;">${num(notServing)}</div></div>
+        <div class="bar-value">${num(notServing)} (${(notServing/totalReg*100).toFixed(1)}%)</div>
+      </div>
+    </div>
+    <div class="conversion-card" id="dtCampusCards"></div>`;
+  const fDiv = document.createElement('div');
+  fDiv.innerHTML = funnelHtml;
+  c1.appendChild(fDiv);
+  grid.appendChild(c1);
+
+  // Build campus cards without nested template literals
+  const cardsContainer = document.getElementById('dtCampusCards');
+  ['Mission','Edinburg','Spanish'].forEach(campus => {
+    const evts = dtStep3Events.filter(e => e.campus === campus);
+    const cReg = evts.reduce((s,e) => s + e.registrants, 0);
+    const cServ = evts.reduce((s,e) => s + e.serving, 0);
+    const cPct = cReg > 0 ? (cServ/cReg*100).toFixed(1) : '0';
+    const color = campusColors[campus] || '#6b7280';
+    const block = document.createElement('div');
+    block.className = 'campus-block';
+    block.innerHTML = '<div class="campus-name" style="color:' + color + '">' + campus + '</div>'
+      + '<div class="big-num" style="color:' + color + '">' + cPct + '%</div>'
+      + '<div class="detail">' + cServ + ' of ' + cReg + ' serving</div>';
+    cardsContainer.appendChild(block);
+  });
+
+  // ── Card 2: Conversion by Step 3 Event (bar chart) ──
+  const evtsWithData = dtStep3Events.filter(e => e.registrants > 0);
+  const c2 = card('Conversion Rate by Step 3 Event','Percentage of Step 3 registrants now serving on Dream Team');
+  const {wrap:w2, canvas:cv2} = makeCanvas('dtByEvent','tall');
+  c2.appendChild(w2); grid.appendChild(c2);
+
+  charts.dtByEvent = new Chart(cv2, {
+    type:'bar',
+    data:{
+      labels: evtsWithData.map(e => e.name.replace(/Growth Track Step 3|Vía de Crecimiento Paso 3/g, 'Step 3').replace(/\(|\)/g,'')),
+      datasets:[
+        {label:'Registrants',data:evtsWithData.map(e=>e.registrants),backgroundColor:'#bcc3ce',borderRadius:6,barPercentage:0.6},
+        {label:'Serving',data:evtsWithData.map(e=>e.serving),backgroundColor:evtsWithData.map(e=>campusColors[e.campus]||'#6b7280'),borderRadius:6,barPercentage:0.6}
+      ]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'top',labels:{usePointStyle:true,pointStyle:'rectRounded',color:'#333'}},
+        datalabels:{anchor:'end',align:'end',color:'#444',font:{size:10,weight:'600'},formatter:v=>v>0?num(v):'',display:ctx=>ctx.dataset.data[ctx.dataIndex]>0},
+        tooltip:{callbacks:{afterBody:items=>{const idx=items[0].dataIndex;const e=evtsWithData[idx];return e.registrants>0?'Conversion: '+e.pct+'%':'';}}}
+      },
+      scales:{
+        x:{beginAtZero:true,ticks:{callback:v=>num(v)},grid:{color:'#f0f0f0'}},
+        y:{grid:{display:false},ticks:{font:{size:11}}}
+      }
+    }
+  });
+
+  // ── Card 3: Top Dream Team Positions (doughnut) ──
+  const c3 = card('Where Step 3 Grads Serve','Dream Team positions held by Step 3 completions');
+  const {wrap:w3, canvas:cv3} = makeCanvas('dtPositions','medium');
+  c3.appendChild(w3); grid.appendChild(c3);
+
+  const posColors = ['#4a7f97','#7b6fa6','#c47a2e','#2e7d5b','#c0392b','#d4a017','#8e44ad','#2980b9','#16a085','#e74c3c','#3498db','#f39c12','#1abc9c','#9b59b6'];
+  charts.dtPositions = new Chart(cv3, {
+    type:'doughnut',
+    data:{
+      labels: dtPositions.map(p=>p.position),
+      datasets:[{data:dtPositions.map(p=>p.count),backgroundColor:posColors,borderColor:'#fff',borderWidth:2}]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'right',labels:{usePointStyle:true,color:'#1a1a1a',padding:10,font:{size:11}}},
+        datalabels:{formatter:(v,ctx)=>{const total=ctx.dataset.data.reduce((a,b)=>a+b,0);const pct=((v/total)*100).toFixed(0);return pct>4?pct+'%':'';},color:'#fff',font:{weight:'bold',size:11}}
+      }
+    }
+  });
+
+  // ── Card 4: Service Types (horizontal bar) ──
+  const c4 = card('Service Types','Which ministry areas Step 3 grads serve in');
+  const {wrap:w4, canvas:cv4} = makeCanvas('dtServiceTypes','medium');
+  c4.appendChild(w4); grid.appendChild(c4);
+
+  charts.dtServiceTypes = new Chart(cv4, {
+    type:'bar',
+    data:{
+      labels: dtServiceTypes.map(s=>s.type),
+      datasets:[{label:'People',data:dtServiceTypes.map(s=>s.count),backgroundColor:'#4a7f97',borderRadius:6,barPercentage:0.7}]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        datalabels:{anchor:'end',align:'end',color:'#444',font:{size:10,weight:'600'},formatter:v=>num(v),display:true}
+      },
+      scales:{
+        x:{beginAtZero:true,ticks:{callback:v=>num(v)},grid:{color:'#f0f0f0'}},
+        y:{grid:{display:false},ticks:{font:{size:11}}}
+      }
+    }
+  });
+
+  // ── Card 5: Detailed Table ──
+  const c5 = card('Step 3 Event Detail','Click any event to see individual registrants', true);
+  let tHtml = '<table class="dt-table"><thead><tr><th>Event</th><th class="number">Registrants</th><th class="number">Serving</th><th class="number">Not Serving</th><th class="number">Conversion</th></tr></thead><tbody>';
+
+  evtsWithData.sort((a,b) => b.pct - a.pct).forEach((e, idx) => {
+    const badgeCls = e.pct >= 30 ? 'high' : e.pct >= 15 ? 'mid' : 'low';
+    tHtml += '<tr class="event-row" data-idx="' + idx + '" onclick="togglePeople(' + idx + ')">';
+    tHtml += '<td>' + e.name + '</td>';
+    tHtml += '<td class="number">' + e.registrants + '</td>';
+    tHtml += '<td class="number">' + e.serving + '</td>';
+    tHtml += '<td class="number">' + (e.registrants - e.serving) + '</td>';
+    tHtml += '<td class="number"><span class="badge ' + badgeCls + '">' + e.pct + '%</span></td>';
+    tHtml += '</tr>';
+    
+    // Person rows (hidden by default)
+    const people = dtPeople[e.name] || [];
+    // Sort: serving first, then alphabetical
+    const sorted = [...people].filter(p => p.name).sort((a,b) => {
+      if (a.lastScheduled && !b.lastScheduled) return -1;
+      if (!a.lastScheduled && b.lastScheduled) return 1;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+    
+    tHtml += '</tbody><tbody class="person-rows" id="people-' + idx + '">';
+    sorted.forEach(p => {
+      tHtml += '<tr class="person-row">';
+      tHtml += '<td>' + (p.name || '—') + (p.lastScheduled ? ' <span class="serving-badge">Serving</span>' : '') + '</td>';
+      tHtml += '<td>' + (p.phone || '—') + '</td>';
+      tHtml += '<td>' + (p.lastScheduled || '') + '</td>';
+      tHtml += '<td></td>';
+      tHtml += '<td></td>';
+      tHtml += '</tr>';
+    });
+    tHtml += '</tbody><tbody>';
+  });
+
+  tHtml += '</tbody></table>';
+  tHtml += '<div class="subtitle" style="margin-top:16px;">Data from Planning Center Online via Qlik · PCO People Dashboard · As of April 2026</div>';
+  const tDiv = document.createElement('div');
+  tDiv.innerHTML = tHtml;
+  c5.appendChild(tDiv);
+  grid.appendChild(c5);
+}
+
+
+function togglePeople(idx) {
+  const row = document.querySelector('.event-row[data-idx="' + idx + '"]');
+  const people = document.getElementById('people-' + idx);
+  if (row && people) {
+    row.classList.toggle('expanded');
+    people.classList.toggle('visible');
+  }
+}
+
+render();
+renderEventRegistrations();
+renderDreamTeam();
+</script>
+</body>
+</html>
