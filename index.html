@@ -3,197 +3,161 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Palm Valley Church — Sunday Attendance Dashboard</title>
+<title>Palm Valley Church &mdash; Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0"></script>
 <style>
 :root {
-  --bg: #ffffff; --card: #f7f8fa; --border: #e2e4e9;
-  --text: #1a1a1a; --muted: #6b7280; --accent: #4a7f97;
-  --mission: #4a7f97; --edinburg: #7b6fa6; --ipv: #c47a2e;
-  --positive: #2e7d5b; --negative: #c0392b;
-  --radius: 12px; --gap: 16px;
+  --bg:#ffffff; --card:#f7f8fa; --border:#e2e4e9;
+  --text:#1a1a1a; --muted:#6b7280; --accent:#4a7f97;
+  --mission:#4a7f97; --edinburg:#7b6fa6; --ipv:#c47a2e;
+  --positive:#2e7d5b; --negative:#c0392b;
+  --sidebar-w:220px; --radius:12px; --gap:16px;
 }
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
-/* ── Login Screen ── */
-#loginScreen {
-  display: flex; align-items: center; justify-content: center; min-height: 100vh;
-  background: linear-gradient(135deg, #f7f8fa 0%, #e8ecf1 100%);
-}
-.login-box {
-  background: #fff; border-radius: 16px; padding: 48px 40px; text-align: center;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.08); max-width: 400px; width: 90%;
-}
-.login-box h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
-.login-box p { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
-.login-box input {
-  width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 8px;
-  font-size: 15px; outline: none; transition: border-color .2s;
-}
-.login-box input:focus { border-color: var(--accent); }
-.login-box button {
-  width: 100%; padding: 12px; border: none; border-radius: 8px; margin-top: 12px;
-  background: var(--accent); color: #fff; font-size: 15px; font-weight: 600;
-  cursor: pointer; transition: background .2s;
-}
-.login-box button:hover { background: #3d6b80; }
-.login-error { color: var(--negative); font-size: 13px; margin-top: 10px; min-height: 20px; }
+/* ── Login ── */
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#f7f8fa 0%,#e8ecf1 100%);}
+.login-box{background:#fff;border-radius:16px;padding:48px 40px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.08);max-width:400px;width:90%;}
+.login-box h1{font-size:22px;font-weight:700;margin-bottom:6px;}
+.login-box p{color:var(--muted);font-size:14px;margin-bottom:28px;}
+.login-box input{width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:8px;font-size:15px;outline:none;transition:border-color .2s;}
+.login-box input:focus{border-color:var(--accent);}
+.login-box button{width:100%;padding:12px;border:none;border-radius:8px;margin-top:12px;background:var(--accent);color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:background .2s;}
+.login-box button:hover{background:#3d6b80;}
+.login-error{color:var(--negative);font-size:13px;margin-top:10px;min-height:20px;}
 
 /* ── Loading ── */
-#loadingScreen {
-  display: none; align-items: center; justify-content: center; min-height: 100vh;
-  background: linear-gradient(135deg, #f7f8fa 0%, #e8ecf1 100%);
-}
-.loader { text-align: center; }
-.spinner {
-  width: 48px; height: 48px; border: 4px solid var(--border); border-top-color: var(--accent);
-  border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.loader p { color: var(--muted); font-size: 15px; }
+#loadingScreen{display:none;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#f7f8fa 0%,#e8ecf1 100%);}
+.spinner{width:48px;height:48px;border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loader p{color:var(--muted);font-size:15px;text-align:center;}
 
-/* ── Setup Instructions ── */
-#setupScreen {
-  display: none; align-items: center; justify-content: center; min-height: 100vh;
-  background: linear-gradient(135deg, #f7f8fa 0%, #e8ecf1 100%); padding: 24px;
-}
-.setup-box {
-  background: #fff; border-radius: 16px; padding: 40px; max-width: 640px; width: 100%;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.08);
-}
-.setup-box h2 { font-size: 20px; margin-bottom: 16px; }
-.setup-box ol { padding-left: 20px; line-height: 2; font-size: 14px; color: var(--text); }
-.setup-box code {
-  background: #f0f2f5; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-family: 'SF Mono', Consolas, monospace;
-}
-.setup-box .note { background: #fff8e1; border-left: 4px solid #f9a825; padding: 12px 16px; border-radius: 0 8px 8px 0; margin-top: 16px; font-size: 13px; }
+/* ── Setup ── */
+#setupScreen{display:none;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#f7f8fa 0%,#e8ecf1 100%);padding:24px;}
+.setup-box{background:#fff;border-radius:16px;padding:40px;max-width:640px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.08);}
+.setup-box h2{font-size:20px;margin-bottom:16px;}
+.setup-box ol{padding-left:20px;line-height:2;font-size:14px;}
+.setup-box code{background:#f0f2f5;padding:2px 8px;border-radius:4px;font-size:13px;font-family:'SF Mono',Consolas,monospace;}
+.setup-box .note{background:#fff8e1;border-left:4px solid #f9a825;padding:12px 16px;border-radius:0 8px 8px 0;margin-top:16px;font-size:13px;}
 
-/* ── Dashboard ── */
-#dashboardScreen { display: none; }
+/* ── App Shell ── */
+#appShell{display:none;min-height:100vh;}
 
-header {
-  padding: 24px 32px 16px; display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--border);
-}
-header .title-area h1 { font-size: 20px; font-weight: 700; }
-header .title-area p { color: var(--muted); font-size: 13px; margin-top: 2px; }
-header .header-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.refresh-btn {
-  display: flex; align-items: center; gap: 6px; padding: 8px 16px; border: 2px solid var(--accent);
-  border-radius: 8px; background: transparent; color: var(--accent); font-size: 13px;
-  font-weight: 600; cursor: pointer; transition: all .2s;
-}
-.refresh-btn:hover { background: var(--accent); color: #fff; }
-.refresh-btn.loading svg { animation: spin 0.8s linear infinite; }
-.last-refresh { font-size: 12px; color: var(--muted); }
-.auto-badge { font-size: 11px; color: var(--muted); background: var(--card); padding: 3px 8px; border-radius: 10px; border: 1px solid var(--border); }
+/* ── Sidebar ── */
+.sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:#1a1f2e;color:#fff;display:flex;flex-direction:column;z-index:100;overflow-y:auto;}
+.sidebar .logo{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,.08);}
+.sidebar .logo h2{font-size:16px;font-weight:700;line-height:1.3;}
+.sidebar .logo p{font-size:11px;color:rgba(255,255,255,.45);margin-top:4px;}
+.sidebar nav{flex:1;padding:12px 0;}
+.sidebar .nav-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.35);padding:16px 20px 6px;font-weight:600;}
+.sidebar .nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;font-size:13px;font-weight:500;color:rgba(255,255,255,.6);transition:all .15s;border-left:3px solid transparent;}
+.sidebar .nav-item:hover{background:rgba(255,255,255,.06);color:#fff;}
+.sidebar .nav-item.active{background:rgba(74,127,151,.25);color:#fff;border-left-color:var(--accent);font-weight:600;}
+.sidebar .nav-item svg{width:18px;height:18px;opacity:.7;flex-shrink:0;}
+.sidebar .nav-item.active svg{opacity:1;}
+.sidebar .sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.08);font-size:11px;color:rgba(255,255,255,.3);}
+
+/* ── Main Content ── */
+.main{margin-left:var(--sidebar-w);min-height:100vh;}
+
+/* ── Tab Panels ── */
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ── Header ── */
+.dash-header{padding:20px 32px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;border-bottom:1px solid var(--border);}
+.dash-header .title-area h1{font-size:20px;font-weight:700;}
+.dash-header .title-area p{color:var(--muted);font-size:13px;margin-top:2px;}
+.dash-header .header-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.refresh-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border:2px solid var(--accent);border-radius:8px;background:transparent;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
+.refresh-btn:hover{background:var(--accent);color:#fff;}
+.refresh-btn.loading svg{animation:spin .8s linear infinite;}
+.last-refresh{font-size:12px;color:var(--muted);}
+.auto-badge{font-size:11px;color:var(--muted);background:var(--card);padding:3px 8px;border-radius:10px;border:1px solid var(--border);}
 
 /* ── Filters ── */
-.filter-bar {
-  display: flex; align-items: center; gap: 10px; padding: 14px 32px;
-  flex-wrap: wrap; border-bottom: 1px solid var(--border); background: var(--card);
-}
-.filter-group { display: flex; align-items: center; gap: 6px; }
-.filter-group label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-.filter-btn {
-  padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border);
-  background: #fff; color: var(--muted); cursor: pointer; font-size: 12px; font-weight: 500; transition: all .2s;
-}
-.filter-btn:hover { border-color: var(--accent); color: var(--text); }
-.filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
-.filter-separator { width: 1px; height: 24px; background: var(--border); margin: 0 4px; }
-.filter-bar input[type="date"] {
-  padding: 5px 10px; border: 1px solid var(--border); border-radius: 6px;
-  font-size: 12px; color: var(--text); background: #fff; outline: none;
-}
-.filter-bar input[type="date"]:focus { border-color: var(--accent); }
+.filter-bar{display:flex;align-items:center;gap:10px;padding:14px 32px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:var(--card);}
+.filter-group{display:flex;align-items:center;gap:6px;}
+.filter-group label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.fbtn{padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;font-size:12px;font-weight:500;transition:all .2s;}
+.fbtn:hover{border-color:var(--accent);color:var(--text);}
+.fbtn.active{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600;}
+.filter-sep{width:1px;height:24px;background:var(--border);margin:0 4px;}
+.filter-bar input[type="date"]{padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text);background:#fff;outline:none;}
+.filter-bar select{padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text);background:#fff;outline:none;}
 
-/* ── KPI Row ── */
-.kpi-row {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--gap); padding: 20px 32px;
-}
-.kpi-card {
-  background: var(--card); border-radius: var(--radius); padding: 20px;
-  border: 1px solid var(--border); position: relative; overflow: hidden;
-}
-.kpi-card .accent-bar { position: absolute; top: 0; left: 0; right: 0; height: 3px; }
-.kpi-card .kpi-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 600; }
-.kpi-card .kpi-value { font-size: 32px; font-weight: 800; font-variant-numeric: tabular-nums; }
-.kpi-card .kpi-value.mission { color: var(--mission); }
-.kpi-card .kpi-value.edinburg { color: var(--edinburg); }
-.kpi-card .kpi-value.ipv { color: var(--ipv); }
-.kpi-card .kpi-value.total { color: var(--text); }
-.kpi-card .kpi-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
-.kpi-card .kpi-change { font-size: 13px; font-weight: 600; margin-top: 6px; }
-.kpi-card .kpi-change.up { color: var(--positive); }
-.kpi-card .kpi-change.down { color: var(--negative); }
-.kpi-card .kpi-change.neutral { color: var(--muted); }
+/* ── KPI ── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:var(--gap);padding:20px 32px;}
+.kpi-card{background:var(--card);border-radius:var(--radius);padding:20px;border:1px solid var(--border);position:relative;overflow:hidden;}
+.kpi-card .accent-bar{position:absolute;top:0;left:0;right:0;height:3px;}
+.kpi-card .kpi-label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600;}
+.kpi-card .kpi-value{font-size:32px;font-weight:800;font-variant-numeric:tabular-nums;}
+.kpi-card .kpi-value.mission{color:var(--mission);}
+.kpi-card .kpi-value.edinburg{color:var(--edinburg);}
+.kpi-card .kpi-value.ipv{color:var(--ipv);}
+.kpi-card .kpi-value.total{color:var(--text);}
+.kpi-card .kpi-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.kpi-card .kpi-change{font-size:13px;font-weight:600;margin-top:6px;}
+.kpi-card .kpi-change.up{color:var(--positive);}
+.kpi-card .kpi-change.down{color:var(--negative);}
+.kpi-card .kpi-change.neutral{color:var(--muted);}
 
-/* ── Charts Grid ── */
-.charts-section { padding: 0 32px 20px; }
-.chart-grid { display: grid; grid-template-columns: 1fr; gap: var(--gap); }
-.chart-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); margin-top: var(--gap); }
-.card {
-  background: var(--card); border-radius: var(--radius); padding: 20px 24px;
-  border: 1px solid var(--border);
-}
-.card h2 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-.card .subtitle { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
-.chart-wrap { position: relative; width: 100%; height: 340px; }
-.chart-wrap.tall { height: 400px; }
-.card .card-controls { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
-.card .card-controls .cb {
-  padding: 4px 12px; border-radius: 5px; border: 1px solid var(--border);
-  background: #fff; color: var(--muted); cursor: pointer; font-size: 11px; font-weight: 500; transition: all .15s;
-}
-.card .card-controls .cb:hover { border-color: var(--accent); }
-.card .card-controls .cb.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+/* ── Charts ── */
+.charts-section{padding:0 32px 20px;}
+.chart-grid{display:grid;grid-template-columns:1fr;gap:var(--gap);}
+.chart-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);margin-top:var(--gap);}
+.card{background:var(--card);border-radius:var(--radius);padding:20px 24px;border:1px solid var(--border);}
+.card h2{font-size:15px;font-weight:600;margin-bottom:4px;}
+.card .subtitle{font-size:12px;color:var(--muted);margin-bottom:14px;}
+.chart-wrap{position:relative;width:100%;height:340px;}
+.chart-wrap.tall{height:400px;}
+.card .card-controls{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.cb{padding:4px 12px;border-radius:5px;border:1px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;font-size:11px;font-weight:500;transition:all .15s;}
+.cb:hover{border-color:var(--accent);}
+.cb.active{background:var(--accent);color:#fff;border-color:var(--accent);}
 
 /* ── Table ── */
-.table-section { padding: 0 32px 32px; }
-.table-card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
-.table-card h2 { font-size: 15px; font-weight: 600; padding: 16px 20px 0; }
-.table-card .subtitle { font-size: 12px; color: var(--muted); padding: 2px 20px 12px; }
-.table-scroll { overflow-x: auto; max-height: 480px; overflow-y: auto; }
-.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.data-table thead { position: sticky; top: 0; z-index: 2; }
-.data-table th {
-  text-align: left; padding: 10px 14px; background: #eef0f4; border-bottom: 2px solid var(--border);
-  color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase;
-  letter-spacing: 0.5px; white-space: nowrap; cursor: pointer; user-select: none;
-}
-.data-table th:hover { color: var(--text); background: #e4e7ec; }
-.data-table td { padding: 9px 14px; border-bottom: 1px solid #eef0f4; font-variant-numeric: tabular-nums; }
-.data-table tbody tr:hover { background: #f0f4f8; }
-.data-table .num { text-align: right; }
-.sort-arrow { font-size: 10px; margin-left: 4px; }
+.table-section{padding:0 32px 32px;}
+.table-card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;}
+.table-card h2{font-size:15px;font-weight:600;padding:16px 20px 0;}
+.table-card .subtitle{font-size:12px;color:var(--muted);padding:2px 20px 12px;}
+.table-scroll{overflow-x:auto;max-height:480px;overflow-y:auto;}
+.data-table{width:100%;border-collapse:collapse;font-size:13px;}
+.data-table thead{position:sticky;top:0;z-index:2;}
+.data-table th{text-align:left;padding:10px 14px;background:#eef0f4;border-bottom:2px solid var(--border);color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;cursor:pointer;user-select:none;}
+.data-table th:hover{color:var(--text);background:#e4e7ec;}
+.data-table td{padding:9px 14px;border-bottom:1px solid #eef0f4;font-variant-numeric:tabular-nums;}
+.data-table tbody tr:hover{background:#f0f4f8;}
+.data-table .num{text-align:right;}
 
 /* ── Footer ── */
-.dash-footer { text-align: center; padding: 20px 32px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--border); }
+.dash-footer{text-align:center;padding:20px 32px;color:var(--muted);font-size:12px;border-top:1px solid var(--border);}
 
 /* ── Responsive ── */
-@media (max-width: 900px) {
-  header { padding: 16px 20px; }
-  .filter-bar { padding: 10px 20px; }
-  .kpi-row { padding: 16px 20px; grid-template-columns: repeat(2, 1fr); }
-  .charts-section { padding: 0 20px 16px; }
-  .chart-grid-2 { grid-template-columns: 1fr; }
-  .table-section { padding: 0 20px 20px; }
+@media(max-width:900px){
+  .sidebar{width:60px;} .sidebar .logo h2,.sidebar .logo p,.sidebar .nav-label,.sidebar .nav-item span,.sidebar .sidebar-footer{display:none;}
+  .sidebar .nav-item{padding:12px 0;justify-content:center;} .main{margin-left:60px;}
+  .dash-header,.filter-bar{padding-left:20px;padding-right:20px;}
+  .kpi-row{padding:16px 20px;grid-template-columns:repeat(2,1fr);}
+  .charts-section{padding:0 20px 16px;} .chart-grid-2{grid-template-columns:1fr;}
+  .table-section{padding:0 20px 20px;}
 }
-@media (max-width: 600px) {
-  .kpi-row { grid-template-columns: 1fr; }
-}
+@media(max-width:600px){ .kpi-row{grid-template-columns:1fr;} }
 
 /* ── Print ── */
-@media print {
-  body { background: #fff; }
-  #loginScreen, .filter-bar, .refresh-btn, .auto-badge { display: none !important; }
-  .card, .kpi-card, .table-card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
-  .chart-wrap { height: 280px !important; }
+@media print{
+  .sidebar{display:none!important;} .main{margin-left:0!important;}
+  body{background:#fff;} .card,.kpi-card,.table-card{box-shadow:none;border:1px solid #ccc;break-inside:avoid;}
+  .chart-wrap{height:280px!important;} .filter-bar,.refresh-btn,.auto-badge{display:none!important;}
 }
+
+/* Semester colors for Rooted */
+.sem-badge{display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:600;}
+.sem-spring{background:#e0f2f1;color:#00695c;}
+.sem-summer{background:#fff3e0;color:#e65100;}
+.sem-fall{background:#ede7f6;color:#4527a0;}
 </style>
 </head>
 <body>
@@ -202,7 +166,7 @@ header .header-actions { display: flex; align-items: center; gap: 12px; flex-wra
 <div id="loginScreen">
   <div class="login-box">
     <h1>Palm Valley Church</h1>
-    <p>Sunday Attendance Dashboard</p>
+    <p>Internal Dashboard</p>
     <input type="password" id="loginPassword" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
     <button onclick="doLogin()">Sign In</button>
     <div class="login-error" id="loginError"></div>
@@ -211,10 +175,7 @@ header .header-actions { display: flex; align-items: center; gap: 12px; flex-wra
 
 <!-- ── LOADING ── -->
 <div id="loadingScreen">
-  <div class="loader">
-    <div class="spinner"></div>
-    <p>Loading attendance data...</p>
-  </div>
+  <div class="loader"><div class="spinner"></div><p>Loading dashboard data...</p></div>
 </div>
 
 <!-- ── SETUP ── -->
@@ -225,843 +186,314 @@ header .header-actions { display: flex; align-items: center; gap: 12px; flex-wra
     <ol>
       <li>Open your Google Sheet</li>
       <li>Go to <strong>File &rarr; Share &rarr; Publish to web</strong></li>
-      <li>Select each Qlik tab individually, choose <strong>CSV</strong> format, and click Publish</li>
-      <li>Copy each published URL</li>
-      <li>Open this HTML file in a text editor and paste the URLs into the <code>SHEET_URLS</code> config at the top of the <code>&lt;script&gt;</code> section</li>
+      <li>Select each tab, choose <strong>CSV</strong> format, click Publish</li>
+      <li>Paste the URLs into the <code>SHEET_URLS</code> config in this HTML file</li>
     </ol>
-    <div class="note">
-      <strong>Tabs to publish:</strong> Qlik Mission: Main &amp; Dream Team, Qlik Mission: Kids, Qlik Edinburg, Qlik IPV
-    </div>
+    <div class="note"><strong>Tabs needed:</strong> Sunday Attendance (4 tabs) + Rooted Attendance (1 tab)</div>
   </div>
 </div>
 
-<!-- ── DASHBOARD ── -->
-<div id="dashboardScreen">
-  <header>
-    <div class="title-area">
-      <h1>Palm Valley Church &mdash; Sunday Attendance</h1>
-      <p>Live data from Google Sheets &nbsp;&middot;&nbsp; <span class="last-refresh" id="lastRefresh">Not yet loaded</span></p>
+<!-- ── APP SHELL ── -->
+<div id="appShell">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <h2>Palm Valley Church</h2>
+      <p>Internal Dashboard</p>
     </div>
-    <div class="header-actions">
-      <span class="auto-badge">Auto-refresh 5 min</span>
-      <button class="refresh-btn" id="refreshBtn" onclick="dashboard.refresh()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-        Refresh
-      </button>
-    </div>
-  </header>
-
-  <!-- Filters -->
-  <div class="filter-bar">
-    <div class="filter-group">
-      <label>Year</label>
-      <button class="filter-btn active" data-filter="year" data-value="all" onclick="setFilter('year',this)">All</button>
-      <button class="filter-btn" data-filter="year" data-value="2023" onclick="setFilter('year',this)">2023</button>
-      <button class="filter-btn" data-filter="year" data-value="2024" onclick="setFilter('year',this)">2024</button>
-      <button class="filter-btn" data-filter="year" data-value="2025" onclick="setFilter('year',this)">2025</button>
-      <button class="filter-btn" data-filter="year" data-value="2026" onclick="setFilter('year',this)">2026</button>
-    </div>
-    <div class="filter-separator"></div>
-    <div class="filter-group">
-      <label>Mode</label>
-      <button class="filter-btn active" data-filter="mode" data-value="total" onclick="setFilter('mode',this)">Total Attendance</button>
-      <button class="filter-btn" data-filter="mode" data-value="auditorium" onclick="setFilter('mode',this)">Auditorium Only</button>
-    </div>
-    <div class="filter-separator"></div>
-    <div class="filter-group">
-      <label>From</label>
-      <input type="date" id="filterDateStart" onchange="applyDateFilter()">
-    </div>
-    <div class="filter-group">
-      <label>To</label>
-      <input type="date" id="filterDateEnd" onchange="applyDateFilter()">
-    </div>
-  </div>
-
-  <!-- KPIs -->
-  <div class="kpi-row" id="kpiRow"></div>
-
-  <!-- Charts -->
-  <div class="charts-section">
-    <div class="chart-grid">
-      <div class="card">
-        <h2>Weekly Attendance Trend</h2>
-        <div class="subtitle">All campuses &mdash; adults + kids + dream team</div>
-        <div class="chart-wrap tall"><canvas id="trendChart"></canvas></div>
+    <nav>
+      <div class="nav-label">Dashboards</div>
+      <div class="nav-item active" data-tab="sunday" onclick="switchTab('sunday',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Sunday Attendance</span>
       </div>
-    </div>
-    <div class="chart-grid-2">
-      <div class="card">
-        <h2>Campus Comparison</h2>
-        <div class="subtitle">Average weekly attendance &mdash; last 4 weeks</div>
-        <div class="chart-wrap"><canvas id="campusChart"></canvas></div>
+      <div class="nav-item" data-tab="rooted" onclick="switchTab('rooted',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>Rooted</span>
       </div>
-      <div class="card">
-        <h2>Service Breakdown</h2>
-        <div class="card-controls" id="svcCampusBtns">
-          <button class="cb active" data-campus="mission" onclick="setSvcCampus('mission',this)">Mission</button>
-          <button class="cb" data-campus="edinburg" onclick="setSvcCampus('edinburg',this)">Edinburg</button>
-          <button class="cb" data-campus="ipv" onclick="setSvcCampus('ipv',this)">IPV</button>
+    </nav>
+    <div class="sidebar-footer">
+      <span class="last-refresh" id="lastRefresh">Not yet loaded</span>
+    </div>
+  </aside>
+
+  <div class="main">
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--           SUNDAY ATTENDANCE TAB             -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="tab-panel active" id="tab-sunday">
+      <div class="dash-header">
+        <div class="title-area">
+          <h1>Sunday Attendance</h1>
+          <p>Live data from Google Sheets</p>
         </div>
-        <div class="subtitle" id="svcSubtitle">Last 8 weeks &mdash; per-service adults</div>
-        <div class="chart-wrap"><canvas id="svcChart"></canvas></div>
-      </div>
-    </div>
-    <div class="chart-grid" style="margin-top:var(--gap)">
-      <div class="card">
-        <h2>Year-over-Year Comparison</h2>
-        <div class="card-controls" id="yoyCampusBtns">
-          <button class="cb active" data-campus="all" onclick="setYoyCampus('all',this)">All Campuses</button>
-          <button class="cb" data-campus="mission" onclick="setYoyCampus('mission',this)">Mission</button>
-          <button class="cb" data-campus="edinburg" onclick="setYoyCampus('edinburg',this)">Edinburg</button>
-          <button class="cb" data-campus="ipv" onclick="setYoyCampus('ipv',this)">IPV</button>
+        <div class="header-actions">
+          <span class="auto-badge">Auto-refresh 5 min</span>
+          <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Refresh
+          </button>
         </div>
-        <div class="subtitle">Same week of year across years</div>
-        <div class="chart-wrap tall"><canvas id="yoyChart"></canvas></div>
       </div>
+      <div class="filter-bar" id="sundayFilters">
+        <div class="filter-group">
+          <label>Year</label>
+          <button class="fbtn active" data-filter="sy" data-value="all" onclick="setSF('year','all',this)">All</button>
+          <button class="fbtn" data-filter="sy" data-value="2023" onclick="setSF('year','2023',this)">2023</button>
+          <button class="fbtn" data-filter="sy" data-value="2024" onclick="setSF('year','2024',this)">2024</button>
+          <button class="fbtn" data-filter="sy" data-value="2025" onclick="setSF('year','2025',this)">2025</button>
+          <button class="fbtn" data-filter="sy" data-value="2026" onclick="setSF('year','2026',this)">2026</button>
+        </div>
+        <div class="filter-sep"></div>
+        <div class="filter-group">
+          <label>Mode</label>
+          <button class="fbtn active" data-filter="sm" data-value="total" onclick="setSF('mode','total',this)">Total</button>
+          <button class="fbtn" data-filter="sm" data-value="auditorium" onclick="setSF('mode','auditorium',this)">Auditorium</button>
+        </div>
+        <div class="filter-sep"></div>
+        <div class="filter-group"><label>From</label><input type="date" id="sDateStart" onchange="setSF('ds',this.value)"></div>
+        <div class="filter-group"><label>To</label><input type="date" id="sDateEnd" onchange="setSF('de',this.value)"></div>
+      </div>
+      <div class="kpi-row" id="sKpiRow"></div>
+      <div class="charts-section">
+        <div class="chart-grid"><div class="card"><h2>Weekly Attendance Trend</h2><div class="subtitle">All campuses</div><div class="chart-wrap tall"><canvas id="sTrendChart"></canvas></div></div></div>
+        <div class="chart-grid-2">
+          <div class="card"><h2>Campus Comparison</h2><div class="subtitle">Average &mdash; last 4 weeks</div><div class="chart-wrap"><canvas id="sCampusChart"></canvas></div></div>
+          <div class="card"><h2>Service Breakdown</h2>
+            <div class="card-controls" id="sSvcBtns"><button class="cb active" onclick="sSvcCampus='mission';sRenderSvc();sSvcActive(this)">Mission</button><button class="cb" onclick="sSvcCampus='edinburg';sRenderSvc();sSvcActive(this)">Edinburg</button><button class="cb" onclick="sSvcCampus='ipv';sRenderSvc();sSvcActive(this)">IPV</button></div>
+            <div class="subtitle">Last 8 weeks &mdash; per-service adults</div><div class="chart-wrap"><canvas id="sSvcChart"></canvas></div>
+          </div>
+        </div>
+        <div class="chart-grid" style="margin-top:var(--gap)"><div class="card"><h2>Year-over-Year</h2>
+          <div class="card-controls" id="sYoyBtns"><button class="cb active" onclick="sYoyCampus='all';sRenderYoy();sYoyActive(this)">All</button><button class="cb" onclick="sYoyCampus='mission';sRenderYoy();sYoyActive(this)">Mission</button><button class="cb" onclick="sYoyCampus='edinburg';sRenderYoy();sYoyActive(this)">Edinburg</button><button class="cb" onclick="sYoyCampus='ipv';sRenderYoy();sYoyActive(this)">IPV</button></div>
+          <div class="subtitle">Same week of year across years</div><div class="chart-wrap tall"><canvas id="sYoyChart"></canvas></div>
+        </div></div>
+      </div>
+      <div class="table-section"><div class="table-card"><h2>Weekly Detail</h2><div class="subtitle">Click headers to sort</div><div class="table-scroll" id="sTableContainer"></div></div></div>
     </div>
-  </div>
 
-  <!-- Table -->
-  <div class="table-section">
-    <div class="table-card">
-      <h2>Weekly Detail</h2>
-      <div class="subtitle">Click column headers to sort</div>
-      <div class="table-scroll" id="tableContainer"></div>
+    <!-- ═══════════════════════════════════════════ -->
+    <!--                ROOTED TAB                   -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-rooted">
+      <div class="dash-header">
+        <div class="title-area">
+          <h1>Rooted</h1>
+          <p>Semester program attendance across campuses</p>
+        </div>
+        <div class="header-actions">
+          <span class="auto-badge">Auto-refresh 5 min</span>
+          <button class="refresh-btn" onclick="refreshAll()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+      <div class="filter-bar" id="rootedFilters">
+        <div class="filter-group">
+          <label>Semester</label>
+          <select id="rSemFilter" onchange="rApplyFilters()"><option value="all">All Semesters</option></select>
+        </div>
+        <div class="filter-sep"></div>
+        <div class="filter-group">
+          <label>Campus</label>
+          <button class="fbtn active" data-filter="rc" data-value="all" onclick="setRF('campus','all',this)">All</button>
+          <button class="fbtn" data-filter="rc" data-value="Mission" onclick="setRF('campus','Mission',this)">Mission</button>
+          <button class="fbtn" data-filter="rc" data-value="Edinburg" onclick="setRF('campus','Edinburg',this)">Edinburg</button>
+          <button class="fbtn" data-filter="rc" data-value="Spanish" onclick="setRF('campus','Spanish',this)">Spanish</button>
+        </div>
+        <div class="filter-sep"></div>
+        <div class="filter-group">
+          <label>Event</label>
+          <button class="fbtn active" data-filter="re" data-value="all" onclick="setRF('event','all',this)">All</button>
+          <button class="fbtn" data-filter="re" data-value="Rooted" onclick="setRF('event','Rooted',this)">Rooted</button>
+          <button class="fbtn" data-filter="re" data-value="special" onclick="setRF('event','special',this)">Experiences</button>
+        </div>
+      </div>
+      <div class="kpi-row" id="rKpiRow"></div>
+      <div class="charts-section">
+        <div class="chart-grid"><div class="card"><h2>Semester Attendance Progression</h2><div class="subtitle">Weekly attendance by semester &mdash; Rooted sessions only</div><div class="chart-wrap tall"><canvas id="rSemChart"></canvas></div></div></div>
+        <div class="chart-grid-2">
+          <div class="card"><h2>Campus Comparison by Semester</h2><div class="subtitle">Average weekly Rooted attendance</div><div class="chart-wrap"><canvas id="rCampusChart"></canvas></div></div>
+          <div class="card"><h2>Retention Rate</h2><div class="subtitle">Week 10 vs Week 1 attendance per semester</div><div class="chart-wrap"><canvas id="rRetentionChart"></canvas></div></div>
+        </div>
+      </div>
+      <div class="table-section"><div class="table-card"><h2>Rooted Detail</h2><div class="subtitle">Click headers to sort</div><div class="table-scroll" id="rTableContainer"></div></div></div>
     </div>
-  </div>
 
-  <div class="dash-footer">
-    Palm Valley Church &mdash; Sunday Attendance Dashboard &nbsp;&middot;&nbsp; Data refreshes from Google Sheets
+    <div class="dash-footer">Palm Valley Church &mdash; Dashboard &middot; Data refreshes from Google Sheets</div>
   </div>
 </div>
 
 <script>
 // ======================================================================
-//  CONFIGURATION - Paste your published Google Sheets CSV URLs below
+//  CONFIGURATION
 // ======================================================================
 const SHEET_URLS = {
   missionMain: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIES_Xjrn1kYI4vrfd0HshbJukA4DZDvi1Y34jS6MiLJrpIOt8cynPs4fxxMDfGRqCdBNuqnk87QWe/pub?gid=133050157&single=true&output=csv',
   missionKids: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIES_Xjrn1kYI4vrfd0HshbJukA4DZDvi1Y34jS6MiLJrpIOt8cynPs4fxxMDfGRqCdBNuqnk87QWe/pub?gid=54149539&single=true&output=csv',
   edinburg:    'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIES_Xjrn1kYI4vrfd0HshbJukA4DZDvi1Y34jS6MiLJrpIOt8cynPs4fxxMDfGRqCdBNuqnk87QWe/pub?gid=710240675&single=true&output=csv',
   ipv:         'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIES_Xjrn1kYI4vrfd0HshbJukA4DZDvi1Y34jS6MiLJrpIOt8cynPs4fxxMDfGRqCdBNuqnk87QWe/pub?gid=930027488&single=true&output=csv',
+  rooted:      'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=421377062&single=true&output=csv',
 };
-const AUTO_REFRESH_MS = 5 * 60 * 1000; // 5 minutes
-
-// CORS proxy — needed when opening the HTML file locally (file://).
-// If hosted on a web server, set CORS_PROXY to '' and CORS_SUFFIX to ''.
+const AUTO_REFRESH_MS = 5*60*1000;
 const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
-const CORS_SUFFIX = ''; // some proxies need a suffix
 
 // ── Password ──────────────────────────────────────────────────────────
-const PASS_HASH = '17973db141409ffdd890123cbf3587fd1943cbf0389eb47dc6a26cdc4b25cd9b';
-
-async function sha256(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
-
-async function doLogin() {
-  const input = document.getElementById('loginPassword');
-  const error = document.getElementById('loginError');
-  const hash = await sha256(input.value);
-  if (hash === PASS_HASH) {
-    document.getElementById('loginScreen').style.display = 'none';
-    startDashboard();
-  } else {
-    error.textContent = 'Incorrect password. Please try again.';
-    input.value = '';
-    input.focus();
-  }
-}
-
-// ── CSV Parser ────────────────────────────────────────────────────────
-function parseCSV(text) {
-  const rows = [];
-  let cur = '', inQ = false;
-  const lines = [];
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    if (inQ) {
-      if (ch === '"' && text[i+1] === '"') { cur += '"'; i++; }
-      else if (ch === '"') inQ = false;
-      else cur += ch;
-    } else {
-      if (ch === '"') inQ = true;
-      else if (ch === '\r' || ch === '\n') {
-        if (ch === '\r' && text[i+1] === '\n') i++;
-        lines.push(cur); cur = '';
-      } else cur += ch;
-    }
-  }
-  if (cur) lines.push(cur);
-
-  for (const line of lines) {
-    if (!line.trim()) continue;
-    const fields = []; let f = '', q = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (q) {
-        if (ch === '"' && line[i+1] === '"') { f += '"'; i++; }
-        else if (ch === '"') q = false;
-        else f += ch;
-      } else {
-        if (ch === '"') q = true;
-        else if (ch === ',') { fields.push(f); f = ''; }
-        else f += ch;
-      }
-    }
-    fields.push(f);
-    rows.push(fields);
-  }
-  return rows;
-}
+const PASS_HASH='17973db141409ffdd890123cbf3587fd1943cbf0389eb47dc6a26cdc4b25cd9b';
+async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+async function doLogin(){const i=document.getElementById('loginPassword'),e=document.getElementById('loginError');if(await sha256(i.value)===PASS_HASH){document.getElementById('loginScreen').style.display='none';startDashboard();}else{e.textContent='Incorrect password.';i.value='';i.focus();}}
 
 // ── Utility ───────────────────────────────────────────────────────────
-function num(v) {
-  if (v === undefined || v === null || v === '') return 0;
-  const n = parseFloat(String(v).replace(/,/g, ''));
-  return isNaN(n) ? 0 : n;
+function parseCSV(t){const L=[];let c='',q=false;for(let i=0;i<t.length;i++){const h=t[i];if(q){if(h==='"'&&t[i+1]==='"'){c+='"';i++;}else if(h==='"')q=false;else c+=h;}else{if(h==='"')q=true;else if(h==='\r'||h==='\n'){if(h==='\r'&&t[i+1]==='\n')i++;L.push(c);c='';}else c+=h;}}if(c)L.push(c);const R=[];for(const l of L){if(!l.trim())continue;const F=[];let f='',q2=false;for(let i=0;i<l.length;i++){const h=l[i];if(q2){if(h==='"'&&l[i+1]==='"'){f+='"';i++;}else if(h==='"')q2=false;else f+=h;}else{if(h==='"')q2=true;else if(h===','){F.push(f);f='';}else f+=h;}}F.push(f);R.push(F);}return R;}
+function num(v){if(v===undefined||v===null||v==='')return 0;const n=parseFloat(String(v).replace(/,/g,''));return isNaN(n)?0:n;}
+function parseDate(s){if(!s||!s.trim())return null;const p=s.trim().split('/');if(p.length!==3)return null;const m=parseInt(p[0]),d=parseInt(p[1]),y=parseInt(p[2]);if(isNaN(m)||isNaN(d)||isNaN(y))return null;return new Date(y,m-1,d);}
+function dateKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function fmtDate(d){const m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return m[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();}
+function fmtShort(d){return(d.getMonth()+1)+'/'+d.getDate();}
+function fmtNum(n){if(!n&&n!==0)return'\u2014';if(n===0)return'\u2014';return n.toLocaleString('en-US');}
+function weekOfYear(d){const s=new Date(d.getFullYear(),0,1);const diff=(d-s+((s.getTimezoneOffset()-d.getTimezoneOffset())*60000))/86400000;return Math.ceil((diff+s.getDay()+1)/7);}
+
+async function fetchSheet(url){try{const r=await fetch(url,{cache:'no-store'});if(r.ok)return await r.text();}catch(e){}const r2=await fetch(CORS_PROXY+encodeURIComponent(url),{cache:'no-store'});if(!r2.ok)throw new Error('Fetch failed: '+r2.status);return await r2.text();}
+
+// ── Tab Navigation ────────────────────────────────────────────────────
+function switchTab(tab, el){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(el)el.classList.add('active');else document.querySelector('[data-tab="'+tab+'"]').classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
 }
 
-function parseDate(s) {
-  if (!s || !s.trim()) return null;
-  const p = s.trim().split('/');
-  if (p.length !== 3) return null;
-  const m = parseInt(p[0],10), d = parseInt(p[1],10), y = parseInt(p[2],10);
-  if (isNaN(m)||isNaN(d)||isNaN(y)) return null;
-  return new Date(y, m-1, d);
+// ══════════════════════════════════════════════════════════════════════
+//  SUNDAY ATTENDANCE
+// ══════════════════════════════════════════════════════════════════════
+const COLORS={mission:'#4a7f97',edinburg:'#7b6fa6',ipv:'#c47a2e'};
+const YCOLORS={2023:'#94a3b8',2024:'#7b6fa6',2025:'#4a7f97',2026:'#c47a2e'};
+const SVC_C=['#3b7d94','#5a9db0','#7dbdcc','#a1d5e0','#c5eaf1'];
+let sRaw=[],sFiltered=[],sCharts={},sFilters={year:'all',mode:'total',ds:null,de:null};
+let sSvcCampus='mission',sYoyCampus='all';
+
+function parseMM(rows){const d={};for(let i=1;i<rows.length;i++){const r=rows[i],dt=parseDate(r[0]);if(!dt)continue;const sv=[];for(let s=0;s<5;s++){const b=1+s*3;sv.push({aud:num(r[b]),oth:num(r[b+1]),tot:num(r[b+2])});}d[dateKey(dt)]={date:dt,tAud:num(r[16]),tOth:num(r[17]),tAdult:num(r[18]),svc:sv};}return d;}
+function parseMK(rows){const d={};for(let i=1;i<rows.length;i++){const r=rows[i],dt=parseDate(r[0]);if(!dt)continue;const sv=[];for(let s=0;s<5;s++){const b=1+s*4;sv.push({kids:num(r[b]),aDT:num(r[b+1]),jDT:num(r[b+2]),tDT:num(r[b+3])});}d[dateKey(dt)]={date:dt,tKids:num(r[21]),aDT:num(r[22]),jDT:num(r[23]),tDT:num(r[24]),svc:sv};}return d;}
+function parseED(rows){const d={};for(let i=1;i<rows.length;i++){const r=rows[i],dt=parseDate(r[0]);if(!dt)continue;const sv=[];for(let s=0;s<4;s++){const b=1+s*7;sv.push({aud:num(r[b]),oth:num(r[b+1]),tot:num(r[b+2]),kids:num(r[b+3]),kDT:num(r[b+4]),youth:num(r[b+5]),yDT:num(r[b+6])});}d[dateKey(dt)]={date:dt,tAud:num(r[29]),tOth:num(r[30]),tAdult:num(r[31]),tKids:num(r[32]),tKDT:num(r[33]),tYouth:num(r[34]),tYDT:num(r[35]),svc:sv};}return d;}
+function parseIP(rows){const d={};for(let i=1;i<rows.length;i++){const r=rows[i],dt=parseDate(r[0]);if(!dt)continue;const sv=[];for(let s=0;s<2;s++){const b=1+s*5;sv.push({aud:num(r[b]),oth:num(r[b+1]),tot:num(r[b+2]),kids:num(r[b+3]),kDT:num(r[b+4])});}d[dateKey(dt)]={date:dt,tAud:num(r[11]),tOth:num(r[12]),tAdult:num(r[13]),tKids:num(r[14]),tKDT:num(r[15]),svc:sv};}return d;}
+
+function sMerge(mm,mk,ed,iv){const keys=new Set([...Object.keys(mm),...Object.keys(mk),...Object.keys(ed),...Object.keys(iv)]);const out=[];keys.forEach(k=>{const a=mm[k]||{},b=mk[k]||{},c=ed[k]||{},d=iv[k]||{};const dt=a.date||b.date||c.date||d.date;if(!dt)return;const mA=a.tAdult||0,mAu=a.tAud||0,mK=b.tKids||0,mD=b.tDT||0;const eA=c.tAdult||0,eAu=c.tAud||0,eK=c.tKids||0,eY=c.tYouth||0,eD=(c.tKDT||0)+(c.tYDT||0);const iA=d.tAdult||0,iAu=d.tAud||0,iK=d.tKids||0,iD=d.tKDT||0;if(mA+mK+mD+eA+eK+eY+eD+iA+iK+iD===0)return;
+const mSvc=[];if(a.svc&&b.svc)for(let s=0;s<5;s++){const x=a.svc[s]||{},y=b.svc[s]||{};if((x.tot||0)+(y.kids||0)+(y.tDT||0)>0)mSvc.push({aud:x.aud||0,oth:x.oth||0,tot:x.tot||0,kids:y.kids||0,dt:y.tDT||0});}
+const eSvc=[];if(c.svc)for(const x of c.svc)if((x.tot||0)+(x.kids||0)+(x.youth||0)>0)eSvc.push(x);
+const iSvc=[];if(d.svc)for(const x of d.svc)if((x.tot||0)+(x.kids||0)>0)iSvc.push(x);
+out.push({date:dt,key:k,mA,mAu,mK,mD,mission_svc:mSvc,eA,eAu,eK,eY,eD,edinburg_svc:eSvc,iA,iAu,iK,iD,ipv_svc:iSvc});});out.sort((a,b)=>a.date-b.date);return out;}
+
+function cT(r,c,m){if(c==='mission')return(m==='auditorium'?r.mAu:r.mA)+r.mK+r.mD;if(c==='edinburg')return(m==='auditorium'?r.eAu:r.eA)+r.eK+r.eY+r.eD;if(c==='ipv')return(m==='auditorium'?r.iAu:r.iA)+r.iK+r.iD;return 0;}
+function gT(r,m){return cT(r,'mission',m)+cT(r,'edinburg',m)+cT(r,'ipv',m);}
+
+function sApply(){let d=sRaw;const f=sFilters;if(f.year!=='all')d=d.filter(r=>r.date.getFullYear()===+f.year);if(f.ds){const ds=new Date(f.ds+'T00:00:00');d=d.filter(r=>r.date>=ds);}if(f.de){const de=new Date(f.de+'T23:59:59');d=d.filter(r=>r.date<=de);}sFiltered=d;sRenderKPI();sRenderTrend();sRenderCampus();sRenderSvc();sRenderYoy();sRenderTable();}
+
+function setSF(k,v,btn){if(k==='year'){sFilters.year=v;document.querySelectorAll('[data-filter="sy"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}else if(k==='mode'){sFilters.mode=v;document.querySelectorAll('[data-filter="sm"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}else if(k==='ds'){sFilters.ds=v||null;}else if(k==='de'){sFilters.de=v||null;}sApply();}
+
+function sRenderKPI(){const d=sFiltered,m=sFilters.mode,el=document.getElementById('sKpiRow');if(!d.length){el.innerHTML='<div class="kpi-card"><div class="kpi-label">No Data</div><div class="kpi-value total">\u2014</div></div>';return;}const L=d[d.length-1],P=d.length>1?d[d.length-2]:null;function ch(c,p){if(!p)return'<span class="kpi-change neutral">\u2014</span>';const pc=((c-p)/p*100);return'<span class="kpi-change '+(pc>0?'up':pc<0?'down':'neutral')+'">'+(pc>=0?'+':'')+pc.toFixed(1)+'% vs prior</span>';}
+const gt=gT(L,m),gtp=P?gT(P,m):null;const mt=cT(L,'mission',m),mtp=P?cT(P,'mission',m):null;const et=cT(L,'edinburg',m),etp=P?cT(P,'edinburg',m):null;const it=cT(L,'ipv',m),itp=P?cT(P,'ipv',m):null;
+el.innerHTML=`<div class="kpi-card"><div class="accent-bar" style="background:var(--text)"></div><div class="kpi-label">Total Attendance</div><div class="kpi-value total">${fmtNum(gt)}</div><div class="kpi-sub">${fmtDate(L.date)}</div>${ch(gt,gtp)}</div><div class="kpi-card"><div class="accent-bar" style="background:var(--mission)"></div><div class="kpi-label">Mission</div><div class="kpi-value mission">${fmtNum(mt)}</div><div class="kpi-sub">Adults ${fmtNum(m==='auditorium'?L.mAu:L.mA)} &middot; Kids ${fmtNum(L.mK)}</div>${ch(mt,mtp)}</div><div class="kpi-card"><div class="accent-bar" style="background:var(--edinburg)"></div><div class="kpi-label">Edinburg</div><div class="kpi-value edinburg">${fmtNum(et)}</div><div class="kpi-sub">Adults ${fmtNum(m==='auditorium'?L.eAu:L.eA)} &middot; Kids ${fmtNum(L.eK)}</div>${ch(et,etp)}</div><div class="kpi-card"><div class="accent-bar" style="background:var(--ipv)"></div><div class="kpi-label">Iglesia PV</div><div class="kpi-value ipv">${fmtNum(it)}</div><div class="kpi-sub">Adults ${fmtNum(m==='auditorium'?L.iAu:L.iA)} &middot; Kids ${fmtNum(L.iK)}</div>${ch(it,itp)}</div>`;}
+
+function sRenderTrend(){const d=sFiltered,m=sFilters.mode,labels=d.map(r=>r.date);const ds=[{label:'Mission',data:d.map(r=>cT(r,'mission',m)),borderColor:COLORS.mission,backgroundColor:COLORS.mission+'18'},{label:'Edinburg',data:d.map(r=>cT(r,'edinburg',m)),borderColor:COLORS.edinburg,backgroundColor:COLORS.edinburg+'18'},{label:'IPV',data:d.map(r=>cT(r,'ipv',m)),borderColor:COLORS.ipv,backgroundColor:COLORS.ipv+'18'}];if(sCharts.trend){sCharts.trend.data.labels=labels;ds.forEach((x,i)=>{sCharts.trend.data.datasets[i].data=x.data;});sCharts.trend.update('none');return;}sCharts.trend=new Chart(document.getElementById('sTrendChart'),{type:'line',data:{labels,datasets:ds.map(x=>({...x,borderWidth:2,tension:.3,pointRadius:1.5,pointHoverRadius:5,fill:false}))},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:16,font:{size:12}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{type:'time',time:{unit:'month',tooltipFormat:'MMM d, yyyy'},grid:{display:false}},y:{beginAtZero:true,ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v}}}}});}
+
+function sRenderCampus(){const d=sFiltered,m=sFilters.mode,l4=d.slice(-4);if(!l4.length)return;function av(a,c){return Math.round(a.reduce((s,r)=>s+cT(r,c,m),0)/a.length);}function aAv(a,c){return Math.round(a.reduce((s,r)=>{if(c==='mission')return s+(m==='auditorium'?r.mAu:r.mA);if(c==='edinburg')return s+(m==='auditorium'?r.eAu:r.eA);return s+(m==='auditorium'?r.iAu:r.iA);},0)/a.length);}function kAv(a,c){return Math.round(a.reduce((s,r)=>{if(c==='mission')return s+r.mK+r.mD;if(c==='edinburg')return s+r.eK+r.eY+r.eD;return s+r.iK+r.iD;},0)/a.length);}
+const aD=[aAv(l4,'mission'),aAv(l4,'edinburg'),aAv(l4,'ipv')],kD=[kAv(l4,'mission'),kAv(l4,'edinburg'),kAv(l4,'ipv')];
+if(sCharts.campus){sCharts.campus.data.datasets[0].data=aD;sCharts.campus.data.datasets[1].data=kD;sCharts.campus.update('none');return;}
+sCharts.campus=new Chart(document.getElementById('sCampusChart'),{type:'bar',data:{labels:['Mission','Edinburg','IPV'],datasets:[{label:'Adults',data:aD,backgroundColor:[COLORS.mission+'CC',COLORS.edinburg+'CC',COLORS.ipv+'CC'],borderRadius:4},{label:'Kids+DT',data:kD,backgroundColor:[COLORS.mission+'55',COLORS.edinburg+'55',COLORS.ipv+'55'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:16,font:{size:12}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v}}}}});}
+
+function sRenderSvc(){const d=sFiltered,m=sFilters.mode,c=sSvcCampus,rec=d.slice(-8);if(!rec.length)return;const labels=rec.map(r=>fmtShort(r.date)),maxS=c==='mission'?5:c==='edinburg'?4:2,ds=[];for(let s=0;s<maxS;s++){const sd=rec.map(r=>{const sv=r[c==='ipv'?'ipv_svc':c==='edinburg'?'edinburg_svc':'mission_svc'];if(!sv||!sv[s])return 0;return m==='auditorium'?(sv[s].aud||0):(sv[s].tot||0);});if(sd.some(v=>v>0))ds.push({label:['1st','2nd','3rd','4th','5th'][s]+' Svc',data:sd,backgroundColor:SVC_C[s%SVC_C.length]+'CC',borderRadius:3});}
+if(sCharts.svc)sCharts.svc.destroy();sCharts.svc=new Chart(document.getElementById('sSvcChart'),{type:'bar',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,beginAtZero:true,ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v}}}}});}
+function sSvcActive(b){document.querySelectorAll('#sSvcBtns .cb').forEach(x=>x.classList.remove('active'));b.classList.add('active');}
+
+function sRenderYoy(){const m=sFilters.mode,c=sYoyCampus,d=sRaw,years=[...new Set(d.map(r=>r.date.getFullYear()))].sort();const ds=years.map(y=>{const yd=d.filter(r=>r.date.getFullYear()===y);return{label:String(y),data:yd.map(r=>({x:weekOfYear(r.date),y:c==='all'?gT(r,m):cT(r,c,m)})),borderColor:YCOLORS[y]||'#999',backgroundColor:(YCOLORS[y]||'#999')+'18',borderWidth:y===years[years.length-1]?3:1.5,pointRadius:y===years[years.length-1]?2.5:1,pointHoverRadius:5,tension:.3,fill:false};});
+if(sCharts.yoy)sCharts.yoy.destroy();sCharts.yoy=new Chart(document.getElementById('sYoyChart'),{type:'line',data:{datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:16,font:{size:12}}},tooltip:{callbacks:{title:i=>'Week '+i[0].parsed.x,label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{type:'linear',title:{display:true,text:'Week of Year',font:{size:12}},min:1,max:53,ticks:{stepSize:4}},y:{beginAtZero:true,ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v}}}}});}
+function sYoyActive(b){document.querySelectorAll('#sYoyBtns .cb').forEach(x=>x.classList.remove('active'));b.classList.add('active');}
+
+function sRenderTable(){const d=[...sFiltered].reverse(),m=sFilters.mode,el=document.getElementById('sTableContainer');const cols=[{k:'date',l:'Date',f:r=>fmtDate(r.date),v:r=>r.date.getTime()},{k:'mA',l:'Mission Adults',f:r=>fmtNum(m==='auditorium'?r.mAu:r.mA),v:r=>m==='auditorium'?r.mAu:r.mA},{k:'mK',l:'Mission Kids',f:r=>fmtNum(r.mK),v:r=>r.mK},{k:'eA',l:'Edinburg Adults',f:r=>fmtNum(m==='auditorium'?r.eAu:r.eA),v:r=>m==='auditorium'?r.eAu:r.eA},{k:'eK',l:'Edinburg Kids',f:r=>fmtNum(r.eK),v:r=>r.eK},{k:'iA',l:'IPV Adults',f:r=>fmtNum(m==='auditorium'?r.iAu:r.iA),v:r=>m==='auditorium'?r.iAu:r.iA},{k:'iK',l:'IPV Kids',f:r=>fmtNum(r.iK),v:r=>r.iK},{k:'gt',l:'Grand Total',f:r=>fmtNum(gT(r,m)),v:r=>gT(r,m)}];let sc='date',sd='desc';
+function render(s){let h='<table class="data-table"><thead><tr>';cols.forEach(c=>{const a=sc===c.k?(sd==='asc'?' \u25B2':' \u25BC'):'';h+='<th'+(c.k!=='date'?' class="num"':'')+' data-col="'+c.k+'">'+c.l+'<span style="font-size:10px;margin-left:4px">'+a+'</span></th>';});h+='</tr></thead><tbody>';s.forEach(r=>{h+='<tr>';cols.forEach(c=>{h+='<td'+(c.k!=='date'?' class="num"':'')+'>'+c.f(r)+'</td>';});h+='</tr>';});h+='</tbody></table>';el.innerHTML=h;el.querySelectorAll('th').forEach(th=>{th.onclick=()=>{const col=th.dataset.col;if(sc===col)sd=sd==='asc'?'desc':'asc';else{sc=col;sd='desc';}const c=cols.find(x=>x.k===col);render([...d].sort((a,b)=>{const av=c.v(a),bv=c.v(b),cmp=av<bv?-1:av>bv?1:0;return sd==='asc'?cmp:-cmp;}));};});}
+render(d);}
+
+// ══════════════════════════════════════════════════════════════════════
+//  ROOTED
+// ══════════════════════════════════════════════════════════════════════
+const RCOLORS={Mission:'#4a7f97',Edinburg:'#7b6fa6',Spanish:'#c47a2e'};
+const SEM_COLORS=['#4a7f97','#7b6fa6','#c47a2e','#2e7d5b','#c0392b','#e67e22','#3498db','#8e44ad','#1abc9c','#d35400'];
+let rRaw=[],rFiltered=[],rCharts={},rFilters={campus:'all',event:'all',semester:'all'};
+
+function parseRooted(rows){const d=[];for(let i=1;i<rows.length;i++){const r=rows[i],dt=parseDate(r[0]);if(!dt)continue;const att=num(r[5]),totAtt=num(r[7]);if(att===0&&totAtt===0)continue;d.push({date:dt,event:r[1]?r[1].trim():'',campus:r[2]?r[2].trim():'',semester:r[3]?r[3].trim():'',week:num(r[4]),attendance:att||totAtt,facilitators:num(r[6])});}d.sort((a,b)=>a.date-b.date);return d;}
+
+function rPopulateFilters(){const sel=document.getElementById('rSemFilter');const sems=[...new Set(rRaw.map(r=>r.semester))];const order=['Fall 2022','Spring 2023','Summer 2023','Fall 2023','Spring 2024','Summer 2024','Fall 2024','Spring 2025','Summer 2025','Fall 2025','Spring 2026','Summer 2026','Fall 2026'];sems.sort((a,b)=>(order.indexOf(a)===-1?99:order.indexOf(a))-(order.indexOf(b)===-1?99:order.indexOf(b)));sel.innerHTML='<option value="all">All Semesters</option>';sems.forEach(s=>{sel.innerHTML+='<option value="'+s+'">'+s+'</option>';});}
+
+function setRF(k,v,btn){if(k==='campus'){rFilters.campus=v;document.querySelectorAll('[data-filter="rc"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}else if(k==='event'){rFilters.event=v;document.querySelectorAll('[data-filter="re"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}rApplyFilters();}
+
+function rApplyFilters(){let d=rRaw;const f=rFilters;f.semester=document.getElementById('rSemFilter').value;if(f.semester!=='all')d=d.filter(r=>r.semester===f.semester);if(f.campus!=='all')d=d.filter(r=>r.campus===f.campus);if(f.event==='Rooted')d=d.filter(r=>r.event==='Rooted'||r.event==='Celebration');else if(f.event==='special')d=d.filter(r=>r.event==='Prayer Experience'||r.event==='Serve Experience');rFiltered=d;rRenderKPI();rRenderSemChart();rRenderCampus();rRenderRetention();rRenderTable();}
+
+function rRenderKPI(){const d=rFiltered,el=document.getElementById('rKpiRow');const rooted=d.filter(r=>r.event==='Rooted'||r.event==='Celebration');if(!d.length){el.innerHTML='<div class="kpi-card"><div class="kpi-label">No Data</div><div class="kpi-value total">\u2014</div></div>';return;}
+// Find the most recent semester's data
+const sems=[...new Set(rooted.map(r=>r.semester))];const latestSem=sems[sems.length-1]||'';const latestData=rooted.filter(r=>r.semester===latestSem);
+const w1=latestData.filter(r=>r.week===1);const w1Total=w1.reduce((s,r)=>s+r.attendance,0);
+const latestWeek=latestData.length?latestData[latestData.length-1]:null;
+const latestTotal=latestWeek?latestData.filter(r=>r.week===latestWeek.week).reduce((s,r)=>s+r.attendance,0):0;
+const retention=w1Total>0?Math.round(latestTotal/w1Total*100):0;
+const allTime=rooted.reduce((s,r)=>s+r.attendance,0);
+const totalSessions=d.length;
+
+el.innerHTML=`<div class="kpi-card"><div class="accent-bar" style="background:var(--accent)"></div><div class="kpi-label">Latest Semester</div><div class="kpi-value total">${latestSem||'\u2014'}</div><div class="kpi-sub">Week 1 enrollment: ${fmtNum(w1Total)}</div></div><div class="kpi-card"><div class="accent-bar" style="background:var(--mission)"></div><div class="kpi-label">Latest Week</div><div class="kpi-value mission">${fmtNum(latestTotal)}</div><div class="kpi-sub">${latestWeek?'Week '+latestWeek.week+' \u2014 '+fmtDate(latestWeek.date):'\u2014'}</div></div><div class="kpi-card"><div class="accent-bar" style="background:${retention>=70?'var(--positive)':'var(--negative)'}"></div><div class="kpi-label">Retention Rate</div><div class="kpi-value total">${retention}%</div><div class="kpi-sub">Latest week vs Week 1</div></div><div class="kpi-card"><div class="accent-bar" style="background:var(--edinburg)"></div><div class="kpi-label">Total Sessions</div><div class="kpi-value edinburg">${fmtNum(totalSessions)}</div><div class="kpi-sub">Across all semesters shown</div></div>`;}
+
+function rRenderSemChart(){const rooted=rRaw.filter(r=>(r.event==='Rooted'||r.event==='Celebration')&&r.week>0);if(rFilters.campus!=='all')rooted.splice(0,rooted.length,...rooted.filter(r=>r.campus===rFilters.campus));
+// Group by semester, then by week (summing campuses)
+const sems=[...new Set(rooted.map(r=>r.semester))];const order=['Fall 2022','Spring 2023','Summer 2023','Fall 2023','Spring 2024','Summer 2024','Fall 2024','Spring 2025','Summer 2025','Fall 2025','Spring 2026'];sems.sort((a,b)=>(order.indexOf(a)===-1?99:order.indexOf(a))-(order.indexOf(b)===-1?99:order.indexOf(b)));
+const datasets=sems.map((sem,i)=>{const sd=rooted.filter(r=>r.semester===sem);const weekMap={};sd.forEach(r=>{weekMap[r.week]=(weekMap[r.week]||0)+r.attendance;});const weeks=Object.keys(weekMap).map(Number).sort((a,b)=>a-b);return{label:sem,data:weeks.map(w=>({x:w,y:weekMap[w]})),borderColor:SEM_COLORS[i%SEM_COLORS.length],backgroundColor:SEM_COLORS[i%SEM_COLORS.length]+'20',borderWidth:i===sems.length-1?3:1.5,pointRadius:i===sems.length-1?3:1.5,pointHoverRadius:6,tension:.3,fill:false};});
+if(rCharts.sem)rCharts.sem.destroy();rCharts.sem=new Chart(document.getElementById('rSemChart'),{type:'line',data:{datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:{callbacks:{title:i=>'Week '+i[0].parsed.x,label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{type:'linear',title:{display:true,text:'Week',font:{size:12}},min:1,max:11,ticks:{stepSize:1}},y:{beginAtZero:true,title:{display:true,text:'Attendance',font:{size:12}}}}}});}
+
+function rRenderCampus(){const rooted=rFiltered.filter(r=>r.event==='Rooted'||r.event==='Celebration');const sems=[...new Set(rooted.map(r=>r.semester))];const order=['Fall 2022','Spring 2023','Spring 2024','Summer 2024','Fall 2024','Spring 2025','Summer 2025','Fall 2025','Spring 2026'];sems.sort((a,b)=>(order.indexOf(a)===-1?99:order.indexOf(a))-(order.indexOf(b)===-1?99:order.indexOf(b)));
+const campuses=['Mission','Edinburg','Spanish'];const datasets=campuses.map(c=>{const cd=rooted.filter(r=>r.campus===c);return{label:c,data:sems.map(s=>{const sd=cd.filter(r=>r.semester===s);return sd.length?Math.round(sd.reduce((sum,r)=>sum+r.attendance,0)/sd.length):0;}),backgroundColor:RCOLORS[c]+'CC',borderRadius:4};}).filter(ds=>ds.data.some(v=>v>0));
+if(rCharts.campus)rCharts.campus.destroy();rCharts.campus=new Chart(document.getElementById('rCampusChart'),{type:'bar',data:{labels:sems,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{grid:{display:false},ticks:{font:{size:10},maxRotation:45}},y:{beginAtZero:true}}}});}
+
+function rRenderRetention(){const rooted=rRaw.filter(r=>(r.event==='Rooted'||r.event==='Celebration')&&r.week>0);if(rFilters.campus!=='all')rooted.splice(0,rooted.length,...rooted.filter(r=>r.campus===rFilters.campus));
+const sems=[...new Set(rooted.map(r=>r.semester))];const order=['Fall 2022','Spring 2023','Spring 2024','Summer 2024','Fall 2024','Spring 2025','Summer 2025','Fall 2025','Spring 2026'];sems.sort((a,b)=>(order.indexOf(a)===-1?99:order.indexOf(a))-(order.indexOf(b)===-1?99:order.indexOf(b)));
+const w1Data=[],lastWData=[],retPct=[];sems.forEach(s=>{const sd=rooted.filter(r=>r.semester===s);const wk1=sd.filter(r=>r.week===1).reduce((sum,r)=>sum+r.attendance,0);const maxW=Math.max(...sd.map(r=>r.week));const wkLast=sd.filter(r=>r.week===maxW).reduce((sum,r)=>sum+r.attendance,0);w1Data.push(wk1);lastWData.push(wkLast);retPct.push(wk1>0?Math.round(wkLast/wk1*100):0);});
+if(rCharts.retention)rCharts.retention.destroy();rCharts.retention=new Chart(document.getElementById('rRetentionChart'),{type:'bar',data:{labels:sems,datasets:[{label:'Week 1',data:w1Data,backgroundColor:'#4a7f97CC',borderRadius:4},{label:'Last Week',data:lastWData,backgroundColor:'#c47a2eCC',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:{callbacks:{afterBody:(items)=>{const i=items[0].dataIndex;return'Retention: '+retPct[i]+'%';}}}},scales:{x:{grid:{display:false},ticks:{font:{size:10},maxRotation:45}},y:{beginAtZero:true}}}});}
+
+function rRenderTable(){const d=[...rFiltered].reverse(),el=document.getElementById('rTableContainer');const cols=[{k:'date',l:'Date',f:r=>fmtDate(r.date),v:r=>r.date.getTime()},{k:'event',l:'Event',f:r=>r.event,v:r=>r.event},{k:'campus',l:'Campus',f:r=>r.campus,v:r=>r.campus},{k:'semester',l:'Semester',f:r=>r.semester,v:r=>r.semester},{k:'week',l:'Week',f:r=>r.week||'\u2014',v:r=>r.week||0},{k:'att',l:'Attendance',f:r=>fmtNum(r.attendance),v:r=>r.attendance}];let sc='date',sd='desc';
+function render(s){let h='<table class="data-table"><thead><tr>';cols.forEach(c=>{const a=sc===c.k?(sd==='asc'?' \u25B2':' \u25BC'):'';const cls=c.k==='att'||c.k==='week'?' class="num"':'';h+='<th'+cls+' data-col="'+c.k+'">'+c.l+'<span style="font-size:10px;margin-left:4px">'+a+'</span></th>';});h+='</tr></thead><tbody>';s.forEach(r=>{h+='<tr>';cols.forEach(c=>{const cls=c.k==='att'||c.k==='week'?' class="num"':'';h+='<td'+cls+'>'+c.f(r)+'</td>';});h+='</tr>';});h+='</tbody></table>';el.innerHTML=h;el.querySelectorAll('th').forEach(th=>{th.onclick=()=>{const col=th.dataset.col;if(sc===col)sd=sd==='asc'?'desc':'asc';else{sc=col;sd='desc';}const c=cols.find(x=>x.k===col);render([...d].sort((a,b)=>{const av=c.v(a),bv=c.v(b),cmp=av<bv?-1:av>bv?1:0;return sd==='asc'?cmp:-cmp;}));};});}
+render(d);}
+
+// ══════════════════════════════════════════════════════════════════════
+//  REFRESH & STARTUP
+// ══════════════════════════════════════════════════════════════════════
+let refreshTimer=null;
+
+async function refreshAll(){
+  const btn=document.getElementById('refreshBtn');btn.classList.add('loading');
+  try{
+    const results=await Promise.all([
+      fetchSheet(SHEET_URLS.missionMain),fetchSheet(SHEET_URLS.missionKids),
+      fetchSheet(SHEET_URLS.edinburg),fetchSheet(SHEET_URLS.ipv),
+      fetchSheet(SHEET_URLS.rooted),
+    ]);
+    // Sunday
+    sRaw=sMerge(parseMM(parseCSV(results[0])),parseMK(parseCSV(results[1])),parseED(parseCSV(results[2])),parseIP(parseCSV(results[3])));
+    sApply();
+    // Rooted
+    rRaw=parseRooted(parseCSV(results[4]));
+    rPopulateFilters();rApplyFilters();
+    document.getElementById('lastRefresh').textContent='Updated '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  }catch(err){console.error('Refresh failed:',err);document.getElementById('lastRefresh').textContent='Refresh failed';}
+  btn.classList.remove('loading');
 }
 
-function dateKey(dt) {
-  return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
-}
-
-function fmtDate(dt) {
-  const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return mo[dt.getMonth()]+' '+dt.getDate()+', '+dt.getFullYear();
-}
-
-function fmtShort(dt) {
-  return (dt.getMonth()+1)+'/'+dt.getDate();
-}
-
-function fmtNum(n) {
-  if (!n && n !== 0) return '\u2014';
-  if (n === 0) return '\u2014';
-  return n.toLocaleString('en-US');
-}
-
-function weekOfYear(dt) {
-  const start = new Date(dt.getFullYear(), 0, 1);
-  const diff = (dt - start + ((start.getTimezoneOffset() - dt.getTimezoneOffset()) * 60000)) / 86400000;
-  return Math.ceil((diff + start.getDay() + 1) / 7);
-}
-
-// ── Data Parsers ──────────────────────────────────────────────────────
-function parseMissionMain(rows) {
-  const data = {};
-  for (let i = 1; i < rows.length; i++) {
-    const r = rows[i];
-    const dt = parseDate(r[0]);
-    if (!dt) continue;
-    const svc = [];
-    for (let s = 0; s < 5; s++) {
-      const b = 1 + s * 3;
-      svc.push({ auditorium: num(r[b]), otherAdults: num(r[b+1]), totalAdults: num(r[b+2]) });
-    }
-    data[dateKey(dt)] = {
-      date: dt,
-      totalAuditorium: num(r[16]), totalOtherAdults: num(r[17]), totalAdults: num(r[18]),
-      services: svc
-    };
-  }
-  return data;
-}
-
-function parseMissionKids(rows) {
-  const data = {};
-  for (let i = 1; i < rows.length; i++) {
-    const r = rows[i];
-    const dt = parseDate(r[0]);
-    if (!dt) continue;
-    const svc = [];
-    for (let s = 0; s < 5; s++) {
-      const b = 1 + s * 4;
-      svc.push({ kids: num(r[b]), adultDT: num(r[b+1]), jvDT: num(r[b+2]), totalDT: num(r[b+3]) });
-    }
-    data[dateKey(dt)] = {
-      date: dt,
-      totalKids: num(r[21]), adultDTKids: num(r[22]), jvDTKids: num(r[23]), totalDTKids: num(r[24]),
-      services: svc
-    };
-  }
-  return data;
-}
-
-function parseEdinburg(rows) {
-  const data = {};
-  for (let i = 1; i < rows.length; i++) {
-    const r = rows[i];
-    const dt = parseDate(r[0]);
-    if (!dt) continue;
-    const svc = [];
-    for (let s = 0; s < 4; s++) {
-      const b = 1 + s * 7;
-      svc.push({
-        auditorium: num(r[b]), otherAdults: num(r[b+1]), totalAdults: num(r[b+2]),
-        kids: num(r[b+3]), kidsDT: num(r[b+4]), youth: num(r[b+5]), youthDT: num(r[b+6])
-      });
-    }
-    data[dateKey(dt)] = {
-      date: dt,
-      totalAuditorium: num(r[29]), totalOtherAdults: num(r[30]), totalAdults: num(r[31]),
-      totalKids: num(r[32]), totalKidsDT: num(r[33]), totalYouth: num(r[34]), totalYouthDT: num(r[35]),
-      services: svc
-    };
-  }
-  return data;
-}
-
-function parseIPV(rows) {
-  const data = {};
-  for (let i = 1; i < rows.length; i++) {
-    const r = rows[i];
-    const dt = parseDate(r[0]);
-    if (!dt) continue;
-    const svc = [];
-    for (let s = 0; s < 2; s++) {
-      const b = 1 + s * 5;
-      svc.push({
-        auditorium: num(r[b]), otherAdults: num(r[b+1]), totalAdults: num(r[b+2]),
-        kids: num(r[b+3]), kidsDT: num(r[b+4])
-      });
-    }
-    data[dateKey(dt)] = {
-      date: dt,
-      totalAuditorium: num(r[11]), totalOtherAdults: num(r[12]), totalAdults: num(r[13]),
-      totalKids: num(r[14]), totalKidsDT: num(r[15]),
-      services: svc
-    };
-  }
-  return data;
-}
-
-// ── Merge ─────────────────────────────────────────────────────────────
-function mergeData(mMain, mKids, edin, ipv) {
-  const allKeys = new Set([...Object.keys(mMain), ...Object.keys(mKids), ...Object.keys(edin), ...Object.keys(ipv)]);
-  const merged = [];
-
-  allKeys.forEach(key => {
-    const mm = mMain[key] || {};
-    const mk = mKids[key] || {};
-    const ed = edin[key] || {};
-    const iv = ipv[key] || {};
-    const dt = mm.date || mk.date || ed.date || iv.date;
-    if (!dt) return;
-
-    const mAdults = mm.totalAdults||0, mAud = mm.totalAuditorium||0;
-    const mKidsN = mk.totalKids||0, mDT = mk.totalDTKids||0;
-    const eAdults = ed.totalAdults||0, eAud = ed.totalAuditorium||0;
-    const eKids = ed.totalKids||0, eYouth = ed.totalYouth||0;
-    const eDT = (ed.totalKidsDT||0) + (ed.totalYouthDT||0);
-    const iAdults = iv.totalAdults||0, iAud = iv.totalAuditorium||0;
-    const iKids = iv.totalKids||0, iDT = iv.totalKidsDT||0;
-
-    const total = mAdults+mKidsN+mDT+eAdults+eKids+eYouth+eDT+iAdults+iKids+iDT;
-    if (total === 0) return;
-
-    // Merge per-service arrays
-    const missionSvc = [];
-    const mmS = mm.services || [{},{},{},{},{}];
-    const mkS = mk.services || [{},{},{},{},{}];
-    for (let s = 0; s < 5; s++) {
-      const a = mmS[s]||{}, k = mkS[s]||{};
-      if ((a.totalAdults||0)+(k.kids||0)+(k.totalDT||0) > 0)
-        missionSvc.push({ auditorium:a.auditorium||0, otherAdults:a.otherAdults||0, totalAdults:a.totalAdults||0, kids:k.kids||0, dt:k.totalDT||0 });
-    }
-
-    const edinSvc = [];
-    if (ed.services) {
-      for (const es of ed.services) {
-        if ((es.totalAdults||0)+(es.kids||0)+(es.youth||0) > 0) edinSvc.push(es);
-      }
-    }
-
-    const ipvSvc = [];
-    if (iv.services) {
-      for (const is_ of iv.services) {
-        if ((is_.totalAdults||0)+(is_.kids||0) > 0) ipvSvc.push(is_);
-      }
-    }
-
-    merged.push({
-      date: dt, key,
-      mission_adults: mAdults, mission_auditorium: mAud, mission_kids: mKidsN, mission_dt: mDT,
-      mission_svc: missionSvc,
-      edinburg_adults: eAdults, edinburg_auditorium: eAud, edinburg_kids: eKids, edinburg_youth: eYouth, edinburg_dt: eDT,
-      edinburg_svc: edinSvc,
-      ipv_adults: iAdults, ipv_auditorium: iAud, ipv_kids: iKids, ipv_dt: iDT,
-      ipv_svc: ipvSvc,
-    });
-  });
-
-  merged.sort((a,b) => a.date - b.date);
-  return merged;
-}
-
-// ── Attendance Helpers ────────────────────────────────────────────────
-function campusTotal(row, campus, mode) {
-  if (campus === 'mission') {
-    return (mode==='auditorium' ? row.mission_auditorium : row.mission_adults) + row.mission_kids + row.mission_dt;
-  }
-  if (campus === 'edinburg') {
-    return (mode==='auditorium' ? row.edinburg_auditorium : row.edinburg_adults) + row.edinburg_kids + row.edinburg_youth + row.edinburg_dt;
-  }
-  if (campus === 'ipv') {
-    return (mode==='auditorium' ? row.ipv_auditorium : row.ipv_adults) + row.ipv_kids + row.ipv_dt;
-  }
-  return 0;
-}
-
-function grandTotal(row, mode) {
-  return campusTotal(row,'mission',mode) + campusTotal(row,'edinburg',mode) + campusTotal(row,'ipv',mode);
-}
-
-// ── Color Config ──────────────────────────────────────────────────────
-const COLORS = { mission:'#4a7f97', edinburg:'#7b6fa6', ipv:'#c47a2e' };
-const YEAR_COLORS = { 2023:'#94a3b8', 2024:'#7b6fa6', 2025:'#4a7f97', 2026:'#c47a2e' };
-const SVC_COLORS = ['#3b7d94','#5a9db0','#7dbdcc','#a1d5e0','#c5eaf1'];
-
-// ── Dashboard ─────────────────────────────────────────────────────────
-let dashboard;
-
-class Dashboard {
-  constructor() {
-    this.rawData = [];
-    this.filteredData = [];
-    this.charts = {};
-    this.filters = { year:'all', mode:'total', dateStart:null, dateEnd:null };
-    this.svcCampus = 'mission';
-    this.yoyCampus = 'all';
-    this.refreshTimer = null;
-  }
-
-  async refresh() {
-    const btn = document.getElementById('refreshBtn');
-    btn.classList.add('loading');
-    try {
-      function proxyUrl(url) {
-        if (!CORS_PROXY) return url;
-        return CORS_PROXY + encodeURIComponent(url) + CORS_SUFFIX;
-      }
-
-      async function fetchSheet(url) {
-        // Try direct first (works if hosted on a server)
-        try {
-          const r = await fetch(url, { cache:'no-store' });
-          if (r.ok) return await r.text();
-        } catch(e) { /* CORS blocked, try proxy */ }
-        // Fallback to proxy
-        const r2 = await fetch(proxyUrl(url), { cache:'no-store' });
-        if (!r2.ok) throw new Error('Proxy fetch failed: ' + r2.status);
-        return await r2.text();
-      }
-
-      const results = await Promise.all([
-        fetchSheet(SHEET_URLS.missionMain),
-        fetchSheet(SHEET_URLS.missionKids),
-        fetchSheet(SHEET_URLS.edinburg),
-        fetchSheet(SHEET_URLS.ipv),
-      ]);
-
-      const mMain = parseMissionMain(parseCSV(results[0]));
-      const mKids = parseMissionKids(parseCSV(results[1]));
-      const edin = parseEdinburg(parseCSV(results[2]));
-      const ipv = parseIPV(parseCSV(results[3]));
-
-      this.rawData = mergeData(mMain, mKids, edin, ipv);
-      this.applyFilters();
-
-      const now = new Date();
-      document.getElementById('lastRefresh').textContent =
-        'Last refreshed: ' + now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-    } catch(err) {
-      console.error('Refresh failed:', err);
-      document.getElementById('lastRefresh').textContent = 'Refresh failed \u2014 check console';
-    }
-    btn.classList.remove('loading');
-  }
-
-  applyFilters() {
-    let data = this.rawData;
-    const f = this.filters;
-    if (f.year !== 'all') {
-      const y = parseInt(f.year);
-      data = data.filter(r => r.date.getFullYear() === y);
-    }
-    if (f.dateStart) {
-      const ds = new Date(f.dateStart + 'T00:00:00');
-      data = data.filter(r => r.date >= ds);
-    }
-    if (f.dateEnd) {
-      const de = new Date(f.dateEnd + 'T23:59:59');
-      data = data.filter(r => r.date <= de);
-    }
-    this.filteredData = data;
-    this.renderKPIs();
-    this.renderTrendChart();
-    this.renderCampusChart();
-    this.renderSvcChart();
-    this.renderYoyChart();
-    this.renderTable();
-  }
-
-  // ── KPIs ──
-  renderKPIs() {
-    const data = this.filteredData;
-    const mode = this.filters.mode;
-    const el = document.getElementById('kpiRow');
-    if (!data.length) { el.innerHTML = '<div class="kpi-card"><div class="kpi-label">No Data</div><div class="kpi-value total">\u2014</div></div>'; return; }
-
-    const latest = data[data.length-1];
-    const prev = data.length > 1 ? data[data.length-2] : null;
-
-    function chg(cur, prv) {
-      if (!prv) return '<span class="kpi-change neutral">\u2014</span>';
-      const pct = ((cur-prv)/prv*100);
-      const s = pct>=0?'+':'';
-      const c = pct>0?'up':pct<0?'down':'neutral';
-      return '<span class="kpi-change '+c+'">'+s+pct.toFixed(1)+'% vs prior week</span>';
-    }
-
-    const gt = grandTotal(latest,mode);
-    const gtp = prev ? grandTotal(prev,mode) : null;
-    const mt = campusTotal(latest,'mission',mode);
-    const mtp = prev ? campusTotal(prev,'mission',mode) : null;
-    const et = campusTotal(latest,'edinburg',mode);
-    const etp = prev ? campusTotal(prev,'edinburg',mode) : null;
-    const it = campusTotal(latest,'ipv',mode);
-    const itp = prev ? campusTotal(prev,'ipv',mode) : null;
-
-    el.innerHTML = `
-      <div class="kpi-card">
-        <div class="accent-bar" style="background:var(--text)"></div>
-        <div class="kpi-label">Total Attendance</div>
-        <div class="kpi-value total">${fmtNum(gt)}</div>
-        <div class="kpi-sub">${fmtDate(latest.date)}</div>
-        ${chg(gt,gtp)}
-      </div>
-      <div class="kpi-card">
-        <div class="accent-bar" style="background:var(--mission)"></div>
-        <div class="kpi-label">Mission</div>
-        <div class="kpi-value mission">${fmtNum(mt)}</div>
-        <div class="kpi-sub">Adults ${fmtNum(mode==='auditorium'?latest.mission_auditorium:latest.mission_adults)} &middot; Kids ${fmtNum(latest.mission_kids)}</div>
-        ${chg(mt,mtp)}
-      </div>
-      <div class="kpi-card">
-        <div class="accent-bar" style="background:var(--edinburg)"></div>
-        <div class="kpi-label">Edinburg</div>
-        <div class="kpi-value edinburg">${fmtNum(et)}</div>
-        <div class="kpi-sub">Adults ${fmtNum(mode==='auditorium'?latest.edinburg_auditorium:latest.edinburg_adults)} &middot; Kids ${fmtNum(latest.edinburg_kids)}</div>
-        ${chg(et,etp)}
-      </div>
-      <div class="kpi-card">
-        <div class="accent-bar" style="background:var(--ipv)"></div>
-        <div class="kpi-label">Iglesia Palm Valley</div>
-        <div class="kpi-value ipv">${fmtNum(it)}</div>
-        <div class="kpi-sub">Adults ${fmtNum(mode==='auditorium'?latest.ipv_auditorium:latest.ipv_adults)} &middot; Kids ${fmtNum(latest.ipv_kids)}</div>
-        ${chg(it,itp)}
-      </div>`;
-  }
-
-  // ── Trend Chart ──
-  renderTrendChart() {
-    const data = this.filteredData, mode = this.filters.mode;
-    const labels = data.map(r=>r.date);
-    const ds = [
-      { label:'Mission', data:data.map(r=>campusTotal(r,'mission',mode)), borderColor:COLORS.mission, backgroundColor:COLORS.mission+'18' },
-      { label:'Edinburg', data:data.map(r=>campusTotal(r,'edinburg',mode)), borderColor:COLORS.edinburg, backgroundColor:COLORS.edinburg+'18' },
-      { label:'IPV', data:data.map(r=>campusTotal(r,'ipv',mode)), borderColor:COLORS.ipv, backgroundColor:COLORS.ipv+'18' },
-    ];
-
-    if (this.charts.trend) {
-      this.charts.trend.data.labels = labels;
-      ds.forEach((d,i)=>{ this.charts.trend.data.datasets[i].data = d.data; });
-      this.charts.trend.update('none');
-      return;
-    }
-
-    this.charts.trend = new Chart(document.getElementById('trendChart'), {
-      type:'line',
-      data:{ labels, datasets: ds.map(d=>({
-        ...d, borderWidth:2, tension:0.3, pointRadius:1.5, pointHoverRadius:5, fill:false
-      }))},
-      options:{
-        responsive:true, maintainAspectRatio:false,
-        interaction:{ mode:'index', intersect:false },
-        plugins:{
-          legend:{ position:'top', labels:{ usePointStyle:true, padding:16, font:{size:12} }},
-          tooltip:{ callbacks:{ label: ctx => ctx.dataset.label+': '+fmtNum(ctx.parsed.y) }}
-        },
-        scales:{
-          x:{ type:'time', time:{ unit:'month', tooltipFormat:'MMM d, yyyy' }, grid:{ display:false }},
-          y:{ beginAtZero:true, ticks:{ callback: v => v>=1000?(v/1000).toFixed(0)+'K':v }}
-        }
-      }
-    });
-  }
-
-  // ── Campus Comparison ──
-  renderCampusChart() {
-    const data = this.filteredData, mode = this.filters.mode;
-    const last4 = data.slice(-4);
-    if (!last4.length) return;
-
-    function avg(arr, c) { return Math.round(arr.reduce((s,r)=>s+campusTotal(r,c,mode),0)/arr.length); }
-    function adAvg(arr, c) {
-      return Math.round(arr.reduce((s,r)=>{
-        if (c==='mission') return s+(mode==='auditorium'?r.mission_auditorium:r.mission_adults);
-        if (c==='edinburg') return s+(mode==='auditorium'?r.edinburg_auditorium:r.edinburg_adults);
-        return s+(mode==='auditorium'?r.ipv_auditorium:r.ipv_adults);
-      },0)/arr.length);
-    }
-    function kiAvg(arr, c) {
-      return Math.round(arr.reduce((s,r)=>{
-        if (c==='mission') return s+r.mission_kids+r.mission_dt;
-        if (c==='edinburg') return s+r.edinburg_kids+r.edinburg_youth+r.edinburg_dt;
-        return s+r.ipv_kids+r.ipv_dt;
-      },0)/arr.length);
-    }
-
-    const labels = ['Mission','Edinburg','IPV'];
-    const adultsD = [adAvg(last4,'mission'), adAvg(last4,'edinburg'), adAvg(last4,'ipv')];
-    const kidsD = [kiAvg(last4,'mission'), kiAvg(last4,'edinburg'), kiAvg(last4,'ipv')];
-
-    if (this.charts.campus) {
-      this.charts.campus.data.datasets[0].data = adultsD;
-      this.charts.campus.data.datasets[1].data = kidsD;
-      this.charts.campus.update('none');
-      return;
-    }
-
-    this.charts.campus = new Chart(document.getElementById('campusChart'), {
-      type:'bar',
-      data:{
-        labels,
-        datasets:[
-          { label:'Adults', data:adultsD, backgroundColor:[COLORS.mission+'CC',COLORS.edinburg+'CC',COLORS.ipv+'CC'], borderRadius:4 },
-          { label:'Kids + DT', data:kidsD, backgroundColor:[COLORS.mission+'55',COLORS.edinburg+'55',COLORS.ipv+'55'], borderRadius:4 },
-        ]
-      },
-      options:{
-        responsive:true, maintainAspectRatio:false,
-        plugins:{
-          legend:{ position:'top', labels:{ usePointStyle:true, padding:16, font:{size:12} }},
-          tooltip:{ callbacks:{ label: ctx => ctx.dataset.label+': '+fmtNum(ctx.parsed.y) }}
-        },
-        scales:{
-          x:{ stacked:true, grid:{ display:false }},
-          y:{ stacked:true, beginAtZero:true, ticks:{ callback: v => v>=1000?(v/1000).toFixed(0)+'K':v }}
-        }
-      }
-    });
-  }
-
-  // ── Service Breakdown ──
-  renderSvcChart() {
-    const data = this.filteredData, mode = this.filters.mode, campus = this.svcCampus;
-    const recent = data.slice(-8);
-    if (!recent.length) return;
-
-    const labels = recent.map(r => fmtShort(r.date));
-    const maxSvc = campus==='mission'?5:campus==='edinburg'?4:2;
-    const datasets = [];
-
-    for (let s = 0; s < maxSvc; s++) {
-      const svcData = recent.map(r => {
-        const svcs = r[campus+'_svc'];
-        if (!svcs||!svcs[s]) return 0;
-        const svc = svcs[s];
-        return mode==='auditorium' ? (svc.auditorium||0) : (svc.totalAdults||0);
-      });
-      if (svcData.some(v=>v>0)) {
-        datasets.push({
-          label: ['1st','2nd','3rd','4th','5th'][s]+' Service',
-          data: svcData,
-          backgroundColor: SVC_COLORS[s%SVC_COLORS.length]+'CC',
-          borderRadius: 3,
-        });
-      }
-    }
-
-    if (this.charts.svc) this.charts.svc.destroy();
-    this.charts.svc = new Chart(document.getElementById('svcChart'), {
-      type:'bar',
-      data:{ labels, datasets },
-      options:{
-        responsive:true, maintainAspectRatio:false,
-        plugins:{
-          legend:{ position:'top', labels:{ usePointStyle:true, padding:12, font:{size:11} }},
-          tooltip:{ callbacks:{ label: ctx => ctx.dataset.label+': '+fmtNum(ctx.parsed.y) }}
-        },
-        scales:{
-          x:{ stacked:true, grid:{ display:false }, ticks:{ font:{size:10} }},
-          y:{ stacked:true, beginAtZero:true, ticks:{ callback: v => v>=1000?(v/1000).toFixed(0)+'K':v }}
-        }
-      }
-    });
-  }
-
-  // ── Year-over-Year ──
-  renderYoyChart() {
-    const mode = this.filters.mode, campus = this.yoyCampus;
-    const data = this.rawData; // always full data for YoY
-    const years = [...new Set(data.map(r=>r.date.getFullYear()))].sort();
-
-    const datasets = years.map(year => {
-      const yd = data.filter(r => r.date.getFullYear()===year);
-      const points = yd.map(r => ({
-        x: weekOfYear(r.date),
-        y: campus==='all' ? grandTotal(r,mode) : campusTotal(r,campus,mode)
-      }));
-      const isLatest = year === years[years.length-1];
-      return {
-        label: String(year), data: points,
-        borderColor: YEAR_COLORS[year]||'#999',
-        backgroundColor: (YEAR_COLORS[year]||'#999')+'18',
-        borderWidth: isLatest?3:1.5,
-        pointRadius: isLatest?2.5:1,
-        pointHoverRadius: 5, tension:0.3, fill:false,
-      };
-    });
-
-    if (this.charts.yoy) this.charts.yoy.destroy();
-    this.charts.yoy = new Chart(document.getElementById('yoyChart'), {
-      type:'line', data:{ datasets },
-      options:{
-        responsive:true, maintainAspectRatio:false,
-        interaction:{ mode:'index', intersect:false },
-        plugins:{
-          legend:{ position:'top', labels:{ usePointStyle:true, padding:16, font:{size:12} }},
-          tooltip:{ callbacks:{
-            title: items => 'Week '+items[0].parsed.x,
-            label: ctx => ctx.dataset.label+': '+fmtNum(ctx.parsed.y)
-          }}
-        },
-        scales:{
-          x:{ type:'linear', title:{ display:true, text:'Week of Year', font:{size:12} }, min:1, max:53, ticks:{ stepSize:4 }},
-          y:{ beginAtZero:true, ticks:{ callback: v => v>=1000?(v/1000).toFixed(0)+'K':v }}
-        }
-      }
-    });
-  }
-
-  // ── Table ──
-  renderTable() {
-    const data = [...this.filteredData].reverse();
-    const mode = this.filters.mode;
-    const container = document.getElementById('tableContainer');
-
-    const cols = [
-      { key:'date', label:'Date', fmt: r=>fmtDate(r.date), val: r=>r.date.getTime() },
-      { key:'mA', label:'Mission Adults', fmt: r=>fmtNum(mode==='auditorium'?r.mission_auditorium:r.mission_adults), val: r=>mode==='auditorium'?r.mission_auditorium:r.mission_adults },
-      { key:'mK', label:'Mission Kids', fmt: r=>fmtNum(r.mission_kids), val: r=>r.mission_kids },
-      { key:'eA', label:'Edinburg Adults', fmt: r=>fmtNum(mode==='auditorium'?r.edinburg_auditorium:r.edinburg_adults), val: r=>mode==='auditorium'?r.edinburg_auditorium:r.edinburg_adults },
-      { key:'eK', label:'Edinburg Kids', fmt: r=>fmtNum(r.edinburg_kids), val: r=>r.edinburg_kids },
-      { key:'iA', label:'IPV Adults', fmt: r=>fmtNum(mode==='auditorium'?r.ipv_auditorium:r.ipv_adults), val: r=>mode==='auditorium'?r.ipv_auditorium:r.ipv_adults },
-      { key:'iK', label:'IPV Kids', fmt: r=>fmtNum(r.ipv_kids), val: r=>r.ipv_kids },
-      { key:'gt', label:'Grand Total', fmt: r=>fmtNum(grandTotal(r,mode)), val: r=>grandTotal(r,mode) },
-    ];
-
-    let sortCol = 'date', sortDir = 'desc';
-
-    function render(sorted) {
-      let h = '<table class="data-table"><thead><tr>';
-      cols.forEach(c => {
-        const arrow = sortCol===c.key ? (sortDir==='asc'?' \u25B2':' \u25BC') : '';
-        const cls = c.key!=='date' ? ' class="num"' : '';
-        h += '<th'+cls+' data-col="'+c.key+'">'+c.label+'<span class="sort-arrow">'+arrow+'</span></th>';
-      });
-      h += '</tr></thead><tbody>';
-      sorted.forEach(r => {
-        h += '<tr>';
-        cols.forEach(c => {
-          const cls = c.key!=='date' ? ' class="num"' : '';
-          h += '<td'+cls+'>'+c.fmt(r)+'</td>';
-        });
-        h += '</tr>';
-      });
-      h += '</tbody></table>';
-      container.innerHTML = h;
-
-      container.querySelectorAll('th').forEach(th => {
-        th.onclick = () => {
-          const col = th.dataset.col;
-          if (sortCol===col) sortDir = sortDir==='asc'?'desc':'asc';
-          else { sortCol = col; sortDir = 'desc'; }
-          const c = cols.find(x=>x.key===col);
-          const s = [...data].sort((a,b) => {
-            const av = c.val(a), bv = c.val(b);
-            const cmp = av<bv?-1:av>bv?1:0;
-            return sortDir==='asc'?cmp:-cmp;
-          });
-          render(s);
-        };
-      });
-    }
-
-    render(data);
-  }
-
-  startAutoRefresh() {
-    if (this.refreshTimer) clearInterval(this.refreshTimer);
-    this.refreshTimer = setInterval(() => this.refresh(), AUTO_REFRESH_MS);
-  }
-}
-
-// ── Filter Handlers ───────────────────────────────────────────────────
-function setFilter(type, btn) {
-  document.querySelectorAll('.filter-btn[data-filter="'+type+'"]').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  dashboard.filters[type] = btn.dataset.value;
-  dashboard.applyFilters();
-}
-
-function setSvcCampus(campus, btn) {
-  document.querySelectorAll('#svcCampusBtns .cb').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  dashboard.svcCampus = campus;
-  dashboard.renderSvcChart();
-}
-
-function setYoyCampus(campus, btn) {
-  document.querySelectorAll('#yoyCampusBtns .cb').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  dashboard.yoyCampus = campus;
-  dashboard.renderYoyChart();
-}
-
-function applyDateFilter() {
-  dashboard.filters.dateStart = document.getElementById('filterDateStart').value || null;
-  dashboard.filters.dateEnd = document.getElementById('filterDateEnd').value || null;
-  dashboard.applyFilters();
-}
-
-// ── Startup ───────────────────────────────────────────────────────────
-dashboard = new Dashboard();
-
-async function startDashboard() {
-  const isConfigured = !Object.values(SHEET_URLS).some(u => u.includes('PASTE_YOUR'));
-  if (!isConfigured) {
-    document.getElementById('setupScreen').style.display = 'flex';
-    return;
-  }
-  document.getElementById('loadingScreen').style.display = 'flex';
-  await dashboard.refresh();
-  document.getElementById('loadingScreen').style.display = 'none';
-  document.getElementById('dashboardScreen').style.display = 'block';
-  dashboard.startAutoRefresh();
+async function startDashboard(){
+  const configured=!Object.values(SHEET_URLS).some(u=>u.includes('PASTE_YOUR'));
+  if(!configured){document.getElementById('setupScreen').style.display='flex';return;}
+  document.getElementById('loadingScreen').style.display='flex';
+  await refreshAll();
+  document.getElementById('loadingScreen').style.display='none';
+  document.getElementById('appShell').style.display='block';
+  if(refreshTimer)clearInterval(refreshTimer);
+  refreshTimer=setInterval(refreshAll,AUTO_REFRESH_MS);
 }
 </script>
 </body>
