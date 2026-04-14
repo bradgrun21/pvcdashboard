@@ -211,6 +211,10 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         <span>Rooted</span>
       </div>
+      <div class="nav-item" data-tab="holiday" onclick="switchTab('holiday',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span>Holiday Services</span>
+      </div>
     </nav>
     <div class="sidebar-footer">
       <span class="last-refresh" id="lastRefresh">Not yet loaded</span>
@@ -322,6 +326,72 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       <div class="table-section"><div class="table-card"><h2>Rooted Detail</h2><div class="subtitle">Click headers to sort</div><div class="table-scroll" id="rTableContainer"></div></div></div>
     </div>
 
+    <!-- ═══════════════════════════════════════════ -->
+    <!--            HOLIDAY SERVICES TAB             -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-holiday">
+      <div class="dash-header">
+        <div class="title-area">
+          <h1>Holiday Services</h1>
+          <p>Christmas Eve &middot; Good Friday &middot; Easter</p>
+        </div>
+        <div class="header-actions">
+          <span class="auto-badge">Auto-refresh 5 min</span>
+          <button class="refresh-btn" onclick="refreshAll()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+      <div class="filter-bar" id="holidayFilters">
+        <div class="filter-group">
+          <label>Event</label>
+          <button class="fbtn active" data-filter="he" data-value="all" onclick="setHF('event','all',this)">All</button>
+          <button class="fbtn" data-filter="he" data-value="Christmas Eve" onclick="setHF('event','Christmas Eve',this)">Christmas Eve</button>
+          <button class="fbtn" data-filter="he" data-value="Good Friday" onclick="setHF('event','Good Friday',this)">Good Friday</button>
+          <button class="fbtn" data-filter="he" data-value="Easter" onclick="setHF('event','Easter',this)">Easter</button>
+        </div>
+        <div class="filter-sep"></div>
+        <div class="filter-group">
+          <label>Campus</label>
+          <button class="fbtn active" data-filter="hc" data-value="all" onclick="setHF('campus','all',this)">All</button>
+          <button class="fbtn" data-filter="hc" data-value="Mission" onclick="setHF('campus','Mission',this)">Mission</button>
+          <button class="fbtn" data-filter="hc" data-value="Edinburg" onclick="setHF('campus','Edinburg',this)">Edinburg</button>
+          <button class="fbtn" data-filter="hc" data-value="Spanish" onclick="setHF('campus','Spanish',this)">Spanish</button>
+        </div>
+      </div>
+      <div class="kpi-row" id="hKpiRow"></div>
+      <div class="charts-section">
+        <div class="chart-grid">
+          <div class="card">
+            <h2>Year-over-Year Attendance</h2>
+            <div class="subtitle">Total attendance by event across years</div>
+            <div class="chart-wrap tall"><canvas id="hYoyChart"></canvas></div>
+          </div>
+        </div>
+        <div class="chart-grid-2">
+          <div class="card">
+            <h2>Campus Breakdown</h2>
+            <div class="subtitle">Attendance by campus per year</div>
+            <div class="chart-wrap"><canvas id="hCampusChart"></canvas></div>
+          </div>
+          <div class="card">
+            <h2>RSVP vs Auditorium</h2>
+            <div class="subtitle">RSVP compared to actual auditorium attendance</div>
+            <div class="chart-wrap"><canvas id="hRsvpChart"></canvas></div>
+          </div>
+        </div>
+        <div class="chart-grid" style="margin-top:var(--gap)">
+          <div class="card">
+            <h2>Service Breakdown</h2>
+            <div class="subtitle">Per-service attendance for the most recent event</div>
+            <div class="chart-wrap tall"><canvas id="hSvcChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+      <div class="table-section"><div class="table-card"><h2>Holiday Service Detail</h2><div class="subtitle">Click headers to sort</div><div class="table-scroll" id="hTableContainer"></div></div></div>
+    </div>
+
     <div class="dash-footer">Palm Valley Church &mdash; Dashboard &middot; Data refreshes from Google Sheets</div>
   </div>
 </div>
@@ -336,6 +406,7 @@ const SHEET_URLS = {
   edinburg:    'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIES_Xjrn1kYI4vrfd0HshbJukA4DZDvi1Y34jS6MiLJrpIOt8cynPs4fxxMDfGRqCdBNuqnk87QWe/pub?gid=710240675&single=true&output=csv',
   ipv:         'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIES_Xjrn1kYI4vrfd0HshbJukA4DZDvi1Y34jS6MiLJrpIOt8cynPs4fxxMDfGRqCdBNuqnk87QWe/pub?gid=930027488&single=true&output=csv',
   rooted:      'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=421377062&single=true&output=csv',
+  holiday:     'https://docs.google.com/spreadsheets/d/e/2PACX-1vRfD4tAKk-Ltf0c65jzuHpqVi-ovIg5vNtiukWs8Y65t7J-dDro43qSVhr-O2Ar0YVzh3wwUOLM3u-H/pub?gid=912394380&single=true&output=csv',
 };
 const AUTO_REFRESH_MS = 5*60*1000;
 const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
@@ -346,7 +417,7 @@ async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEn
 async function doLogin(){const i=document.getElementById('loginPassword'),e=document.getElementById('loginError');if(await sha256(i.value)===PASS_HASH){document.getElementById('loginScreen').style.display='none';startDashboard();}else{e.textContent='Incorrect password.';i.value='';i.focus();}}
 
 // ── Utility ───────────────────────────────────────────────────────────
-function parseCSV(t){const L=[];let c='',q=false;for(let i=0;i<t.length;i++){const h=t[i];if(q){if(h==='"'&&t[i+1]==='"'){c+='"';i++;}else if(h==='"')q=false;else c+=h;}else{if(h==='"')q=true;else if(h==='\r'||h==='\n'){if(h==='\r'&&t[i+1]==='\n')i++;L.push(c);c='';}else c+=h;}}if(c)L.push(c);const R=[];for(const l of L){if(!l.trim())continue;const F=[];let f='',q2=false;for(let i=0;i<l.length;i++){const h=l[i];if(q2){if(h==='"'&&l[i+1]==='"'){f+='"';i++;}else if(h==='"')q2=false;else f+=h;}else{if(h==='"')q2=true;else if(h===','){F.push(f);f='';}else f+=h;}}F.push(f);R.push(F);}return R;}
+function parseCSV(t){const L=[];let c='',q=false;for(let i=0;i<t.length;i++){const h=t[i];if(h==='"'){q=!q;c+=h;}else if(!q&&(h==='\r'||h==='\n')){if(h==='\r'&&t[i+1]==='\n')i++;L.push(c);c='';}else c+=h;}if(c)L.push(c);const R=[];for(const l of L){if(!l.trim())continue;const F=[];let f='',q2=false;for(let i=0;i<l.length;i++){const h=l[i];if(q2){if(h==='"'&&l[i+1]==='"'){f+='"';i++;}else if(h==='"')q2=false;else f+=h;}else{if(h==='"')q2=true;else if(h===','){F.push(f);f='';}else f+=h;}}F.push(f);R.push(F);}return R;}
 function num(v){if(v===undefined||v===null||v==='')return 0;const n=parseFloat(String(v).replace(/,/g,''));return isNaN(n)?0:n;}
 function parseDate(s){if(!s||!s.trim())return null;const p=s.trim().split('/');if(p.length!==3)return null;const m=parseInt(p[0]),d=parseInt(p[1]),y=parseInt(p[2]);if(isNaN(m)||isNaN(d)||isNaN(y))return null;return new Date(y,m-1,d);}
 function dateKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -462,6 +533,197 @@ function render(s){let h='<table class="data-table"><thead><tr>';cols.forEach(c=
 render(d);}
 
 // ══════════════════════════════════════════════════════════════════════
+//  HOLIDAY SERVICES
+// ══════════════════════════════════════════════════════════════════════
+const HCAMP_COLORS={Mission:'#4a7f97',Edinburg:'#7b6fa6',Spanish:'#c47a2e'};
+const HEVENT_COLORS={'Christmas Eve':'#c0392b','Good Friday':'#7b6fa6','Easter':'#2e7d5b'};
+const HEVENT_ORDER=['Good Friday','Easter','Christmas Eve'];
+let hRaw=[],hFiltered=[],hCharts={},hFilters={event:'all',campus:'all'};
+
+function parseHoliday(rows){
+  const d=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];if(!r||r.length<9)continue;
+    const dt=parseDate(r[1]);if(!dt)continue;
+    const eventLabel=(r[0]||'').trim();
+    const year=parseInt(r[2])||dt.getFullYear();
+    const campus=(r[3]||'').trim();
+    const eventType=eventLabel.replace(/^\d{4}\s+/,'');
+    const service=(r[5]||'').trim();
+    const time=(r[6]||'').trim();
+    const totalAtt=num(r[7]);
+    const audAtt=num(r[8]);
+    const rsvp=num(r[9]);
+    d.push({date:dt,year,campus,eventLabel,eventType,service,time,totalAtt,audAtt,rsvp,effectiveTotal:totalAtt||audAtt});
+  }
+  d.sort((a,b)=>a.date-b.date);return d;
+}
+
+// Group service-level rows into event aggregates: { year, eventType, campusTotals, totalAtt, audAtt, rsvp, services[] }
+function hAggregate(data){
+  const map={};
+  data.forEach(r=>{
+    const k=r.year+'|'+r.eventType;
+    if(!map[k])map[k]={year:r.year,eventType:r.eventType,totalAtt:0,audAtt:0,rsvp:0,effectiveTotal:0,campuses:{},services:[],dates:[]};
+    const g=map[k];
+    g.totalAtt+=r.totalAtt;g.audAtt+=r.audAtt;g.rsvp+=r.rsvp;g.effectiveTotal+=r.effectiveTotal;
+    if(!g.campuses[r.campus])g.campuses[r.campus]={totalAtt:0,audAtt:0,rsvp:0,effectiveTotal:0};
+    g.campuses[r.campus].totalAtt+=r.totalAtt;g.campuses[r.campus].audAtt+=r.audAtt;
+    g.campuses[r.campus].rsvp+=r.rsvp;g.campuses[r.campus].effectiveTotal+=r.effectiveTotal;
+    g.services.push(r);
+    if(!g.dates.includes(r.date.getTime()))g.dates.push(r.date.getTime());
+  });
+  return Object.values(map).sort((a,b)=>{
+    if(a.year!==b.year)return a.year-b.year;
+    return HEVENT_ORDER.indexOf(a.eventType)-HEVENT_ORDER.indexOf(b.eventType);
+  });
+}
+
+function setHF(k,v,btn){
+  if(k==='event'){hFilters.event=v;document.querySelectorAll('[data-filter="he"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}
+  else if(k==='campus'){hFilters.campus=v;document.querySelectorAll('[data-filter="hc"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}
+  hApplyFilters();
+}
+
+function hApplyFilters(){
+  let d=hRaw;
+  if(hFilters.event!=='all')d=d.filter(r=>r.eventType===hFilters.event);
+  if(hFilters.campus!=='all')d=d.filter(r=>r.campus===hFilters.campus);
+  hFiltered=d;
+  hRenderKPI();hRenderYoy();hRenderCampus();hRenderRsvp();hRenderSvc();hRenderTable();
+}
+
+function hRenderKPI(){
+  const el=document.getElementById('hKpiRow');
+  const agg=hAggregate(hFiltered);
+  if(!agg.length){el.innerHTML='<div class="kpi-card"><div class="kpi-label">No Data</div><div class="kpi-value total">\u2014</div></div>';return;}
+  const latest=agg[agg.length-1];
+  // Find previous same event
+  const prev=agg.filter(a=>a.eventType===latest.eventType&&a.year<latest.year);
+  const prevEvt=prev.length?prev[prev.length-1]:null;
+
+  function ch(cur,prv,label){
+    if(!prv||!prv)return'<span class="kpi-change neutral">\u2014</span>';
+    const pct=((cur-prv)/prv*100);
+    return'<span class="kpi-change '+(pct>0?'up':pct<0?'down':'neutral')+'">'+(pct>=0?'+':'')+pct.toFixed(1)+'% vs '+label+'</span>';
+  }
+
+  const prevLabel=prevEvt?prevEvt.year+' '+prevEvt.eventType:'prior';
+  const hasTotal=latest.totalAtt>0;
+  const hasRsvp=latest.rsvp>0;
+  const rsvpPct=latest.audAtt>0&&hasRsvp?Math.round(latest.rsvp/latest.audAtt*100):0;
+
+  let html=`<div class="kpi-card"><div class="accent-bar" style="background:${HEVENT_COLORS[latest.eventType]||'var(--accent)'}"></div><div class="kpi-label">${latest.year} ${latest.eventType}</div><div class="kpi-value total">${fmtNum(latest.effectiveTotal)}</div><div class="kpi-sub">Total Attendance</div>${ch(latest.effectiveTotal,prevEvt?prevEvt.effectiveTotal:null,prevLabel)}</div>`;
+  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--mission)"></div><div class="kpi-label">Auditorium</div><div class="kpi-value mission">${fmtNum(latest.audAtt)}</div><div class="kpi-sub">Auditorium-only count</div>${ch(latest.audAtt,prevEvt?prevEvt.audAtt:null,prevLabel)}</div>`;
+  if(hasRsvp){
+    html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--edinburg)"></div><div class="kpi-label">RSVPs</div><div class="kpi-value edinburg">${fmtNum(latest.rsvp)}</div><div class="kpi-sub">vs Auditorium: ${rsvpPct}%</div>${ch(latest.rsvp,prevEvt?prevEvt.rsvp:null,prevLabel)}</div>`;
+    html+=`<div class="kpi-card"><div class="accent-bar" style="background:${rsvpPct>100?'var(--negative)':'var(--positive)'}"></div><div class="kpi-label">RSVP-to-Aud Ratio</div><div class="kpi-value total">${rsvpPct}%</div><div class="kpi-sub">${rsvpPct>100?'Over-RSVPed':'Under-RSVPed'} by ${Math.abs(rsvpPct-100)}%</div></div>`;
+  } else {
+    html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--edinburg)"></div><div class="kpi-label">Services</div><div class="kpi-value edinburg">${latest.services.length}</div><div class="kpi-sub">${latest.year} ${latest.eventType}</div></div>`;
+    html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--ipv)"></div><div class="kpi-label">Avg per Service</div><div class="kpi-value ipv">${fmtNum(Math.round(latest.effectiveTotal/latest.services.length))}</div><div class="kpi-sub">Auditorium avg: ${fmtNum(Math.round(latest.audAtt/latest.services.length))}</div></div>`;
+  }
+  el.innerHTML=html;
+}
+
+function hRenderYoy(){
+  const agg=hAggregate(hFiltered);
+  if(!agg.length){if(hCharts.yoy)hCharts.yoy.destroy();hCharts.yoy=null;return;}
+  const evtFilter=hFilters.event;
+
+  let labels,datasets;
+  if(evtFilter!=='all'){
+    // Single event: bars per year
+    labels=agg.map(a=>String(a.year));
+    datasets=[
+      {label:'Total Attendance',data:agg.map(a=>a.effectiveTotal),backgroundColor:(HEVENT_COLORS[evtFilter]||'#4a7f97')+'CC',borderRadius:4},
+      {label:'Auditorium',data:agg.map(a=>a.audAtt),backgroundColor:(HEVENT_COLORS[evtFilter]||'#4a7f97')+'55',borderRadius:4}
+    ];
+  } else {
+    // All events: grouped by year, bars per event type
+    const years=[...new Set(agg.map(a=>a.year))].sort();
+    labels=years.map(String);
+    const events=HEVENT_ORDER.filter(e=>agg.some(a=>a.eventType===e));
+    datasets=events.map(evt=>({
+      label:evt,
+      data:years.map(y=>{const m=agg.find(a=>a.year===y&&a.eventType===evt);return m?m.effectiveTotal:0;}),
+      backgroundColor:HEVENT_COLORS[evt]+'CC',borderRadius:4
+    }));
+  }
+  if(hCharts.yoy)hCharts.yoy.destroy();
+  hCharts.yoy=new Chart(document.getElementById('hYoyChart'),{type:'bar',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:16,font:{size:12}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v}}}}});
+}
+
+function hRenderCampus(){
+  const agg=hAggregate(hFiltered);
+  if(!agg.length||hFilters.campus!=='all'){if(hCharts.campus)hCharts.campus.destroy();hCharts.campus=null;return;}
+  const labels=agg.map(a=>a.year+' '+a.eventType);
+  const campuses=['Mission','Edinburg','Spanish'];
+  const datasets=campuses.map(c=>({
+    label:c,
+    data:agg.map(a=>(a.campuses[c]||{}).effectiveTotal||0),
+    backgroundColor:HCAMP_COLORS[c]+'CC',borderRadius:4
+  })).filter(ds=>ds.data.some(v=>v>0));
+  if(hCharts.campus)hCharts.campus.destroy();
+  hCharts.campus=new Chart(document.getElementById('hCampusChart'),{type:'bar',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10},maxRotation:45}},y:{stacked:true,beginAtZero:true,ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v}}}}});
+}
+
+function hRenderRsvp(){
+  // Only show events that have RSVP data
+  const agg=hAggregate(hFiltered).filter(a=>a.rsvp>0);
+  if(!agg.length){if(hCharts.rsvp)hCharts.rsvp.destroy();hCharts.rsvp=null;return;}
+  const labels=agg.map(a=>a.year+' '+a.eventType);
+  const datasets=[
+    {label:'Auditorium Att.',data:agg.map(a=>a.audAtt),backgroundColor:'#4a7f97CC',borderRadius:4},
+    {label:'RSVP',data:agg.map(a=>a.rsvp),backgroundColor:'#c47a2eCC',borderRadius:4}
+  ];
+  if(hCharts.rsvp)hCharts.rsvp.destroy();
+  hCharts.rsvp=new Chart(document.getElementById('hRsvpChart'),{type:'bar',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:{callbacks:{afterBody:(items)=>{const i=items[0].dataIndex;const aud=agg[i].audAtt;const rsvp=agg[i].rsvp;const pct=aud>0?Math.round(rsvp/aud*100):0;return'RSVP-to-Aud: '+pct+'%';}}}},scales:{x:{grid:{display:false},ticks:{font:{size:10},maxRotation:45}},y:{beginAtZero:true,ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v}}}}});
+}
+
+function hRenderSvc(){
+  const agg=hAggregate(hFiltered);
+  if(!agg.length){if(hCharts.svc)hCharts.svc.destroy();hCharts.svc=null;return;}
+  const latest=agg[agg.length-1];
+  const svcs=latest.services.sort((a,b)=>a.date-b.date||(a.time<b.time?-1:1));
+  const labels=svcs.map(s=>s.campus+' '+s.service+' ('+s.time+')');
+  const ds=[];
+  if(svcs.some(s=>s.totalAtt>0)){
+    ds.push({label:'Total Attendance',data:svcs.map(s=>s.totalAtt),backgroundColor:svcs.map(s=>(HCAMP_COLORS[s.campus]||'#999')+'CC'),borderRadius:4});
+  }
+  ds.push({label:'Auditorium',data:svcs.map(s=>s.audAtt),backgroundColor:svcs.map(s=>(HCAMP_COLORS[s.campus]||'#999')+'66'),borderRadius:4});
+  if(svcs.some(s=>s.rsvp>0)){
+    ds.push({label:'RSVP',data:svcs.map(s=>s.rsvp),backgroundColor:svcs.map(s=>'#e67e2266'),borderColor:svcs.map(s=>'#e67e22'),borderWidth:1,borderRadius:4,type:'bar'});
+  }
+  if(hCharts.svc)hCharts.svc.destroy();
+  hCharts.svc=new Chart(document.getElementById('hSvcChart'),{type:'bar',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.x)}}},scales:{y:{grid:{display:false},ticks:{font:{size:10}}},x:{beginAtZero:true,ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v}}}}});
+}
+
+function hRenderTable(){
+  const d=[...hFiltered].reverse(),el=document.getElementById('hTableContainer');
+  const cols=[
+    {k:'date',l:'Date',f:r=>fmtDate(r.date),v:r=>r.date.getTime()},
+    {k:'evt',l:'Event',f:r=>r.eventType,v:r=>r.eventType},
+    {k:'campus',l:'Campus',f:r=>r.campus,v:r=>r.campus},
+    {k:'svc',l:'Service',f:r=>r.service,v:r=>r.service},
+    {k:'time',l:'Time',f:r=>r.time,v:r=>r.time},
+    {k:'total',l:'Total Att.',f:r=>r.totalAtt?fmtNum(r.totalAtt):'\u2014',v:r=>r.totalAtt},
+    {k:'aud',l:'Auditorium',f:r=>fmtNum(r.audAtt),v:r=>r.audAtt},
+    {k:'rsvp',l:'RSVP',f:r=>r.rsvp?fmtNum(r.rsvp):'\u2014',v:r=>r.rsvp},
+    {k:'rsvpPct',l:'RSVP-to-Aud',f:r=>{if(!r.rsvp||!r.audAtt)return'\u2014';return Math.round(r.rsvp/r.audAtt*100)+'%';},v:r=>r.audAtt>0&&r.rsvp>0?r.rsvp/r.audAtt:0}
+  ];
+  let sc='date',sd='desc';
+  function render(s){
+    let h='<table class="data-table"><thead><tr>';
+    cols.forEach(c=>{const a=sc===c.k?(sd==='asc'?' \u25B2':' \u25BC'):'';const cls=['total','aud','rsvp','rsvpPct'].includes(c.k)?' class="num"':'';h+='<th'+cls+' data-col="'+c.k+'">'+c.l+'<span style="font-size:10px;margin-left:4px">'+a+'</span></th>';});
+    h+='</tr></thead><tbody>';
+    s.forEach(r=>{h+='<tr>';cols.forEach(c=>{const cls=['total','aud','rsvp','rsvpPct'].includes(c.k)?' class="num"':'';h+='<td'+cls+'>'+c.f(r)+'</td>';});h+='</tr>';});
+    h+='</tbody></table>';el.innerHTML=h;
+    el.querySelectorAll('th').forEach(th=>{th.onclick=()=>{const col=th.dataset.col;if(sc===col)sd=sd==='asc'?'desc':'asc';else{sc=col;sd='desc';}const c=cols.find(x=>x.k===col);render([...d].sort((a,b)=>{const av=c.v(a),bv=c.v(b),cmp=av<bv?-1:av>bv?1:0;return sd==='asc'?cmp:-cmp;}));};});
+  }
+  render(d);
+}
+
+// ══════════════════════════════════════════════════════════════════════
 //  REFRESH & STARTUP
 // ══════════════════════════════════════════════════════════════════════
 let refreshTimer=null;
@@ -472,7 +734,7 @@ async function refreshAll(){
     const results=await Promise.all([
       fetchSheet(SHEET_URLS.missionMain),fetchSheet(SHEET_URLS.missionKids),
       fetchSheet(SHEET_URLS.edinburg),fetchSheet(SHEET_URLS.ipv),
-      fetchSheet(SHEET_URLS.rooted),
+      fetchSheet(SHEET_URLS.rooted),fetchSheet(SHEET_URLS.holiday),
     ]);
     // Sunday
     sRaw=sMerge(parseMM(parseCSV(results[0])),parseMK(parseCSV(results[1])),parseED(parseCSV(results[2])),parseIP(parseCSV(results[3])));
@@ -480,6 +742,9 @@ async function refreshAll(){
     // Rooted
     rRaw=parseRooted(parseCSV(results[4]));
     rPopulateFilters();rApplyFilters();
+    // Holiday
+    hRaw=parseHoliday(parseCSV(results[5]));
+    hApplyFilters();
     document.getElementById('lastRefresh').textContent='Updated '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   }catch(err){console.error('Refresh failed:',err);document.getElementById('lastRefresh').textContent='Refresh failed';}
   btn.classList.remove('loading');
