@@ -365,7 +365,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
         <div class="chart-grid">
           <div class="card">
             <h2>Year-over-Year Attendance</h2>
-            <div class="subtitle">Total attendance by event across years</div>
+            <div class="subtitle">Total attendance by event across years &middot; Total = Auditorium + Dream Team + Kids</div>
             <div class="chart-wrap tall"><canvas id="hYoyChart"></canvas></div>
           </div>
         </div>
@@ -613,7 +613,7 @@ function hRenderKPI(){
   const hasRsvp=latest.rsvp>0;
   const rsvpPct=latest.audAtt>0&&hasRsvp?Math.round(latest.rsvp/latest.audAtt*100):0;
 
-  let html=`<div class="kpi-card"><div class="accent-bar" style="background:${HEVENT_COLORS[latest.eventType]||'var(--accent)'}"></div><div class="kpi-label">${latest.year} ${latest.eventType}</div><div class="kpi-value total">${fmtNum(latest.effectiveTotal)}</div><div class="kpi-sub">Total Attendance</div>${ch(latest.effectiveTotal,prevEvt?prevEvt.effectiveTotal:null,prevLabel)}</div>`;
+  let html=`<div class="kpi-card"><div class="accent-bar" style="background:${HEVENT_COLORS[latest.eventType]||'var(--accent)'}"></div><div class="kpi-label">${latest.year} ${latest.eventType}</div><div class="kpi-value total">${fmtNum(latest.effectiveTotal)}</div><div class="kpi-sub">Total Attendance <span style="color:var(--muted);font-size:10px">(Auditorium, Dream Team &amp; Kids)</span></div>${ch(latest.effectiveTotal,prevEvt?prevEvt.effectiveTotal:null,prevLabel)}</div>`;
   html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--mission)"></div><div class="kpi-label">Auditorium</div><div class="kpi-value mission">${fmtNum(latest.audAtt)}</div><div class="kpi-sub">Auditorium-only count</div>${ch(latest.audAtt,prevEvt?prevEvt.audAtt:null,prevLabel)}</div>`;
   if(hasRsvp){
     html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--edinburg)"></div><div class="kpi-label">RSVPs</div><div class="kpi-value edinburg">${fmtNum(latest.rsvp)}</div><div class="kpi-sub">vs Auditorium: ${rsvpPct}%</div>${ch(latest.rsvp,prevEvt?prevEvt.rsvp:null,prevLabel)}</div>`;
@@ -635,7 +635,7 @@ function hRenderYoy(){
     // Single event: bars per year
     labels=agg.map(a=>String(a.year));
     datasets=[
-      {label:'Total Attendance',data:agg.map(a=>a.effectiveTotal),backgroundColor:(HEVENT_COLORS[evtFilter]||'#4a7f97')+'CC',borderRadius:4},
+      {label:'Total Attendance (Aud + DT + Kids)',data:agg.map(a=>a.effectiveTotal),backgroundColor:(HEVENT_COLORS[evtFilter]||'#4a7f97')+'CC',borderRadius:4},
       {label:'Auditorium',data:agg.map(a=>a.audAtt),backgroundColor:(HEVENT_COLORS[evtFilter]||'#4a7f97')+'55',borderRadius:4}
     ];
   } else {
@@ -684,11 +684,12 @@ function hRenderSvc(){
   const agg=hAggregate(hFiltered);
   if(!agg.length){if(hCharts.svc)hCharts.svc.destroy();hCharts.svc=null;return;}
   const latest=agg[agg.length-1];
-  const svcs=latest.services.sort((a,b)=>a.date-b.date||(a.time<b.time?-1:1));
+  function svcNum(s){const m=s.service.match(/(\d+)/);return m?parseInt(m[1]):99;}
+  const svcs=latest.services.sort((a,b)=>a.date-b.date||svcNum(a)-svcNum(b));
   const labels=svcs.map(s=>s.campus+' '+s.service+' ('+s.time+')');
   const ds=[];
   if(svcs.some(s=>s.totalAtt>0)){
-    ds.push({label:'Total Attendance',data:svcs.map(s=>s.totalAtt),backgroundColor:svcs.map(s=>(HCAMP_COLORS[s.campus]||'#999')+'CC'),borderRadius:4});
+    ds.push({label:'Total Attendance (Aud + DT + Kids)',data:svcs.map(s=>s.totalAtt),backgroundColor:svcs.map(s=>(HCAMP_COLORS[s.campus]||'#999')+'CC'),borderRadius:4});
   }
   ds.push({label:'Auditorium',data:svcs.map(s=>s.audAtt),backgroundColor:svcs.map(s=>(HCAMP_COLORS[s.campus]||'#999')+'66'),borderRadius:4});
   if(svcs.some(s=>s.rsvp>0)){
@@ -706,7 +707,7 @@ function hRenderTable(){
     {k:'campus',l:'Campus',f:r=>r.campus,v:r=>r.campus},
     {k:'svc',l:'Service',f:r=>r.service,v:r=>r.service},
     {k:'time',l:'Time',f:r=>r.time,v:r=>r.time},
-    {k:'total',l:'Total Att.',f:r=>r.totalAtt?fmtNum(r.totalAtt):'\u2014',v:r=>r.totalAtt},
+    {k:'total',l:'Total (Aud+DT+Kids)',f:r=>r.totalAtt?fmtNum(r.totalAtt):'\u2014',v:r=>r.totalAtt},
     {k:'aud',l:'Auditorium',f:r=>fmtNum(r.audAtt),v:r=>r.audAtt},
     {k:'rsvp',l:'RSVP',f:r=>r.rsvp?fmtNum(r.rsvp):'\u2014',v:r=>r.rsvp},
     {k:'rsvpPct',l:'RSVP-to-Aud',f:r=>{if(!r.rsvp||!r.audAtt)return'\u2014';return Math.round(r.rsvp/r.audAtt*100)+'%';},v:r=>r.audAtt>0&&r.rsvp>0?r.rsvp/r.audAtt:0}
