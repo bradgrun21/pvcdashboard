@@ -211,6 +211,14 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         <span>Rooted</span>
       </div>
+      <div class="nav-item" data-tab="youth" onclick="switchTab('youth',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        <span>Youth</span>
+      </div>
+      <div class="nav-item" data-tab="youngadults" onclick="switchTab('youngadults',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Young Adults</span>
+      </div>
       <div class="nav-item" data-tab="holiday" onclick="switchTab('holiday',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
         <span>Holiday Services</span>
@@ -269,6 +277,16 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
             <div class="subtitle">Last 8 weeks &mdash; per-service adults</div><div class="chart-wrap"><canvas id="sSvcChart"></canvas></div>
           </div>
         </div>
+        <div class="chart-grid-2" style="margin-top:var(--gap)">
+          <div class="card"><h2>Kids by Service</h2>
+            <div class="card-controls" id="sKidsSvcBtns"><button class="cb active" onclick="sKidsSvcCampus='mission';sRenderKidsSvc();sKidsSvcActive(this)">Mission</button><button class="cb" onclick="sKidsSvcCampus='edinburg';sRenderKidsSvc();sKidsSvcActive(this)">Edinburg</button><button class="cb" onclick="sKidsSvcCampus='ipv';sRenderKidsSvc();sKidsSvcActive(this)">IPV</button></div>
+            <div class="subtitle">Last 8 weeks &mdash; kids attendance per service</div><div class="chart-wrap"><canvas id="sKidsSvcChart"></canvas></div>
+          </div>
+          <div class="card"><h2>Kids Dream Team by Service</h2>
+            <div class="card-controls" id="sDtSvcBtns"><button class="cb active" onclick="sDtSvcCampus='mission';sRenderDtSvc();sDtSvcActive(this)">Mission</button><button class="cb" onclick="sDtSvcCampus='edinburg';sRenderDtSvc();sDtSvcActive(this)">Edinburg</button><button class="cb" onclick="sDtSvcCampus='ipv';sRenderDtSvc();sDtSvcActive(this)">IPV</button></div>
+            <div class="subtitle">Last 8 weeks &mdash; kids DT per service</div><div class="chart-wrap"><canvas id="sDtSvcChart"></canvas></div>
+          </div>
+        </div>
         <div class="chart-grid" style="margin-top:var(--gap)"><div class="card"><h2>Year-over-Year</h2>
           <div class="card-controls" id="sYoyBtns"><button class="cb active" onclick="sYoyCampus='all';sRenderYoy();sYoyActive(this)">All</button><button class="cb" onclick="sYoyCampus='mission';sRenderYoy();sYoyActive(this)">Mission</button><button class="cb" onclick="sYoyCampus='edinburg';sRenderYoy();sYoyActive(this)">Edinburg</button><button class="cb" onclick="sYoyCampus='ipv';sRenderYoy();sYoyActive(this)">IPV</button></div>
           <div class="subtitle">Same week of year across years</div><div class="chart-wrap tall"><canvas id="sYoyChart"></canvas></div>
@@ -324,6 +342,70 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
         </div>
       </div>
       <div class="table-section"><div class="table-card"><h2>Rooted Detail</h2><div class="subtitle">Click headers to sort</div><div class="table-scroll" id="rTableContainer"></div></div></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--                 YOUTH TAB                    -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-youth">
+      <div class="dash-header">
+        <div class="title-area"><h1>Youth</h1><p>Wednesday night youth attendance</p></div>
+        <div class="header-actions"><span class="auto-badge">Auto-refresh 5 min</span><button class="refresh-btn" onclick="refreshAll()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Refresh</button></div>
+      </div>
+      <div class="filter-bar" id="youthFilters">
+        <div class="filter-group"><label>Event</label>
+          <button class="fbtn active" data-filter="ye" onclick="setYF('event','all',this)">All</button>
+        </div>
+        <div class="filter-sep"></div>
+        <div class="filter-group"><label>Campus</label>
+          <button class="fbtn active" data-filter="yc" onclick="setYF('campus','all',this)">All</button>
+          <button class="fbtn" data-filter="yc" onclick="setYF('campus','Mission',this)">Mission</button>
+          <button class="fbtn" data-filter="yc" onclick="setYF('campus','Edinburg',this)">Edinburg</button>
+        </div>
+      </div>
+      <div class="kpi-row" id="yKpiRow"></div>
+      <div class="charts-section">
+        <div class="chart-grid"><div class="card"><h2>Weekly Attendance Trend</h2><div class="subtitle">Total attendance over time</div><div class="chart-wrap tall"><canvas id="yTrendChart"></canvas></div></div></div>
+        <div class="chart-grid-2">
+          <div class="card"><h2>HS vs MS Breakdown</h2><div class="subtitle">Last 8 weeks</div><div class="chart-wrap"><canvas id="yBreakdownChart"></canvas></div></div>
+          <div class="card"><h2>Year-over-Year</h2>
+            <div class="card-controls" id="yYoyBtns"><button class="cb active" onclick="yYoyCampus='all';yRenderYoy();yYoyActive(this)">All</button><button class="cb" onclick="yYoyCampus='Mission';yRenderYoy();yYoyActive(this)">Mission</button><button class="cb" onclick="yYoyCampus='Edinburg';yRenderYoy();yYoyActive(this)">Edinburg</button></div>
+            <div class="subtitle">Same week of year across years</div><div class="chart-wrap"><canvas id="yYoyChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+      <div class="table-section"><div class="table-card"><h2>Youth Detail</h2><div class="subtitle">Click headers to sort</div><div class="table-scroll" id="yTableContainer"></div></div></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!--            YOUNG ADULTS TAB                  -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-youngadults">
+      <div class="dash-header">
+        <div class="title-area"><h1>Young Adults</h1><p>Young adults attendance across events</p></div>
+        <div class="header-actions"><span class="auto-badge">Auto-refresh 5 min</span><button class="refresh-btn" onclick="refreshAll()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Refresh</button></div>
+      </div>
+      <div class="filter-bar" id="yaFilters">
+        <div class="filter-group"><label>Event</label>
+          <button class="fbtn active" data-filter="yae" onclick="setYAF('event','all',this)">All</button>
+        </div>
+        <div class="filter-sep"></div>
+        <div class="filter-group"><label>Campus</label>
+          <button class="fbtn active" data-filter="yac" onclick="setYAF('campus','all',this)">All</button>
+        </div>
+      </div>
+      <div class="kpi-row" id="yaKpiRow"></div>
+      <div class="charts-section">
+        <div class="chart-grid"><div class="card"><h2>Weekly Attendance Trend</h2><div class="subtitle">Total attendance over time</div><div class="chart-wrap tall"><canvas id="yaTrendChart"></canvas></div></div></div>
+        <div class="chart-grid-2">
+          <div class="card"><h2>Event Comparison</h2><div class="subtitle">Average attendance by event</div><div class="chart-wrap"><canvas id="yaEventChart"></canvas></div></div>
+          <div class="card"><h2>Year-over-Year</h2>
+            <div class="card-controls" id="yaYoyBtns"><button class="cb active" onclick="yaYoyCampus='all';yaRenderYoy();yaYoyActive(this)">All</button></div>
+            <div class="subtitle">Same week of year across years</div><div class="chart-wrap"><canvas id="yaYoyChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+      <div class="table-section"><div class="table-card"><h2>Young Adults Detail</h2><div class="subtitle">Click headers to sort</div><div class="table-scroll" id="yaTableContainer"></div></div></div>
     </div>
 
     <!-- ═══════════════════════════════════════════ -->
@@ -406,6 +488,8 @@ const SHEET_URLS = {
   edinburg:    'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIES_Xjrn1kYI4vrfd0HshbJukA4DZDvi1Y34jS6MiLJrpIOt8cynPs4fxxMDfGRqCdBNuqnk87QWe/pub?gid=710240675&single=true&output=csv',
   ipv:         'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIES_Xjrn1kYI4vrfd0HshbJukA4DZDvi1Y34jS6MiLJrpIOt8cynPs4fxxMDfGRqCdBNuqnk87QWe/pub?gid=930027488&single=true&output=csv',
   rooted:      'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=421377062&single=true&output=csv',
+  youth:       'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=837314920&single=true&output=csv',
+  youngAdults: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?output=csv',
   holiday:     'https://docs.google.com/spreadsheets/d/e/2PACX-1vRfD4tAKk-Ltf0c65jzuHpqVi-ovIg5vNtiukWs8Y65t7J-dDro43qSVhr-O2Ar0YVzh3wwUOLM3u-H/pub?gid=912394380&single=true&output=csv',
 };
 const AUTO_REFRESH_MS = 5*60*1000;
@@ -443,7 +527,7 @@ const COLORS={mission:'#4a7f97',edinburg:'#7b6fa6',ipv:'#c47a2e'};
 const YCOLORS={2023:'#94a3b8',2024:'#7b6fa6',2025:'#4a7f97',2026:'#c47a2e'};
 const SVC_C=['#3b7d94','#5a9db0','#7dbdcc','#a1d5e0','#c5eaf1'];
 let sRaw=[],sFiltered=[],sCharts={},sFilters={year:'all',mode:'total',ds:null,de:null};
-let sSvcCampus='mission',sYoyCampus='all';
+let sSvcCampus='mission',sYoyCampus='all',sKidsSvcCampus='mission',sDtSvcCampus='mission';
 
 function parseMM(rows){const d={};for(let i=1;i<rows.length;i++){const r=rows[i],dt=parseDate(r[0]);if(!dt)continue;const sv=[];for(let s=0;s<5;s++){const b=1+s*3;sv.push({aud:num(r[b]),oth:num(r[b+1]),tot:num(r[b+2])});}d[dateKey(dt)]={date:dt,tAud:num(r[16]),tOth:num(r[17]),tAdult:num(r[18]),svc:sv};}return d;}
 function parseMK(rows){const d={};for(let i=1;i<rows.length;i++){const r=rows[i],dt=parseDate(r[0]);if(!dt)continue;const sv=[];for(let s=0;s<5;s++){const b=1+s*4;sv.push({kids:num(r[b]),aDT:num(r[b+1]),jDT:num(r[b+2]),tDT:num(r[b+3])});}d[dateKey(dt)]={date:dt,tKids:num(r[21]),aDT:num(r[22]),jDT:num(r[23]),tDT:num(r[24]),svc:sv};}return d;}
@@ -459,13 +543,35 @@ out.push({date:dt,key:k,mA,mAu,mK,mD,mission_svc:mSvc,eA,eAu,eK,eY,eD,edinburg_s
 function cT(r,c,m){if(c==='mission')return(m==='auditorium'?r.mAu:r.mA)+r.mK+r.mD;if(c==='edinburg')return(m==='auditorium'?r.eAu:r.eA)+r.eK+r.eY+r.eD;if(c==='ipv')return(m==='auditorium'?r.iAu:r.iA)+r.iK+r.iD;return 0;}
 function gT(r,m){return cT(r,'mission',m)+cT(r,'edinburg',m)+cT(r,'ipv',m);}
 
-function sApply(){let d=sRaw;const f=sFilters;if(f.year!=='all')d=d.filter(r=>r.date.getFullYear()===+f.year);if(f.ds){const ds=new Date(f.ds+'T00:00:00');d=d.filter(r=>r.date>=ds);}if(f.de){const de=new Date(f.de+'T23:59:59');d=d.filter(r=>r.date<=de);}sFiltered=d;sRenderKPI();sRenderTrend();sRenderCampus();sRenderSvc();sRenderYoy();sRenderTable();}
+function sApply(){let d=sRaw;const f=sFilters;if(f.year!=='all')d=d.filter(r=>r.date.getFullYear()===+f.year);if(f.ds){const ds=new Date(f.ds+'T00:00:00');d=d.filter(r=>r.date>=ds);}if(f.de){const de=new Date(f.de+'T23:59:59');d=d.filter(r=>r.date<=de);}sFiltered=d;sRenderKPI();sRenderTrend();sRenderCampus();sRenderSvc();sRenderKidsSvc();sRenderDtSvc();sRenderYoy();sRenderTable();}
 
 function setSF(k,v,btn){if(k==='year'){sFilters.year=v;document.querySelectorAll('[data-filter="sy"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}else if(k==='mode'){sFilters.mode=v;document.querySelectorAll('[data-filter="sm"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}else if(k==='ds'){sFilters.ds=v||null;}else if(k==='de'){sFilters.de=v||null;}sApply();}
 
-function sRenderKPI(){const d=sFiltered,m=sFilters.mode,el=document.getElementById('sKpiRow');if(!d.length){el.innerHTML='<div class="kpi-card"><div class="kpi-label">No Data</div><div class="kpi-value total">\u2014</div></div>';return;}const L=d[d.length-1],P=d.length>1?d[d.length-2]:null;function ch(c,p){if(!p)return'<span class="kpi-change neutral">\u2014</span>';const pc=((c-p)/p*100);return'<span class="kpi-change '+(pc>0?'up':pc<0?'down':'neutral')+'">'+(pc>=0?'+':'')+pc.toFixed(1)+'% vs prior</span>';}
-const gt=gT(L,m),gtp=P?gT(P,m):null;const mt=cT(L,'mission',m),mtp=P?cT(P,'mission',m):null;const et=cT(L,'edinburg',m),etp=P?cT(P,'edinburg',m):null;const it=cT(L,'ipv',m),itp=P?cT(P,'ipv',m):null;
-el.innerHTML=`<div class="kpi-card"><div class="accent-bar" style="background:var(--text)"></div><div class="kpi-label">Total Attendance</div><div class="kpi-value total">${fmtNum(gt)}</div><div class="kpi-sub">${fmtDate(L.date)}</div>${ch(gt,gtp)}</div><div class="kpi-card"><div class="accent-bar" style="background:var(--mission)"></div><div class="kpi-label">Mission</div><div class="kpi-value mission">${fmtNum(mt)}</div><div class="kpi-sub">Adults ${fmtNum(m==='auditorium'?L.mAu:L.mA)} &middot; Kids ${fmtNum(L.mK)}</div>${ch(mt,mtp)}</div><div class="kpi-card"><div class="accent-bar" style="background:var(--edinburg)"></div><div class="kpi-label">Edinburg</div><div class="kpi-value edinburg">${fmtNum(et)}</div><div class="kpi-sub">Adults ${fmtNum(m==='auditorium'?L.eAu:L.eA)} &middot; Kids ${fmtNum(L.eK)}</div>${ch(et,etp)}</div><div class="kpi-card"><div class="accent-bar" style="background:var(--ipv)"></div><div class="kpi-label">Iglesia PV</div><div class="kpi-value ipv">${fmtNum(it)}</div><div class="kpi-sub">Adults ${fmtNum(m==='auditorium'?L.iAu:L.iA)} &middot; Kids ${fmtNum(L.iK)}</div>${ch(it,itp)}</div>`;}
+function sRenderKPI(){
+  const d=sFiltered,m=sFilters.mode,el=document.getElementById('sKpiRow');
+  if(!d.length){el.innerHTML='<div class="kpi-card"><div class="kpi-label">No Data</div><div class="kpi-value total">\u2014</div></div>';return;}
+  const L=d[d.length-1],last8=d.slice(-8);
+  function avg8(fn){return Math.round(last8.reduce((s,r)=>s+fn(r),0)/last8.length);}
+  function allAdults(r){return(m==='auditorium'?r.mAu:r.mA)+(m==='auditorium'?r.eAu:r.eA)+(m==='auditorium'?r.iAu:r.iA);}
+  function allKids(r){return r.mK+r.mD+r.eK+r.eD+r.iK+r.iD;}
+  // 8-week averages
+  const avgAll=avg8(r=>gT(r,m)),avgM=avg8(r=>cT(r,'mission',m)),avgE=avg8(r=>cT(r,'edinburg',m)),avgI=avg8(r=>cT(r,'ipv',m));
+  const avgAdults=avg8(allAdults),avgKids=avg8(allKids);
+  // YoY: same week of year from prior year (search sRaw, not filtered)
+  const wk=weekOfYear(L.date),yr=L.date.getFullYear();
+  const pyMatch=sRaw.filter(r=>r.date.getFullYear()===yr-1&&weekOfYear(r.date)===wk);
+  const PY=pyMatch.length?pyMatch[pyMatch.length-1]:null;
+  const yLbl=PY?(yr-1)+' Wk '+wk:'last year';
+  function ch(cur,prev){if(!prev)return'<span class="kpi-change neutral">\u2014</span>';const pc=((cur-prev)/prev*100);return'<span class="kpi-change '+(pc>0?'up':pc<0?'down':'neutral')+'">'+(pc>=0?'+':'')+pc.toFixed(1)+'% vs '+yLbl+'</span>';}
+  // Current & prior-year values
+  const curAll=gT(L,m),pyAll=PY?gT(PY,m):null;
+  const curM=cT(L,'mission',m),pyM=PY?cT(PY,'mission',m):null;
+  const curE=cT(L,'edinburg',m),pyE=PY?cT(PY,'edinburg',m):null;
+  const curI=cT(L,'ipv',m),pyI=PY?cT(PY,'ipv',m):null;
+  const curAdults=allAdults(L),pyAdults=PY?allAdults(PY):null;
+  const curKids=allKids(L),pyKids=PY?allKids(PY):null;
+  el.innerHTML=`<div class="kpi-card"><div class="accent-bar" style="background:var(--text)"></div><div class="kpi-label">Total Attendance</div><div class="kpi-value total">${fmtNum(avgAll)}</div><div class="kpi-sub">8-Wk Avg &middot; Latest: ${fmtNum(curAll)} (${fmtDate(L.date)})</div>${ch(curAll,pyAll)}</div><div class="kpi-card"><div class="accent-bar" style="background:var(--positive)"></div><div class="kpi-label">Total Adults</div><div class="kpi-value" style="color:var(--positive)">${fmtNum(avgAdults)}</div><div class="kpi-sub">8-Wk Avg &middot; Latest: ${fmtNum(curAdults)}</div>${ch(curAdults,pyAdults)}</div><div class="kpi-card"><div class="accent-bar" style="background:#e67e22"></div><div class="kpi-label">Total Kids + DT</div><div class="kpi-value" style="color:#e67e22">${fmtNum(avgKids)}</div><div class="kpi-sub">8-Wk Avg &middot; Latest: ${fmtNum(curKids)}</div>${ch(curKids,pyKids)}</div><div class="kpi-card"><div class="accent-bar" style="background:var(--mission)"></div><div class="kpi-label">Mission</div><div class="kpi-value mission">${fmtNum(avgM)}</div><div class="kpi-sub">8-Wk Avg &middot; Adults ${fmtNum(m==='auditorium'?L.mAu:L.mA)} &middot; Kids ${fmtNum(L.mK+L.mD)}</div>${ch(curM,pyM)}</div><div class="kpi-card"><div class="accent-bar" style="background:var(--edinburg)"></div><div class="kpi-label">Edinburg</div><div class="kpi-value edinburg">${fmtNum(avgE)}</div><div class="kpi-sub">8-Wk Avg &middot; Adults ${fmtNum(m==='auditorium'?L.eAu:L.eA)} &middot; Kids ${fmtNum(L.eK+L.eD)}</div>${ch(curE,pyE)}</div><div class="kpi-card"><div class="accent-bar" style="background:var(--ipv)"></div><div class="kpi-label">Iglesia PV</div><div class="kpi-value ipv">${fmtNum(avgI)}</div><div class="kpi-sub">8-Wk Avg &middot; Adults ${fmtNum(m==='auditorium'?L.iAu:L.iA)} &middot; Kids ${fmtNum(L.iK+L.iD)}</div>${ch(curI,pyI)}</div>`;
+}
 
 function sRenderTrend(){const d=sFiltered,m=sFilters.mode,labels=d.map(r=>r.date);const ds=[{label:'Mission',data:d.map(r=>cT(r,'mission',m)),borderColor:COLORS.mission,backgroundColor:COLORS.mission+'18'},{label:'Edinburg',data:d.map(r=>cT(r,'edinburg',m)),borderColor:COLORS.edinburg,backgroundColor:COLORS.edinburg+'18'},{label:'IPV',data:d.map(r=>cT(r,'ipv',m)),borderColor:COLORS.ipv,backgroundColor:COLORS.ipv+'18'}];if(sCharts.trend){sCharts.trend.data.labels=labels;ds.forEach((x,i)=>{sCharts.trend.data.datasets[i].data=x.data;});sCharts.trend.update('none');return;}sCharts.trend=new Chart(document.getElementById('sTrendChart'),{type:'line',data:{labels,datasets:ds.map(x=>({...x,borderWidth:2,tension:.3,pointRadius:1.5,pointHoverRadius:5,fill:false}))},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:16,font:{size:12}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{type:'time',time:{unit:'month',tooltipFormat:'MMM d, yyyy'},grid:{display:false}},y:{beginAtZero:true,ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v}}}}});}
 
@@ -478,6 +584,16 @@ function sRenderSvc(){const d=sFiltered,m=sFilters.mode,c=sSvcCampus,rec=d.slice
 if(sCharts.svc)sCharts.svc.destroy();sCharts.svc=new Chart(document.getElementById('sSvcChart'),{type:'bar',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,beginAtZero:true,ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v}}}}});}
 function sSvcActive(b){document.querySelectorAll('#sSvcBtns .cb').forEach(x=>x.classList.remove('active'));b.classList.add('active');}
 
+const KIDS_C=['#e67e22','#f39c12','#f5b041','#f8c471','#fad7a0'];
+const DT_C=['#27ae60','#2ecc71','#58d68d','#82e0aa','#abebc6'];
+function sRenderKidsSvc(){const d=sFiltered,c=sKidsSvcCampus,rec=d.slice(-8);if(!rec.length)return;const labels=rec.map(r=>fmtShort(r.date)),maxS=c==='mission'?5:c==='edinburg'?4:2,ds=[];for(let s=0;s<maxS;s++){const sd=rec.map(r=>{const sv=r[c==='ipv'?'ipv_svc':c==='edinburg'?'edinburg_svc':'mission_svc'];if(!sv||!sv[s])return 0;return sv[s].kids||0;});if(sd.some(v=>v>0))ds.push({label:['1st','2nd','3rd','4th','5th'][s]+' Svc',data:sd,backgroundColor:KIDS_C[s%KIDS_C.length]+'CC',borderRadius:3});}
+if(sCharts.kidsSvc)sCharts.kidsSvc.destroy();sCharts.kidsSvc=new Chart(document.getElementById('sKidsSvcChart'),{type:'bar',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,beginAtZero:true}}}});}
+function sKidsSvcActive(b){document.querySelectorAll('#sKidsSvcBtns .cb').forEach(x=>x.classList.remove('active'));b.classList.add('active');}
+
+function sRenderDtSvc(){const d=sFiltered,c=sDtSvcCampus,rec=d.slice(-8);if(!rec.length)return;const labels=rec.map(r=>fmtShort(r.date)),maxS=c==='mission'?5:c==='edinburg'?4:2,ds=[];for(let s=0;s<maxS;s++){const sd=rec.map(r=>{const sv=r[c==='ipv'?'ipv_svc':c==='edinburg'?'edinburg_svc':'mission_svc'];if(!sv||!sv[s])return 0;return c==='mission'?(sv[s].dt||0):(sv[s].kDT||0);});if(sd.some(v=>v>0))ds.push({label:['1st','2nd','3rd','4th','5th'][s]+' Svc',data:sd,backgroundColor:DT_C[s%DT_C.length]+'CC',borderRadius:3});}
+if(sCharts.dtSvc)sCharts.dtSvc.destroy();sCharts.dtSvc=new Chart(document.getElementById('sDtSvcChart'),{type:'bar',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,beginAtZero:true}}}});}
+function sDtSvcActive(b){document.querySelectorAll('#sDtSvcBtns .cb').forEach(x=>x.classList.remove('active'));b.classList.add('active');}
+
 function sRenderYoy(){const m=sFilters.mode,c=sYoyCampus,d=sRaw,years=[...new Set(d.map(r=>r.date.getFullYear()))].sort();const ds=years.map(y=>{const yd=d.filter(r=>r.date.getFullYear()===y);return{label:String(y),data:yd.map(r=>({x:weekOfYear(r.date),y:c==='all'?gT(r,m):cT(r,c,m)})),borderColor:YCOLORS[y]||'#999',backgroundColor:(YCOLORS[y]||'#999')+'18',borderWidth:y===years[years.length-1]?3:1.5,pointRadius:y===years[years.length-1]?2.5:1,pointHoverRadius:5,tension:.3,fill:false};});
 if(sCharts.yoy)sCharts.yoy.destroy();sCharts.yoy=new Chart(document.getElementById('sYoyChart'),{type:'line',data:{datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:16,font:{size:12}}},tooltip:{callbacks:{title:i=>'Week '+i[0].parsed.x,label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{type:'linear',title:{display:true,text:'Week of Year',font:{size:12}},min:1,max:53,ticks:{stepSize:4}},y:{beginAtZero:true,ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v}}}}});}
 function sYoyActive(b){document.querySelectorAll('#sYoyBtns .cb').forEach(x=>x.classList.remove('active'));b.classList.add('active');}
@@ -485,6 +601,215 @@ function sYoyActive(b){document.querySelectorAll('#sYoyBtns .cb').forEach(x=>x.c
 function sRenderTable(){const d=[...sFiltered].reverse(),m=sFilters.mode,el=document.getElementById('sTableContainer');const cols=[{k:'date',l:'Date',f:r=>fmtDate(r.date),v:r=>r.date.getTime()},{k:'mA',l:'Mission Adults',f:r=>fmtNum(m==='auditorium'?r.mAu:r.mA),v:r=>m==='auditorium'?r.mAu:r.mA},{k:'mK',l:'Mission Kids',f:r=>fmtNum(r.mK),v:r=>r.mK},{k:'eA',l:'Edinburg Adults',f:r=>fmtNum(m==='auditorium'?r.eAu:r.eA),v:r=>m==='auditorium'?r.eAu:r.eA},{k:'eK',l:'Edinburg Kids',f:r=>fmtNum(r.eK),v:r=>r.eK},{k:'iA',l:'IPV Adults',f:r=>fmtNum(m==='auditorium'?r.iAu:r.iA),v:r=>m==='auditorium'?r.iAu:r.iA},{k:'iK',l:'IPV Kids',f:r=>fmtNum(r.iK),v:r=>r.iK},{k:'gt',l:'Grand Total',f:r=>fmtNum(gT(r,m)),v:r=>gT(r,m)}];let sc='date',sd='desc';
 function render(s){let h='<table class="data-table"><thead><tr>';cols.forEach(c=>{const a=sc===c.k?(sd==='asc'?' \u25B2':' \u25BC'):'';h+='<th'+(c.k!=='date'?' class="num"':'')+' data-col="'+c.k+'">'+c.l+'<span style="font-size:10px;margin-left:4px">'+a+'</span></th>';});h+='</tr></thead><tbody>';s.forEach(r=>{h+='<tr>';cols.forEach(c=>{h+='<td'+(c.k!=='date'?' class="num"':'')+'>'+c.f(r)+'</td>';});h+='</tr>';});h+='</tbody></table>';el.innerHTML=h;el.querySelectorAll('th').forEach(th=>{th.onclick=()=>{const col=th.dataset.col;if(sc===col)sd=sd==='asc'?'desc':'asc';else{sc=col;sd='desc';}const c=cols.find(x=>x.k===col);render([...d].sort((a,b)=>{const av=c.v(a),bv=c.v(b),cmp=av<bv?-1:av>bv?1:0;return sd==='asc'?cmp:-cmp;}));};});}
 render(d);}
+
+// ══════════════════════════════════════════════════════════════════════
+//  YOUTH
+// ══════════════════════════════════════════════════════════════════════
+let yRaw=[],yFiltered=[],yCharts={},yFilters={event:'all',campus:'all'},yYoyCampus='all';
+
+function parseYouth(rows){
+  const d=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i],dt=parseDate(r[0]);if(!dt)continue;
+    const hs=num(r[5]),ms=num(r[7]),tAtt=num(r[13]),tVol=num(r[12]);
+    if(tAtt===0&&hs===0&&ms===0)continue;
+    d.push({date:dt,weekNum:num(r[1]),year:num(r[2]),event:(r[3]||'').trim(),campus:(r[4]||'').trim(),
+      hs,hsVol:num(r[6]),ms,msVol:num(r[8]),connections:num(r[9]),lobby:num(r[10]),westEnd:num(r[11]),
+      totalVol:tVol,totalAtt:tAtt});
+  }
+  d.sort((a,b)=>a.date-b.date);return d;
+}
+
+function yPopulateFilters(){
+  const events=[...new Set(yRaw.map(r=>r.event))].filter(Boolean).sort();
+  const el=document.querySelector('[data-filter="ye"]').parentElement;
+  let html='<label>Event</label><button class="fbtn active" data-filter="ye" onclick="setYF(\'event\',\'all\',this)">All</button>';
+  events.forEach(e=>{html+='<button class="fbtn" data-filter="ye" onclick="setYF(\'event\',\''+e+'\',this)">'+e+'</button>';});
+  el.innerHTML=html;
+  const campuses=[...new Set(yRaw.map(r=>r.campus))].filter(Boolean).sort();
+  const el2=document.querySelector('[data-filter="yc"]').parentElement;
+  let html2='<label>Campus</label><button class="fbtn active" data-filter="yc" onclick="setYF(\'campus\',\'all\',this)">All</button>';
+  campuses.forEach(c=>{html2+='<button class="fbtn" data-filter="yc" onclick="setYF(\'campus\',\''+c+'\',this)">'+c+'</button>';});
+  el2.innerHTML=html2;
+}
+
+function setYF(k,v,btn){
+  if(k==='event'){yFilters.event=v;document.querySelectorAll('[data-filter="ye"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}
+  else if(k==='campus'){yFilters.campus=v;document.querySelectorAll('[data-filter="yc"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}
+  yApply();
+}
+
+function yApply(){
+  let d=yRaw;
+  if(yFilters.event!=='all')d=d.filter(r=>r.event===yFilters.event);
+  if(yFilters.campus!=='all')d=d.filter(r=>r.campus===yFilters.campus);
+  yFiltered=d;yRenderKPI();yRenderTrend();yRenderBreakdown();yRenderYoy();yRenderTable();
+}
+
+function yRenderKPI(){
+  const d=yFiltered,el=document.getElementById('yKpiRow');
+  if(!d.length){el.innerHTML='<div class="kpi-card"><div class="kpi-label">No Data</div><div class="kpi-value total">\u2014</div></div>';return;}
+  const L=d[d.length-1],last8=d.slice(-8);
+  function avg8(fn){return Math.round(last8.reduce((s,r)=>s+fn(r),0)/last8.length);}
+  const avgAtt=avg8(r=>r.totalAtt),avgHS=avg8(r=>r.hs),avgMS=avg8(r=>r.ms),avgVol=avg8(r=>r.totalVol);
+  // YoY
+  const wk=weekOfYear(L.date),yr=L.date.getFullYear();
+  let pyMatch=yRaw.filter(r=>r.date.getFullYear()===yr-1&&weekOfYear(r.date)===wk);
+  if(yFilters.campus!=='all')pyMatch=pyMatch.filter(r=>r.campus===yFilters.campus);
+  if(yFilters.event!=='all')pyMatch=pyMatch.filter(r=>r.event===yFilters.event);
+  const pyAtt=pyMatch.reduce((s,r)=>s+r.totalAtt,0)||null;
+  const yLbl=pyAtt?(yr-1)+' Wk '+wk:'last year';
+  function ch(cur,prev){if(!prev)return'<span class="kpi-change neutral">\u2014</span>';const pc=((cur-prev)/prev*100);return'<span class="kpi-change '+(pc>0?'up':pc<0?'down':'neutral')+'">'+(pc>=0?'+':'')+pc.toFixed(1)+'% vs '+yLbl+'</span>';}
+  el.innerHTML=`<div class="kpi-card"><div class="accent-bar" style="background:var(--text)"></div><div class="kpi-label">Total Attendance</div><div class="kpi-value total">${fmtNum(avgAtt)}</div><div class="kpi-sub">8-Wk Avg &middot; Latest: ${fmtNum(L.totalAtt)}</div>${ch(L.totalAtt,pyAtt)}</div><div class="kpi-card"><div class="accent-bar" style="background:var(--mission)"></div><div class="kpi-label">High School</div><div class="kpi-value mission">${fmtNum(avgHS)}</div><div class="kpi-sub">8-Wk Avg &middot; Latest: ${fmtNum(L.hs)}</div></div><div class="kpi-card"><div class="accent-bar" style="background:var(--edinburg)"></div><div class="kpi-label">Middle School</div><div class="kpi-value edinburg">${fmtNum(avgMS)}</div><div class="kpi-sub">8-Wk Avg &middot; Latest: ${fmtNum(L.ms)}</div></div><div class="kpi-card"><div class="accent-bar" style="background:var(--positive)"></div><div class="kpi-label">Total Volunteers</div><div class="kpi-value" style="color:var(--positive)">${fmtNum(avgVol)}</div><div class="kpi-sub">8-Wk Avg &middot; Latest: ${fmtNum(L.totalVol)}</div></div>`;
+}
+
+function yRenderTrend(){
+  const d=yFiltered,labels=d.map(r=>r.date);
+  // Aggregate by date if multiple campuses
+  const byDate={};d.forEach(r=>{const k=dateKey(r.date);if(!byDate[k])byDate[k]={date:r.date,hs:0,ms:0,total:0,vol:0};byDate[k].hs+=r.hs;byDate[k].ms+=r.ms;byDate[k].total+=r.totalAtt;byDate[k].vol+=r.totalVol;});
+  const agg=Object.values(byDate).sort((a,b)=>a.date-b.date);
+  const ds=[
+    {label:'Total Attendance',data:agg.map(r=>r.total),borderColor:'#1a1a1a',backgroundColor:'#1a1a1a18',borderWidth:2.5,tension:.3,pointRadius:2,pointHoverRadius:5,fill:false},
+    {label:'High School',data:agg.map(r=>r.hs),borderColor:COLORS.mission,backgroundColor:COLORS.mission+'18',borderWidth:2,tension:.3,pointRadius:1.5,pointHoverRadius:5,fill:false},
+    {label:'Middle School',data:agg.map(r=>r.ms),borderColor:COLORS.edinburg,backgroundColor:COLORS.edinburg+'18',borderWidth:2,tension:.3,pointRadius:1.5,pointHoverRadius:5,fill:false}
+  ];
+  if(yCharts.trend)yCharts.trend.destroy();
+  yCharts.trend=new Chart(document.getElementById('yTrendChart'),{type:'line',data:{labels:agg.map(r=>r.date),datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:16,font:{size:12}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{type:'time',time:{unit:'month',tooltipFormat:'MMM d, yyyy'},grid:{display:false}},y:{beginAtZero:true}}}});
+}
+
+function yRenderBreakdown(){
+  const d=yFiltered,rec=d.slice(-8);if(!rec.length)return;
+  const byDate={};rec.forEach(r=>{const k=dateKey(r.date);if(!byDate[k])byDate[k]={date:r.date,hs:0,ms:0,hsVol:0,msVol:0};byDate[k].hs+=r.hs;byDate[k].ms+=r.ms;byDate[k].hsVol+=r.hsVol;byDate[k].msVol+=r.msVol;});
+  const agg=Object.values(byDate).sort((a,b)=>a.date-b.date);
+  const labels=agg.map(r=>fmtShort(r.date));
+  const ds=[
+    {label:'High School',data:agg.map(r=>r.hs),backgroundColor:COLORS.mission+'CC',borderRadius:3},
+    {label:'Middle School',data:agg.map(r=>r.ms),backgroundColor:COLORS.edinburg+'CC',borderRadius:3},
+    {label:'HS Vol',data:agg.map(r=>r.hsVol),backgroundColor:COLORS.mission+'44',borderRadius:3},
+    {label:'MS Vol',data:agg.map(r=>r.msVol),backgroundColor:COLORS.edinburg+'44',borderRadius:3}
+  ];
+  if(yCharts.breakdown)yCharts.breakdown.destroy();
+  yCharts.breakdown=new Chart(document.getElementById('yBreakdownChart'),{type:'bar',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true}}}});
+}
+
+function yRenderYoy(){
+  const c=yYoyCampus,d=yRaw;
+  let fd=c==='all'?d:d.filter(r=>r.campus===c);
+  const byWeek={};fd.forEach(r=>{const yr=r.date.getFullYear(),wk=weekOfYear(r.date),k=yr+'|'+wk;if(!byWeek[k])byWeek[k]={yr,wk,total:0};byWeek[k].total+=r.totalAtt;});
+  const years=[...new Set(Object.values(byWeek).map(r=>r.yr))].sort();
+  const ds=years.map(y=>{const pts=Object.values(byWeek).filter(r=>r.yr===y).map(r=>({x:r.wk,y:r.total}));return{label:String(y),data:pts,borderColor:YCOLORS[y]||'#999',backgroundColor:(YCOLORS[y]||'#999')+'18',borderWidth:y===years[years.length-1]?3:1.5,pointRadius:y===years[years.length-1]?2.5:1,tension:.3,fill:false};});
+  if(yCharts.yoy)yCharts.yoy.destroy();
+  yCharts.yoy=new Chart(document.getElementById('yYoyChart'),{type:'line',data:{datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:{callbacks:{title:i=>'Week '+i[0].parsed.x,label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{type:'linear',title:{display:true,text:'Week of Year'},min:1,max:53,ticks:{stepSize:4}},y:{beginAtZero:true}}}});
+}
+function yYoyActive(b){document.querySelectorAll('#yYoyBtns .cb').forEach(x=>x.classList.remove('active'));b.classList.add('active');}
+
+function yRenderTable(){
+  const d=[...yFiltered].reverse(),el=document.getElementById('yTableContainer');
+  const cols=[{k:'date',l:'Date',f:r=>fmtDate(r.date),v:r=>r.date.getTime()},{k:'event',l:'Event',f:r=>r.event,v:r=>r.event},{k:'campus',l:'Campus',f:r=>r.campus,v:r=>r.campus},{k:'hs',l:'High School',f:r=>fmtNum(r.hs),v:r=>r.hs},{k:'ms',l:'Middle School',f:r=>fmtNum(r.ms),v:r=>r.ms},{k:'vol',l:'Volunteers',f:r=>fmtNum(r.totalVol),v:r=>r.totalVol},{k:'att',l:'Total Att.',f:r=>fmtNum(r.totalAtt),v:r=>r.totalAtt}];
+  let sc='date',sd='desc';
+  function render(s){let h='<table class="data-table"><thead><tr>';cols.forEach(c=>{const a=sc===c.k?(sd==='asc'?' \u25B2':' \u25BC'):'';const cls=['hs','ms','vol','att'].includes(c.k)?' class="num"':'';h+='<th'+cls+' data-col="'+c.k+'">'+c.l+'<span style="font-size:10px;margin-left:4px">'+a+'</span></th>';});h+='</tr></thead><tbody>';s.forEach(r=>{h+='<tr>';cols.forEach(c=>{const cls=['hs','ms','vol','att'].includes(c.k)?' class="num"':'';h+='<td'+cls+'>'+c.f(r)+'</td>';});h+='</tr>';});h+='</tbody></table>';el.innerHTML=h;el.querySelectorAll('th').forEach(th=>{th.onclick=()=>{const col=th.dataset.col;if(sc===col)sd=sd==='asc'?'desc':'asc';else{sc=col;sd='desc';}const c=cols.find(x=>x.k===col);render([...d].sort((a,b)=>{const av=c.v(a),bv=c.v(b),cmp=av<bv?-1:av>bv?1:0;return sd==='asc'?cmp:-cmp;}));};});}
+  render(d);
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//  YOUNG ADULTS
+// ══════════════════════════════════════════════════════════════════════
+let yaRaw=[],yaFiltered=[],yaCharts={},yaFilters={event:'all',campus:'all'},yaYoyCampus='all';
+
+function parseYoungAdults(rows){
+  const d=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i],dt=parseDate(r[0]);if(!dt)continue;
+    const att=num(r[5]),dreamTeam=num(r[6]),totalAtt=num(r[7]);
+    if(att===0&&totalAtt===0)continue;
+    d.push({date:dt,event:(r[1]||'').trim(),campus:(r[2]||'').trim(),semester:(r[3]||'').trim(),week:num(r[4]),attendance:att,dreamTeam,totalAtt:totalAtt||att+dreamTeam});
+  }
+  d.sort((a,b)=>a.date-b.date);return d;
+}
+
+function yaPopulateFilters(){
+  const events=[...new Set(yaRaw.map(r=>r.event))].filter(Boolean).sort();
+  const el=document.querySelector('[data-filter="yae"]').parentElement;
+  let html='<label>Event</label><button class="fbtn active" data-filter="yae" onclick="setYAF(\'event\',\'all\',this)">All</button>';
+  events.forEach(e=>{html+='<button class="fbtn" data-filter="yae" onclick="setYAF(\'event\',\''+e.replace(/'/g,"\\'")+'\',this)">'+e+'</button>';});
+  el.innerHTML=html;
+  const campuses=[...new Set(yaRaw.map(r=>r.campus))].filter(Boolean).sort();
+  const el2=document.querySelector('[data-filter="yac"]').parentElement;
+  let html2='<label>Campus</label><button class="fbtn active" data-filter="yac" onclick="setYAF(\'campus\',\'all\',this)">All</button>';
+  campuses.forEach(c=>{html2+='<button class="fbtn" data-filter="yac" onclick="setYAF(\'campus\',\''+c+'\',this)">'+c+'</button>';});
+  el2.innerHTML=html2;
+}
+
+function setYAF(k,v,btn){
+  if(k==='event'){yaFilters.event=v;document.querySelectorAll('[data-filter="yae"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}
+  else if(k==='campus'){yaFilters.campus=v;document.querySelectorAll('[data-filter="yac"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}
+  yaApply();
+}
+
+function yaApply(){
+  let d=yaRaw;
+  if(yaFilters.event!=='all')d=d.filter(r=>r.event===yaFilters.event);
+  if(yaFilters.campus!=='all')d=d.filter(r=>r.campus===yaFilters.campus);
+  yaFiltered=d;yaRenderKPI();yaRenderTrend();yaRenderEvent();yaRenderYoy();yaRenderTable();
+}
+
+function yaRenderKPI(){
+  const d=yaFiltered,el=document.getElementById('yaKpiRow');
+  if(!d.length){el.innerHTML='<div class="kpi-card"><div class="kpi-label">No Data</div><div class="kpi-value total">\u2014</div></div>';return;}
+  const L=d[d.length-1],last8=d.slice(-8);
+  function avg8(fn){return Math.round(last8.reduce((s,r)=>s+fn(r),0)/last8.length);}
+  const avgAtt=avg8(r=>r.totalAtt),avgDT=avg8(r=>r.dreamTeam);
+  // YoY
+  const wk=weekOfYear(L.date),yr=L.date.getFullYear();
+  let pyMatch=yaRaw.filter(r=>r.date.getFullYear()===yr-1&&weekOfYear(r.date)===wk);
+  if(yaFilters.event!=='all')pyMatch=pyMatch.filter(r=>r.event===yaFilters.event);
+  if(yaFilters.campus!=='all')pyMatch=pyMatch.filter(r=>r.campus===yaFilters.campus);
+  const pyAtt=pyMatch.reduce((s,r)=>s+r.totalAtt,0)||null;
+  const yLbl=pyAtt?(yr-1)+' Wk '+wk:'last year';
+  function ch(cur,prev){if(!prev)return'<span class="kpi-change neutral">\u2014</span>';const pc=((cur-prev)/prev*100);return'<span class="kpi-change '+(pc>0?'up':pc<0?'down':'neutral')+'">'+(pc>=0?'+':'')+pc.toFixed(1)+'% vs '+yLbl+'</span>';}
+  const events=[...new Set(d.map(r=>r.event))];
+  el.innerHTML=`<div class="kpi-card"><div class="accent-bar" style="background:var(--text)"></div><div class="kpi-label">Total Attendance</div><div class="kpi-value total">${fmtNum(avgAtt)}</div><div class="kpi-sub">8-Wk Avg &middot; Latest: ${fmtNum(L.totalAtt)}</div>${ch(L.totalAtt,pyAtt)}</div><div class="kpi-card"><div class="accent-bar" style="background:var(--positive)"></div><div class="kpi-label">Dream Team</div><div class="kpi-value" style="color:var(--positive)">${fmtNum(avgDT)}</div><div class="kpi-sub">8-Wk Avg &middot; Latest: ${fmtNum(L.dreamTeam)}</div></div><div class="kpi-card"><div class="accent-bar" style="background:var(--mission)"></div><div class="kpi-label">Events Tracked</div><div class="kpi-value mission">${events.length}</div><div class="kpi-sub">${events.join(', ').substring(0,60)}</div></div><div class="kpi-card"><div class="accent-bar" style="background:var(--edinburg)"></div><div class="kpi-label">Latest Date</div><div class="kpi-value edinburg" style="font-size:20px">${fmtDate(L.date)}</div><div class="kpi-sub">${L.event} &middot; ${L.campus||'All'}</div></div>`;
+}
+
+function yaRenderTrend(){
+  const d=yaFiltered;if(!d.length)return;
+  const byDate={};d.forEach(r=>{const k=dateKey(r.date);if(!byDate[k])byDate[k]={date:r.date,att:0,dt:0};byDate[k].att+=r.totalAtt;byDate[k].dt+=r.dreamTeam;});
+  const agg=Object.values(byDate).sort((a,b)=>a.date-b.date);
+  const ds=[
+    {label:'Total Attendance',data:agg.map(r=>r.att),borderColor:COLORS.mission,backgroundColor:COLORS.mission+'18',borderWidth:2.5,tension:.3,pointRadius:2,fill:false},
+    {label:'Dream Team',data:agg.map(r=>r.dt),borderColor:'#27ae60',backgroundColor:'#27ae6018',borderWidth:2,tension:.3,pointRadius:1.5,fill:false}
+  ];
+  if(yaCharts.trend)yaCharts.trend.destroy();
+  yaCharts.trend=new Chart(document.getElementById('yaTrendChart'),{type:'line',data:{labels:agg.map(r=>r.date),datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:16,font:{size:12}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{type:'time',time:{unit:'month',tooltipFormat:'MMM d, yyyy'},grid:{display:false}},y:{beginAtZero:true}}}});
+}
+
+function yaRenderEvent(){
+  const d=yaFiltered;if(!d.length)return;
+  const evts=[...new Set(d.map(r=>r.event))].filter(Boolean);
+  const evtAvgs=evts.map(e=>{const ed=d.filter(r=>r.event===e);return{event:e,avg:Math.round(ed.reduce((s,r)=>s+r.totalAtt,0)/ed.length),count:ed.length};}).sort((a,b)=>b.avg-a.avg);
+  const colors=['#4a7f97','#7b6fa6','#c47a2e','#2e7d5b','#c0392b','#e67e22','#3498db','#8e44ad'];
+  if(yaCharts.event)yaCharts.event.destroy();
+  yaCharts.event=new Chart(document.getElementById('yaEventChart'),{type:'bar',data:{labels:evtAvgs.map(e=>e.event),datasets:[{label:'Avg Attendance',data:evtAvgs.map(e=>e.avg),backgroundColor:evtAvgs.map((_,i)=>colors[i%colors.length]+'CC'),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'Avg: '+fmtNum(c.parsed.x)+' ('+evtAvgs[c.dataIndex].count+' sessions)'}}},scales:{y:{grid:{display:false},ticks:{font:{size:11}}},x:{beginAtZero:true}}}});
+}
+
+function yaRenderYoy(){
+  const c=yaYoyCampus,d=yaRaw;
+  let fd=c==='all'?d:d.filter(r=>r.campus===c);
+  const byWeek={};fd.forEach(r=>{const yr=r.date.getFullYear(),wk=weekOfYear(r.date),k=yr+'|'+wk;if(!byWeek[k])byWeek[k]={yr,wk,total:0};byWeek[k].total+=r.totalAtt;});
+  const years=[...new Set(Object.values(byWeek).map(r=>r.yr))].sort();
+  const ds=years.map(y=>{const pts=Object.values(byWeek).filter(r=>r.yr===y).map(r=>({x:r.wk,y:r.total}));return{label:String(y),data:pts,borderColor:YCOLORS[y]||'#999',backgroundColor:(YCOLORS[y]||'#999')+'18',borderWidth:y===years[years.length-1]?3:1.5,pointRadius:y===years[years.length-1]?2.5:1,tension:.3,fill:false};});
+  if(yaCharts.yoy)yaCharts.yoy.destroy();
+  yaCharts.yoy=new Chart(document.getElementById('yaYoyChart'),{type:'line',data:{datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:{callbacks:{title:i=>'Week '+i[0].parsed.x,label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{type:'linear',title:{display:true,text:'Week of Year'},min:1,max:53,ticks:{stepSize:4}},y:{beginAtZero:true}}}});
+}
+function yaYoyActive(b){document.querySelectorAll('#yaYoyBtns .cb').forEach(x=>x.classList.remove('active'));b.classList.add('active');}
+
+function yaRenderTable(){
+  const d=[...yaFiltered].reverse(),el=document.getElementById('yaTableContainer');
+  const cols=[{k:'date',l:'Date',f:r=>fmtDate(r.date),v:r=>r.date.getTime()},{k:'event',l:'Event',f:r=>r.event,v:r=>r.event},{k:'campus',l:'Campus',f:r=>r.campus||'\u2014',v:r=>r.campus},{k:'sem',l:'Semester',f:r=>r.semester||'\u2014',v:r=>r.semester},{k:'att',l:'Attendance',f:r=>fmtNum(r.attendance),v:r=>r.attendance},{k:'dt',l:'Dream Team',f:r=>fmtNum(r.dreamTeam),v:r=>r.dreamTeam},{k:'total',l:'Total',f:r=>fmtNum(r.totalAtt),v:r=>r.totalAtt}];
+  let sc='date',sd='desc';
+  function render(s){let h='<table class="data-table"><thead><tr>';cols.forEach(c=>{const a=sc===c.k?(sd==='asc'?' \u25B2':' \u25BC'):'';const cls=['att','dt','total'].includes(c.k)?' class="num"':'';h+='<th'+cls+' data-col="'+c.k+'">'+c.l+'<span style="font-size:10px;margin-left:4px">'+a+'</span></th>';});h+='</tr></thead><tbody>';s.forEach(r=>{h+='<tr>';cols.forEach(c=>{const cls=['att','dt','total'].includes(c.k)?' class="num"':'';h+='<td'+cls+'>'+c.f(r)+'</td>';});h+='</tr>';});h+='</tbody></table>';el.innerHTML=h;el.querySelectorAll('th').forEach(th=>{th.onclick=()=>{const col=th.dataset.col;if(sc===col)sd=sd==='asc'?'desc':'asc';else{sc=col;sd='desc';}const c=cols.find(x=>x.k===col);render([...d].sort((a,b)=>{const av=c.v(a),bv=c.v(b),cmp=av<bv?-1:av>bv?1:0;return sd==='asc'?cmp:-cmp;}));};});}
+  render(d);
+}
 
 // ══════════════════════════════════════════════════════════════════════
 //  ROOTED
@@ -736,6 +1061,7 @@ async function refreshAll(){
       fetchSheet(SHEET_URLS.missionMain),fetchSheet(SHEET_URLS.missionKids),
       fetchSheet(SHEET_URLS.edinburg),fetchSheet(SHEET_URLS.ipv),
       fetchSheet(SHEET_URLS.rooted),fetchSheet(SHEET_URLS.holiday),
+      fetchSheet(SHEET_URLS.youth),fetchSheet(SHEET_URLS.youngAdults),
     ]);
     // Sunday
     sRaw=sMerge(parseMM(parseCSV(results[0])),parseMK(parseCSV(results[1])),parseED(parseCSV(results[2])),parseIP(parseCSV(results[3])));
@@ -746,6 +1072,12 @@ async function refreshAll(){
     // Holiday
     hRaw=parseHoliday(parseCSV(results[5]));
     hApplyFilters();
+    // Youth
+    yRaw=parseYouth(parseCSV(results[6]));
+    yPopulateFilters();yApply();
+    // Young Adults
+    yaRaw=parseYoungAdults(parseCSV(results[7]));
+    yaPopulateFilters();yaApply();
     document.getElementById('lastRefresh').textContent='Updated '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   }catch(err){console.error('Refresh failed:',err);document.getElementById('lastRefresh').textContent='Refresh failed';}
   btn.classList.remove('loading');
