@@ -146,11 +146,23 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 }
 @media(max-width:600px){ .kpi-row{grid-template-columns:1fr;} }
 
+/* ── PDF Button ── */
+.pdf-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border:2px solid #c0392b;border-radius:8px;background:transparent;color:#c0392b;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
+.pdf-btn:hover{background:#c0392b;color:#fff;}
+.pdf-btn svg{flex-shrink:0;}
+
 /* ── Print ── */
 @media print{
   .sidebar{display:none!important;} .main{margin-left:0!important;}
   body{background:#fff;} .card,.kpi-card,.table-card{box-shadow:none;border:1px solid #ccc;break-inside:avoid;}
-  .chart-wrap{height:280px!important;} .filter-bar,.refresh-btn,.auto-badge{display:none!important;}
+  .chart-wrap{height:280px!important;} .filter-bar,.refresh-btn,.auto-badge,.pdf-btn,.er-view-toggle{display:none!important;}
+  .tab-panel{display:none!important;} .tab-panel.active{display:block!important;}
+  .dash-header{padding:12px 0!important;border-bottom:2px solid #333;}
+  .kpi-row{padding:12px 0!important;} .charts-section{padding:0 0 12px!important;} .table-section{padding:0 0 12px!important;}
+  .er-compare-section{break-inside:avoid;} .table-scroll{max-height:none!important;overflow:visible!important;}
+  #loginScreen,#loadingScreen,#setupScreen{display:none!important;}
+  #appShell{display:block!important;}
+  .dash-footer{display:none!important;}
 }
 
 /* Semester colors for Rooted */
@@ -618,6 +630,25 @@ function switchTab(tab, el){
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
 }
+
+// ── PDF Download ─────────────────────────────────────────────────────
+function downloadPDF(){
+  const active=document.querySelector('.tab-panel.active');
+  const title=active?active.querySelector('.title-area h1')?.textContent||'Dashboard':'Dashboard';
+  document.title='PVC — '+title;
+  window.print();
+  setTimeout(()=>{document.title='Palm Valley Church \u2014 Dashboard';},1000);
+}
+// inject PDF button into every header-actions div
+document.addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('.header-actions').forEach(ha=>{
+    const btn=document.createElement('button');
+    btn.className='pdf-btn';
+    btn.onclick=downloadPDF;
+    btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download PDF';
+    ha.appendChild(btn);
+  });
+});
 
 // ══════════════════════════════════════════════════════════════════════
 //  SUNDAY ATTENDANCE
