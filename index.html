@@ -162,6 +162,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
   .dash-header{padding:12px 16px!important;border-bottom:2px solid #333;}
   .kpi-row{padding:12px 16px!important;} .charts-section{padding:0 16px 12px!important;} .table-section{padding:0 16px 12px!important;}
   .er-compare-section{break-inside:avoid;} .table-scroll{max-height:none!important;overflow:visible!important;}
+  .ministry-tabs{display:none!important;} .ministry-panel{display:none!important;} .ministry-panel.active{display:block!important;}
   #loginScreen,#loadingScreen,#setupScreen{display:none!important;}
   #appShell{display:block!important;}
   .dash-footer{display:none!important;}
@@ -195,6 +196,13 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 .er-compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);}
 @media(max-width:900px){.er-compare-grid{grid-template-columns:1fr;}}
 .er-view-toggle{display:flex;gap:6px;}
+
+/* ── Ministry Sub-Tabs ── */
+.ministry-tabs{display:flex;gap:4px;padding:16px 32px 0;border-bottom:1px solid var(--border);background:#fff;}
+.ministry-tab{padding:10px 24px;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;transition:all .15s;}
+.ministry-tab:hover{color:var(--text);}
+.ministry-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.ministry-panel{display:none;} .ministry-panel.active{display:block;}
 </style>
 </head>
 <body>
@@ -244,17 +252,9 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <span>Sunday Attendance</span>
       </div>
-      <div class="nav-item" data-tab="rooted" onclick="switchTab('rooted',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        <span>Rooted</span>
-      </div>
-      <div class="nav-item" data-tab="youth" onclick="switchTab('youth',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-        <span>Youth</span>
-      </div>
-      <div class="nav-item" data-tab="youngadults" onclick="switchTab('youngadults',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <span>Young Adults</span>
+      <div class="nav-item" data-tab="ministry" onclick="switchTab('ministry',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Ministry Attendance</span>
       </div>
       <div class="nav-item" data-tab="holiday" onclick="switchTab('holiday',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -330,13 +330,13 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
     </div>
 
     <!-- ═══════════════════════════════════════════ -->
-    <!--                ROOTED TAB                   -->
+    <!--          MINISTRY ATTENDANCE TAB              -->
     <!-- ═══════════════════════════════════════════ -->
-    <div class="tab-panel" id="tab-rooted">
+    <div class="tab-panel" id="tab-ministry">
       <div class="dash-header">
         <div class="title-area">
-          <h1>Rooted</h1>
-          <p>Semester program attendance across campuses</p>
+          <h1>Ministry Attendance</h1>
+          <p>Youth &middot; Young Adults &middot; Rooted</p>
         </div>
         <div class="header-actions">
           <span class="auto-badge">Auto-refresh 5 min</span>
@@ -346,102 +346,108 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
           </button>
         </div>
       </div>
-      <div class="filter-bar" id="rootedFilters">
-        <div class="filter-group">
-          <label>Semester</label>
-          <select id="rSemFilter" onchange="rApplyFilters()"><option value="all">All Semesters</option></select>
-        </div>
-        <div class="filter-sep"></div>
-        <div class="filter-group">
-          <label>Campus</label>
-          <button class="fbtn active" data-filter="rc" data-value="all" onclick="setRF('campus','all',this)">All</button>
-          <button class="fbtn" data-filter="rc" data-value="Mission" onclick="setRF('campus','Mission',this)">Mission</button>
-          <button class="fbtn" data-filter="rc" data-value="Edinburg" onclick="setRF('campus','Edinburg',this)">Edinburg</button>
-          <button class="fbtn" data-filter="rc" data-value="Spanish" onclick="setRF('campus','Spanish',this)">Spanish</button>
-        </div>
-        <div class="filter-sep"></div>
-        <div class="filter-group">
-          <label>Event</label>
-          <button class="fbtn active" data-filter="re" data-value="all" onclick="setRF('event','all',this)">All</button>
-          <button class="fbtn" data-filter="re" data-value="Rooted" onclick="setRF('event','Rooted',this)">Rooted</button>
-          <button class="fbtn" data-filter="re" data-value="special" onclick="setRF('event','special',this)">Experiences</button>
-        </div>
+      <div class="ministry-tabs">
+        <button class="ministry-tab active" onclick="switchMinistry('youth',this)">Youth</button>
+        <button class="ministry-tab" onclick="switchMinistry('youngadults',this)">Young Adults</button>
+        <button class="ministry-tab" onclick="switchMinistry('rooted',this)">Rooted</button>
       </div>
-      <div class="kpi-row" id="rKpiRow"></div>
-      <div class="charts-section">
-        <div class="chart-grid"><div class="card"><h2>Semester Attendance Progression</h2><div class="subtitle">Weekly attendance by semester &mdash; Rooted sessions only</div><div class="chart-wrap tall"><canvas id="rSemChart"></canvas></div></div></div>
-        <div class="chart-grid"><div class="card"><h2>Week-by-Week Across Semesters</h2>
-          <div class="card-controls" id="rWeekViewBtns"><button class="cb active" onclick="rWeekView='grouped';rRenderWeekComp();rWeekViewActive(this)">By Week</button><button class="cb" onclick="rWeekView='overlay';rRenderWeekComp();rWeekViewActive(this)">Overlay</button></div>
-          <div class="subtitle">Compare same week across all semesters</div><div class="chart-wrap tall"><canvas id="rWeekCompChart"></canvas></div></div></div>
-        <div class="chart-grid-2">
-          <div class="card"><h2>Campus Comparison by Semester</h2><div class="subtitle">Average weekly Rooted attendance</div><div class="chart-wrap"><canvas id="rCampusChart"></canvas></div></div>
-          <div class="card"><h2>Retention Rate</h2><div class="subtitle">Week 10 vs Week 1 attendance per semester</div><div class="chart-wrap"><canvas id="rRetentionChart"></canvas></div></div>
-        </div>
-      </div>
-      <div class="table-section"><div class="table-card"><h2>Rooted Detail</h2><div class="subtitle">Click headers to sort</div><div class="table-scroll" id="rTableContainer"></div></div></div>
-    </div>
 
-    <!-- ═══════════════════════════════════════════ -->
-    <!--                 YOUTH TAB                    -->
-    <!-- ═══════════════════════════════════════════ -->
-    <div class="tab-panel" id="tab-youth">
-      <div class="dash-header">
-        <div class="title-area"><h1>Youth</h1><p>Wednesday night youth attendance</p></div>
-        <div class="header-actions"><span class="auto-badge">Auto-refresh 5 min</span><button class="refresh-btn" onclick="refreshAll()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Refresh</button></div>
-      </div>
-      <div class="filter-bar" id="youthFilters">
-        <div class="filter-group"><label>Event</label>
-          <button class="fbtn active" data-filter="ye" onclick="setYF('event','all',this)">All</button>
+      <!-- ── Youth Sub-Panel ── -->
+      <div class="ministry-panel active" id="mp-youth">
+        <div class="filter-bar" id="youthFilters">
+          <div class="filter-group"><label>Event</label>
+            <button class="fbtn active" data-filter="ye" onclick="setYF('event','all',this)">All</button>
+          </div>
+          <div class="filter-sep"></div>
+          <div class="filter-group"><label>Campus</label>
+            <button class="fbtn active" data-filter="yc" onclick="setYF('campus','all',this)">All</button>
+            <button class="fbtn" data-filter="yc" onclick="setYF('campus','Mission',this)">Mission</button>
+            <button class="fbtn" data-filter="yc" onclick="setYF('campus','Edinburg',this)">Edinburg</button>
+          </div>
+          <div class="filter-sep"></div>
+          <div class="filter-group"><label>From</label><input type="date" id="yDateStart" onchange="setYF('ds',this.value)"></div>
+          <div class="filter-group"><label>To</label><input type="date" id="yDateEnd" onchange="setYF('de',this.value)"></div>
         </div>
-        <div class="filter-sep"></div>
-        <div class="filter-group"><label>Campus</label>
-          <button class="fbtn active" data-filter="yc" onclick="setYF('campus','all',this)">All</button>
-          <button class="fbtn" data-filter="yc" onclick="setYF('campus','Mission',this)">Mission</button>
-          <button class="fbtn" data-filter="yc" onclick="setYF('campus','Edinburg',this)">Edinburg</button>
+        <div class="kpi-row" id="yKpiRow"></div>
+        <div class="charts-section">
+          <div class="chart-grid"><div class="card"><h2>Weekly Attendance Trend</h2><div class="subtitle">Total attendance over time</div><div class="chart-wrap tall"><canvas id="yTrendChart"></canvas></div></div></div>
+          <div class="chart-grid"><div class="card"><h2>HS vs MS Breakdown</h2><div class="subtitle">Last 8 weeks</div><div class="chart-wrap"><canvas id="yBreakdownChart"></canvas></div></div></div>
+          <div class="chart-grid"><div class="card"><h2>Year-over-Year</h2>
+              <div class="card-controls" id="yYoyBtns"><button class="cb active" onclick="yYoyCampus='all';yRenderYoy();yYoyActive(this)">All</button><button class="cb" onclick="yYoyCampus='Mission';yRenderYoy();yYoyActive(this)">Mission</button><button class="cb" onclick="yYoyCampus='Edinburg';yRenderYoy();yYoyActive(this)">Edinburg</button></div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0;" id="yYoyEventChecks"></div>
+              <div class="subtitle">Same week of year across years — toggle events to include</div><div class="chart-wrap tall"><canvas id="yYoyChart"></canvas></div>
+          </div></div>
         </div>
+        <div class="table-section"><div class="table-card"><h2>Youth Detail</h2><div class="subtitle">Click headers to sort</div><div class="table-scroll" id="yTableContainer"></div></div></div>
       </div>
-      <div class="kpi-row" id="yKpiRow"></div>
-      <div class="charts-section">
-        <div class="chart-grid"><div class="card"><h2>Weekly Attendance Trend</h2><div class="subtitle">Total attendance over time</div><div class="chart-wrap tall"><canvas id="yTrendChart"></canvas></div></div></div>
-        <div class="chart-grid"><div class="card"><h2>HS vs MS Breakdown</h2><div class="subtitle">Last 8 weeks</div><div class="chart-wrap"><canvas id="yBreakdownChart"></canvas></div></div></div>
-        <div class="chart-grid"><div class="card"><h2>Year-over-Year</h2>
-            <div class="card-controls" id="yYoyBtns"><button class="cb active" onclick="yYoyCampus='all';yRenderYoy();yYoyActive(this)">All</button><button class="cb" onclick="yYoyCampus='Mission';yRenderYoy();yYoyActive(this)">Mission</button><button class="cb" onclick="yYoyCampus='Edinburg';yRenderYoy();yYoyActive(this)">Edinburg</button></div>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0;" id="yYoyEventChecks"></div>
-            <div class="subtitle">Same week of year across years — toggle events to include</div><div class="chart-wrap tall"><canvas id="yYoyChart"></canvas></div>
-        </div></div>
-      </div>
-      <div class="table-section"><div class="table-card"><h2>Youth Detail</h2><div class="subtitle">Click headers to sort</div><div class="table-scroll" id="yTableContainer"></div></div></div>
-    </div>
 
-    <!-- ═══════════════════════════════════════════ -->
-    <!--            YOUNG ADULTS TAB                  -->
-    <!-- ═══════════════════════════════════════════ -->
-    <div class="tab-panel" id="tab-youngadults">
-      <div class="dash-header">
-        <div class="title-area"><h1>Young Adults</h1><p>Young adults attendance across events</p></div>
-        <div class="header-actions"><span class="auto-badge">Auto-refresh 5 min</span><button class="refresh-btn" onclick="refreshAll()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Refresh</button></div>
-      </div>
-      <div class="filter-bar" id="yaFilters">
-        <div class="filter-group"><label>Event</label>
-          <button class="fbtn active" data-filter="yae" onclick="setYAF('event','all',this)">All</button>
+      <!-- ── Young Adults Sub-Panel ── -->
+      <div class="ministry-panel" id="mp-youngadults">
+        <div class="filter-bar" id="yaFilters">
+          <div class="filter-group"><label>Event</label>
+            <button class="fbtn active" data-filter="yae" onclick="setYAF('event','all',this)">All</button>
+          </div>
+          <div class="filter-sep"></div>
+          <div class="filter-group"><label>Campus</label>
+            <button class="fbtn active" data-filter="yac" onclick="setYAF('campus','all',this)">All</button>
+          </div>
+          <div class="filter-sep"></div>
+          <div class="filter-group"><label>From</label><input type="date" id="yaDateStart" onchange="setYAF('ds',this.value)"></div>
+          <div class="filter-group"><label>To</label><input type="date" id="yaDateEnd" onchange="setYAF('de',this.value)"></div>
         </div>
-        <div class="filter-sep"></div>
-        <div class="filter-group"><label>Campus</label>
-          <button class="fbtn active" data-filter="yac" onclick="setYAF('campus','all',this)">All</button>
-        </div>
-      </div>
-      <div class="kpi-row" id="yaKpiRow"></div>
-      <div class="charts-section">
-        <div class="chart-grid"><div class="card"><h2>Weekly Attendance Trend</h2><div class="subtitle">Total attendance over time</div><div class="chart-wrap tall"><canvas id="yaTrendChart"></canvas></div></div></div>
-        <div class="chart-grid-2">
-          <div class="card"><h2>Event Comparison</h2><div class="subtitle">Average attendance by event</div><div class="chart-wrap"><canvas id="yaEventChart"></canvas></div></div>
-          <div class="card"><h2>Year-over-Year</h2>
-            <div class="card-controls" id="yaYoyBtns"><button class="cb active" onclick="yaYoyCampus='all';yaRenderYoy();yaYoyActive(this)">All</button></div>
-            <div class="subtitle">Same week of year across years</div><div class="chart-wrap"><canvas id="yaYoyChart"></canvas></div>
+        <div class="kpi-row" id="yaKpiRow"></div>
+        <div class="charts-section">
+          <div class="chart-grid"><div class="card"><h2>Weekly Attendance Trend</h2><div class="subtitle">Total attendance over time</div><div class="chart-wrap tall"><canvas id="yaTrendChart"></canvas></div></div></div>
+          <div class="chart-grid-2">
+            <div class="card"><h2>Event Comparison</h2><div class="subtitle">Average attendance by event</div><div class="chart-wrap"><canvas id="yaEventChart"></canvas></div></div>
+            <div class="card"><h2>Year-over-Year</h2>
+              <div class="card-controls" id="yaYoyBtns"><button class="cb active" onclick="yaYoyCampus='all';yaRenderYoy();yaYoyActive(this)">All</button></div>
+              <div class="subtitle">Same week of year across years</div><div class="chart-wrap"><canvas id="yaYoyChart"></canvas></div>
+            </div>
           </div>
         </div>
+        <div class="table-section"><div class="table-card"><h2>Young Adults Detail</h2><div class="subtitle">Click headers to sort</div><div class="table-scroll" id="yaTableContainer"></div></div></div>
       </div>
-      <div class="table-section"><div class="table-card"><h2>Young Adults Detail</h2><div class="subtitle">Click headers to sort</div><div class="table-scroll" id="yaTableContainer"></div></div></div>
+
+      <!-- ── Rooted Sub-Panel ── -->
+      <div class="ministry-panel" id="mp-rooted">
+        <div class="filter-bar" id="rootedFilters">
+          <div class="filter-group">
+            <label>Semester</label>
+            <select id="rSemFilter" onchange="rApplyFilters()"><option value="all">All Semesters</option></select>
+          </div>
+          <div class="filter-sep"></div>
+          <div class="filter-group">
+            <label>Campus</label>
+            <button class="fbtn active" data-filter="rc" data-value="all" onclick="setRF('campus','all',this)">All</button>
+            <button class="fbtn" data-filter="rc" data-value="Mission" onclick="setRF('campus','Mission',this)">Mission</button>
+            <button class="fbtn" data-filter="rc" data-value="Edinburg" onclick="setRF('campus','Edinburg',this)">Edinburg</button>
+            <button class="fbtn" data-filter="rc" data-value="Spanish" onclick="setRF('campus','Spanish',this)">Spanish</button>
+          </div>
+          <div class="filter-sep"></div>
+          <div class="filter-group">
+            <label>Event</label>
+            <button class="fbtn active" data-filter="re" data-value="all" onclick="setRF('event','all',this)">All</button>
+            <button class="fbtn" data-filter="re" data-value="Rooted" onclick="setRF('event','Rooted',this)">Rooted</button>
+            <button class="fbtn" data-filter="re" data-value="special" onclick="setRF('event','special',this)">Experiences</button>
+          </div>
+          <div class="filter-sep"></div>
+          <div class="filter-group"><label>From</label><input type="date" id="rDateStart" onchange="setRF('ds',this.value)"></div>
+          <div class="filter-group"><label>To</label><input type="date" id="rDateEnd" onchange="setRF('de',this.value)"></div>
+        </div>
+        <div class="kpi-row" id="rKpiRow"></div>
+        <div class="charts-section">
+          <div class="chart-grid"><div class="card"><h2>Semester Attendance Progression</h2><div class="subtitle">Weekly attendance by semester &mdash; Rooted sessions only</div><div class="chart-wrap tall"><canvas id="rSemChart"></canvas></div></div></div>
+          <div class="chart-grid"><div class="card"><h2>Week-by-Week Across Semesters</h2>
+            <div class="card-controls" id="rWeekViewBtns"><button class="cb active" onclick="rWeekView='grouped';rRenderWeekComp();rWeekViewActive(this)">By Week</button><button class="cb" onclick="rWeekView='overlay';rRenderWeekComp();rWeekViewActive(this)">Overlay</button></div>
+            <div class="subtitle">Compare same week across all semesters</div><div class="chart-wrap tall"><canvas id="rWeekCompChart"></canvas></div></div></div>
+          <div class="chart-grid-2">
+            <div class="card"><h2>Campus Comparison by Semester</h2><div class="subtitle">Average weekly Rooted attendance</div><div class="chart-wrap"><canvas id="rCampusChart"></canvas></div></div>
+            <div class="card"><h2>Retention Rate</h2><div class="subtitle">Week 10 vs Week 1 attendance per semester</div><div class="chart-wrap"><canvas id="rRetentionChart"></canvas></div></div>
+          </div>
+        </div>
+        <div class="table-section"><div class="table-card"><h2>Rooted Detail</h2><div class="subtitle">Click headers to sort</div><div class="table-scroll" id="rTableContainer"></div></div></div>
+      </div>
     </div>
 
     <!-- ═══════════════════════════════════════════ -->
@@ -635,6 +641,14 @@ function switchTab(tab, el){
   document.getElementById('tab-'+tab).classList.add('active');
 }
 
+// ── Ministry Sub-Tab Switching ────────────────────────────────────────
+function switchMinistry(sub,btn){
+  document.querySelectorAll('.ministry-tab').forEach(t=>t.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  document.querySelectorAll('.ministry-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('mp-'+sub).classList.add('active');
+}
+
 // ── PDF Download ─────────────────────────────────────────────────────
 function downloadPDF(){
   const active=document.querySelector('.tab-panel.active');
@@ -696,16 +710,13 @@ function sRenderKPI(){
   const pyMatch=sRaw.filter(r=>r.date.getFullYear()===yr-1&&weekOfYear(r.date)===wk);
   const PY=pyMatch.length?pyMatch[pyMatch.length-1]:null;
   const yLbl=PY?(yr-1)+' Wk '+wk:'last year';
-  function ch(cur,prev){if(!prev)return'<span class="kpi-change neutral">\u2014</span>';const pc=((cur-prev)/prev*100);return'<span class="kpi-change '+(pc>0?'up':pc<0?'down':'neutral')+'">'+(pc>=0?'+':'')+pc.toFixed(1)+'% vs '+yLbl+'</span>';}
+  function ch(cur,prev){if(!prev)return'<span class="kpi-change neutral">\u2014</span>';const pc=((cur-prev)/prev*100);return'<span class="kpi-change '+(pc>0?'up':pc<0?'down':'neutral')+'">'+(pc>=0?'+':'')+pc.toFixed(1)+'% vs '+yLbl+' ('+fmtNum(prev)+')</span>';}
   // Latest values
   const curAll=gT(L,m),pyAll=PY?gT(PY,m):null;
   const curAdults=allAdults(L),pyAdults=PY?allAdults(PY):null;
   const curM=cT(L,'mission',m),pyM=PY?cT(PY,'mission',m):null;
   const curE=cT(L,'edinburg',m),pyE=PY?cT(PY,'edinburg',m):null;
   const curI=cT(L,'ipv',m),pyI=PY?cT(PY,'ipv',m):null;
-  // 8-week averages
-  const avgAll=avg8(r=>gT(r,m)),avgAdults=avg8(allAdults),avgKids=avg8(allKids),avgDT=avg8(allDT);
-  const avgM=avg8(r=>cT(r,'mission',m)),avgE=avg8(r=>cT(r,'edinburg',m)),avgI=avg8(r=>cT(r,'ipv',m));
   // Row 1: Latest Sunday
   let html=`<div style="margin-bottom:4px;padding:0 32px;font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">${fmtDate(L.date)}</div>`;
   html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--text)"></div><div class="kpi-label">Total Attendance</div><div class="kpi-value total">${fmtNum(curAll)}</div><div class="kpi-sub">Adults ${fmtNum(curAdults)}</div>${ch(curAll,pyAll)}</div>`;
@@ -713,14 +724,6 @@ function sRenderKPI(){
   html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--mission)"></div><div class="kpi-label">Mission</div><div class="kpi-value mission">${fmtNum(curM)}</div><div class="kpi-sub">Adults ${fmtNum(campusAdults(L,'mission'))} &middot; Kids ${fmtNum(campusKids(L,'mission'))}</div>${ch(curM,pyM)}</div>`;
   html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--edinburg)"></div><div class="kpi-label">Edinburg</div><div class="kpi-value edinburg">${fmtNum(curE)}</div><div class="kpi-sub">Adults ${fmtNum(campusAdults(L,'edinburg'))} &middot; Kids ${fmtNum(campusKids(L,'edinburg'))}</div>${ch(curE,pyE)}</div>`;
   html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--ipv)"></div><div class="kpi-label">Iglesia PV</div><div class="kpi-value ipv">${fmtNum(curI)}</div><div class="kpi-sub">Adults ${fmtNum(campusAdults(L,'ipv'))} &middot; Kids ${fmtNum(campusKids(L,'ipv'))}</div>${ch(curI,pyI)}</div>`;
-  // Row 2: 8-Week Averages
-  html+=`<div style="grid-column:1/-1;margin-top:12px;padding:0;font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">8-Week Rolling Averages</div>`;
-  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--text)"></div><div class="kpi-label">Avg Total Attendance</div><div class="kpi-value total">${fmtNum(avgAll)}</div></div>`;
-  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--positive)"></div><div class="kpi-label">Avg Adults</div><div class="kpi-value" style="color:var(--positive)">${fmtNum(avgAdults)}</div></div>`;
-  html+=`<div class="kpi-card"><div class="accent-bar" style="background:#e67e22"></div><div class="kpi-label">Avg Kids</div><div class="kpi-value" style="color:#e67e22">${fmtNum(avgKids)}</div></div>`;
-  html+=`<div class="kpi-card"><div class="accent-bar" style="background:#8e44ad"></div><div class="kpi-label">Avg Dream Team</div><div class="kpi-value" style="color:#8e44ad">${fmtNum(avgDT)}</div></div>`;
-  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--mission)"></div><div class="kpi-label">Avg Mission</div><div class="kpi-value mission">${fmtNum(avgM)}</div></div>`;
-  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--edinburg)"></div><div class="kpi-label">Avg Edinburg</div><div class="kpi-value edinburg">${fmtNum(avgE)}</div></div>`;
   el.innerHTML=html;
 }
 
@@ -748,7 +751,7 @@ render(d);}
 // ══════════════════════════════════════════════════════════════════════
 //  YOUTH
 // ══════════════════════════════════════════════════════════════════════
-let yRaw=[],yFiltered=[],yCharts={},yFilters={event:'all',campus:'all'},yYoyCampus='all',yYoyEvents=new Set();
+let yRaw=[],yFiltered=[],yCharts={},yFilters={event:'all',campus:'all',ds:null,de:null},yYoyCampus='all',yYoyEvents=new Set();
 
 function parseYouth(rows){
   const d=[];
@@ -767,7 +770,7 @@ function yPopulateFilters(){
   const events=[...new Set(yRaw.map(r=>r.event))].filter(Boolean).sort();
   const el=document.querySelector('[data-filter="ye"]').parentElement;
   let html='<label>Event</label><button class="fbtn active" data-filter="ye" onclick="setYF(\'event\',\'all\',this)">All</button>';
-  events.forEach(e=>{html+='<button class="fbtn" data-filter="ye" onclick="setYF(\'event\',\''+e+'\',this)">'+e+'</button>';});
+  events.forEach(e=>{html+='<button class="fbtn" data-filter="ye" onclick="setYF(\'event\',\''+e.replace(/'/g,"\\'")+'\',this)">'+e+'</button>';});
   el.innerHTML=html;
   const campuses=[...new Set(yRaw.map(r=>r.campus))].filter(Boolean).sort();
   const el2=document.querySelector('[data-filter="yc"]').parentElement;
@@ -777,12 +780,14 @@ function yPopulateFilters(){
   // populate YoY event checkboxes
   yYoyEvents=new Set(events);
   const ec=document.getElementById('yYoyEventChecks');
-  if(ec){let h='';events.forEach(e=>{h+='<label style="display:inline-flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;"><input type="checkbox" checked onchange="yToggleYoyEvent(\''+e+'\',this.checked)" style="accent-color:#4a7f97;">'+e+'</label>';});ec.innerHTML=h;}
+  if(ec){let h='';events.forEach(e=>{h+='<label style="display:inline-flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;"><input type="checkbox" checked onchange="yToggleYoyEvent(\''+e.replace(/'/g,"\\'")+'\',this.checked)" style="accent-color:#4a7f97;">'+e+'</label>';});ec.innerHTML=h;}
 }
 
 function setYF(k,v,btn){
   if(k==='event'){yFilters.event=v;document.querySelectorAll('[data-filter="ye"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}
   else if(k==='campus'){yFilters.campus=v;document.querySelectorAll('[data-filter="yc"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}
+  else if(k==='ds'){yFilters.ds=v||null;}
+  else if(k==='de'){yFilters.de=v||null;}
   yApply();
 }
 
@@ -790,6 +795,8 @@ function yApply(){
   let d=yRaw;
   if(yFilters.event!=='all')d=d.filter(r=>r.event===yFilters.event);
   if(yFilters.campus!=='all')d=d.filter(r=>r.campus===yFilters.campus);
+  if(yFilters.ds){const ds=new Date(yFilters.ds+'T00:00:00');d=d.filter(r=>r.date>=ds);}
+  if(yFilters.de){const de=new Date(yFilters.de+'T23:59:59');d=d.filter(r=>r.date<=de);}
   yFiltered=d;yRenderKPI();yRenderTrend();yRenderBreakdown();yRenderYoy();yRenderTable();
 }
 
@@ -811,17 +818,29 @@ function yRenderKPI(){
 }
 
 function yRenderTrend(){
-  const d=yFiltered,labels=d.map(r=>r.date);
+  const d=yFiltered;if(!d.length)return;
   // Aggregate by date if multiple campuses
   const byDate={};d.forEach(r=>{const k=dateKey(r.date);if(!byDate[k])byDate[k]={date:r.date,hs:0,ms:0,total:0,vol:0};byDate[k].hs+=r.hs;byDate[k].ms+=r.ms;byDate[k].total+=r.totalAtt;byDate[k].vol+=r.totalVol;});
   const agg=Object.values(byDate).sort((a,b)=>a.date-b.date);
-  const ds=[
-    {label:'Total Attendance',data:agg.map(r=>r.total),borderColor:'#1a1a1a',backgroundColor:'#1a1a1a18',borderWidth:2.5,tension:.3,pointRadius:2,pointHoverRadius:5,fill:false},
-    {label:'High School',data:agg.map(r=>r.hs),borderColor:COLORS.mission,backgroundColor:COLORS.mission+'18',borderWidth:2,tension:.3,pointRadius:1.5,pointHoverRadius:5,fill:false},
-    {label:'Middle School',data:agg.map(r=>r.ms),borderColor:COLORS.edinburg,backgroundColor:COLORS.edinburg+'18',borderWidth:2,tension:.3,pointRadius:1.5,pointHoverRadius:5,fill:false}
-  ];
+  const useBar=agg.length<=8;
   if(yCharts.trend)yCharts.trend.destroy();
-  yCharts.trend=new Chart(document.getElementById('yTrendChart'),{type:'line',data:{labels:agg.map(r=>r.date),datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:16,font:{size:12}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{type:'time',time:{unit:'month',tooltipFormat:'MMM d, yyyy'},grid:{display:false}},y:{beginAtZero:true}}}});
+  if(useBar){
+    // Bar chart for low-count events (Girl's Night, 3BN, United Night)
+    const labels=agg.map(r=>fmtDate(r.date));
+    const ds=[
+      {label:'Total Attendance',data:agg.map(r=>r.total),backgroundColor:'#1a1a1aCC',borderRadius:4},
+      {label:'High School',data:agg.map(r=>r.hs),backgroundColor:COLORS.mission+'CC',borderRadius:4},
+      {label:'Middle School',data:agg.map(r=>r.ms),backgroundColor:COLORS.edinburg+'CC',borderRadius:4}
+    ];
+    yCharts.trend=new Chart(document.getElementById('yTrendChart'),{type:'bar',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:16,font:{size:12}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{beginAtZero:true}}}});
+  } else {
+    const ds=[
+      {label:'Total Attendance',data:agg.map(r=>r.total),borderColor:'#1a1a1a',backgroundColor:'#1a1a1a18',borderWidth:2.5,tension:.3,pointRadius:2,pointHoverRadius:5,fill:false},
+      {label:'High School',data:agg.map(r=>r.hs),borderColor:COLORS.mission,backgroundColor:COLORS.mission+'18',borderWidth:2,tension:.3,pointRadius:1.5,pointHoverRadius:5,fill:false},
+      {label:'Middle School',data:agg.map(r=>r.ms),borderColor:COLORS.edinburg,backgroundColor:COLORS.edinburg+'18',borderWidth:2,tension:.3,pointRadius:1.5,pointHoverRadius:5,fill:false}
+    ];
+    yCharts.trend=new Chart(document.getElementById('yTrendChart'),{type:'line',data:{labels:agg.map(r=>r.date),datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:16,font:{size:12}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{type:'time',time:{unit:'month',tooltipFormat:'MMM d, yyyy'},grid:{display:false}},y:{beginAtZero:true}}}});
+  }
 }
 
 function yRenderBreakdown(){
@@ -863,7 +882,7 @@ function yRenderTable(){
 // ══════════════════════════════════════════════════════════════════════
 //  YOUNG ADULTS
 // ══════════════════════════════════════════════════════════════════════
-let yaRaw=[],yaFiltered=[],yaCharts={},yaFilters={event:'all',campus:'all'},yaYoyCampus='all';
+let yaRaw=[],yaFiltered=[],yaCharts={},yaFilters={event:'all',campus:'all',ds:null,de:null},yaYoyCampus='all';
 
 function parseYoungAdults(rows){
   const d=[];
@@ -892,6 +911,8 @@ function yaPopulateFilters(){
 function setYAF(k,v,btn){
   if(k==='event'){yaFilters.event=v;document.querySelectorAll('[data-filter="yae"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}
   else if(k==='campus'){yaFilters.campus=v;document.querySelectorAll('[data-filter="yac"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}
+  else if(k==='ds'){yaFilters.ds=v||null;}
+  else if(k==='de'){yaFilters.de=v||null;}
   yaApply();
 }
 
@@ -899,6 +920,8 @@ function yaApply(){
   let d=yaRaw;
   if(yaFilters.event!=='all')d=d.filter(r=>r.event===yaFilters.event);
   if(yaFilters.campus!=='all')d=d.filter(r=>r.campus===yaFilters.campus);
+  if(yaFilters.ds){const ds=new Date(yaFilters.ds+'T00:00:00');d=d.filter(r=>r.date>=ds);}
+  if(yaFilters.de){const de=new Date(yaFilters.de+'T23:59:59');d=d.filter(r=>r.date<=de);}
   yaFiltered=d;yaRenderKPI();yaRenderTrend();yaRenderEvent();yaRenderYoy();yaRenderTable();
 }
 
@@ -965,15 +988,15 @@ function yaRenderTable(){
 // ══════════════════════════════════════════════════════════════════════
 const RCOLORS={Mission:'#4a7f97',Edinburg:'#7b6fa6',Spanish:'#c47a2e'};
 const SEM_COLORS=['#4a7f97','#7b6fa6','#c47a2e','#2e7d5b','#c0392b','#e67e22','#3498db','#8e44ad','#1abc9c','#d35400'];
-let rRaw=[],rFiltered=[],rCharts={},rFilters={campus:'all',event:'all',semester:'all'};
+let rRaw=[],rFiltered=[],rCharts={},rFilters={campus:'all',event:'all',semester:'all',ds:null,de:null};
 
 function parseRooted(rows){const d=[];for(let i=1;i<rows.length;i++){const r=rows[i],dt=parseDate(r[0]);if(!dt)continue;const att=num(r[5]),totAtt=num(r[7]);if(att===0&&totAtt===0)continue;d.push({date:dt,event:r[1]?r[1].trim():'',campus:r[2]?r[2].trim():'',semester:r[3]?r[3].trim():'',week:num(r[4]),attendance:att||totAtt,facilitators:num(r[6])});}d.sort((a,b)=>a.date-b.date);return d;}
 
 function rPopulateFilters(){const sel=document.getElementById('rSemFilter');const sems=[...new Set(rRaw.map(r=>r.semester))];const order=['Fall 2022','Spring 2023','Summer 2023','Fall 2023','Spring 2024','Summer 2024','Fall 2024','Spring 2025','Summer 2025','Fall 2025','Spring 2026','Summer 2026','Fall 2026'];sems.sort((a,b)=>(order.indexOf(a)===-1?99:order.indexOf(a))-(order.indexOf(b)===-1?99:order.indexOf(b)));sel.innerHTML='<option value="all">All Semesters</option>';sems.forEach(s=>{sel.innerHTML+='<option value="'+s+'">'+s+'</option>';});}
 
-function setRF(k,v,btn){if(k==='campus'){rFilters.campus=v;document.querySelectorAll('[data-filter="rc"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}else if(k==='event'){rFilters.event=v;document.querySelectorAll('[data-filter="re"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}rApplyFilters();}
+function setRF(k,v,btn){if(k==='campus'){rFilters.campus=v;document.querySelectorAll('[data-filter="rc"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}else if(k==='event'){rFilters.event=v;document.querySelectorAll('[data-filter="re"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}else if(k==='ds'){rFilters.ds=v||null;}else if(k==='de'){rFilters.de=v||null;}rApplyFilters();}
 
-function rApplyFilters(){let d=rRaw;const f=rFilters;f.semester=document.getElementById('rSemFilter').value;if(f.semester!=='all')d=d.filter(r=>r.semester===f.semester);if(f.campus!=='all')d=d.filter(r=>r.campus===f.campus);if(f.event==='Rooted')d=d.filter(r=>r.event==='Rooted'||r.event==='Celebration');else if(f.event==='special')d=d.filter(r=>r.event==='Prayer Experience'||r.event==='Serve Experience');rFiltered=d;rRenderKPI();rRenderSemChart();rRenderWeekComp();rRenderCampus();rRenderRetention();rRenderTable();}
+function rApplyFilters(){let d=rRaw;const f=rFilters;f.semester=document.getElementById('rSemFilter').value;if(f.semester!=='all')d=d.filter(r=>r.semester===f.semester);if(f.campus!=='all')d=d.filter(r=>r.campus===f.campus);if(f.event==='Rooted')d=d.filter(r=>r.event==='Rooted'||r.event==='Celebration');else if(f.event==='special')d=d.filter(r=>r.event==='Prayer Experience'||r.event==='Serve Experience');if(f.ds){const ds=new Date(f.ds+'T00:00:00');d=d.filter(r=>r.date>=ds);}if(f.de){const de=new Date(f.de+'T23:59:59');d=d.filter(r=>r.date<=de);}rFiltered=d;rRenderKPI();rRenderSemChart();rRenderWeekComp();rRenderCampus();rRenderRetention();rRenderTable();}
 
 function rRenderKPI(){const d=rFiltered,el=document.getElementById('rKpiRow');const rooted=d.filter(r=>r.event==='Rooted'||r.event==='Celebration');if(!d.length){el.innerHTML='<div class="kpi-card"><div class="kpi-label">No Data</div><div class="kpi-value total">\u2014</div></div>';return;}
 // Find the most recent semester's data
