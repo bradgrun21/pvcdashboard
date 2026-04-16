@@ -158,6 +158,27 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 .sem-spring{background:#e0f2f1;color:#00695c;}
 .sem-summer{background:#fff3e0;color:#e65100;}
 .sem-fall{background:#ede7f6;color:#4527a0;}
+
+/* ── Event Registrations Multi-Select ── */
+.er-multi-select{position:relative;min-width:280px;}
+.er-multi-select .er-trigger{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;font-size:12px;color:var(--text);min-height:34px;flex-wrap:wrap;}
+.er-multi-select .er-trigger:hover{border-color:var(--accent);}
+.er-multi-select .er-trigger .er-arrow{flex-shrink:0;font-size:10px;color:var(--muted);}
+.er-multi-select .er-chips{display:flex;flex-wrap:wrap;gap:4px;flex:1;}
+.er-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:var(--accent);color:#fff;border-radius:4px;font-size:11px;font-weight:500;}
+.er-chip .er-chip-x{cursor:pointer;font-weight:700;opacity:.7;} .er-chip .er-chip-x:hover{opacity:1;}
+.er-dropdown{display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:50;max-height:320px;overflow-y:auto;margin-top:4px;}
+.er-dropdown.open{display:block;}
+.er-dropdown .er-search{width:100%;padding:10px 12px;border:none;border-bottom:1px solid var(--border);font-size:12px;outline:none;}
+.er-dropdown .er-option{padding:8px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .1s;}
+.er-dropdown .er-option:hover{background:#f0f4f8;}
+.er-dropdown .er-option.selected{background:rgba(74,127,151,.08);font-weight:600;}
+.er-dropdown .er-option .er-check{width:16px;height:16px;border:2px solid var(--border);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;}
+.er-dropdown .er-option.selected .er-check{background:var(--accent);border-color:var(--accent);}
+.er-compare-section{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:20px 24px;margin-bottom:var(--gap);}
+.er-compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);}
+@media(max-width:900px){.er-compare-grid{grid-template-columns:1fr;}}
+.er-view-toggle{display:flex;gap:6px;}
 </style>
 </head>
 <body>
@@ -222,6 +243,10 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       <div class="nav-item" data-tab="holiday" onclick="switchTab('holiday',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
         <span>Holiday Services</span>
+      </div>
+      <div class="nav-item" data-tab="eventregistrations" onclick="switchTab('eventregistrations',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/></svg>
+        <span>Event Registrations</span>
       </div>
     </nav>
     <div class="sidebar-footer">
@@ -469,6 +494,84 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       <div class="table-section"><div class="table-card"><h2>Holiday Service Detail</h2><div class="subtitle">Click headers to sort</div><div class="table-scroll" id="hTableContainer"></div></div></div>
     </div>
 
+    <!-- ═══════════════════════════════════════════ -->
+    <!--          EVENT REGISTRATIONS TAB             -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-eventregistrations">
+      <div class="dash-header">
+        <div class="title-area">
+          <h1>Event Registrations</h1>
+          <p>Registration velocity &amp; progress for all events</p>
+        </div>
+        <div class="header-actions">
+          <div class="er-view-toggle">
+            <button class="fbtn active" id="erViewChart" onclick="erSetView('chart',this)">Chart</button>
+            <button class="fbtn" id="erViewTable" onclick="erSetView('table',this)">Table</button>
+          </div>
+          <span class="auto-badge">Auto-refresh 5 min</span>
+          <button class="refresh-btn" onclick="refreshAll()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+      <div class="filter-bar" id="erFilters">
+        <div class="filter-group"><label>Select Events</label>
+          <div class="er-multi-select" id="erEventSelect">
+            <div class="er-trigger" onclick="erToggleDropdown()">
+              <div class="er-chips" id="erChips"><span style="color:var(--muted)">Choose events...</span></div>
+              <span class="er-arrow">&#9662;</span>
+            </div>
+            <div class="er-dropdown" id="erDropdown">
+              <input class="er-search" type="text" placeholder="Search events..." oninput="erFilterOptions(this.value)">
+              <div id="erOptionsList"></div>
+            </div>
+          </div>
+        </div>
+        <div class="filter-sep"></div>
+        <div class="filter-group"><label>Quick</label>
+          <button class="fbtn" onclick="erSelectTop(5)">Top 5</button>
+          <button class="fbtn" onclick="erSelectRecent(5)">Recent 5</button>
+          <button class="fbtn" onclick="erClearAll()">Clear All</button>
+        </div>
+        <div class="filter-sep"></div>
+        <div class="filter-group"><label>Chart Metric</label>
+          <button class="fbtn active" id="erMetricTotal" onclick="erSetMetric('total',this)">Running Total</button>
+          <button class="fbtn" id="erMetricPct" onclick="erSetMetric('pct',this)">% of Final</button>
+        </div>
+      </div>
+
+      <div class="kpi-row" id="erKpiRow"></div>
+
+      <!-- Chart View -->
+      <div class="charts-section" id="erChartSection">
+        <div class="chart-grid">
+          <div class="card">
+            <h2>Registration Curves</h2>
+            <div class="subtitle">X-axis = weeks before event (right-to-left countdown) &middot; select events above</div>
+            <div class="chart-wrap tall"><canvas id="erCurveChart"></canvas></div>
+          </div>
+        </div>
+        <div class="er-compare-section" style="margin-top:var(--gap)">
+          <h2 style="font-size:15px;font-weight:600;margin-bottom:4px;">Side-by-Side Comparison</h2>
+          <div class="subtitle" style="font-size:12px;color:var(--muted);margin-bottom:14px;">Select exactly 2 events above to compare their registration progress</div>
+          <div class="er-compare-grid" id="erCompareGrid">
+            <div class="card" id="erCompareA"><p style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center;">Select 2 events to compare</p></div>
+            <div class="card" id="erCompareB"><p style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center;">&nbsp;</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table View -->
+      <div class="table-section" id="erTableSection" style="display:none;">
+        <div class="table-card">
+          <h2>Registration Detail</h2>
+          <div class="subtitle">Showing selected events &middot; Click headers to sort</div>
+          <div class="table-scroll" id="erTableContainer"></div>
+        </div>
+      </div>
+    </div>
+
     <div class="dash-footer">Palm Valley Church &mdash; Dashboard &middot; Data refreshes from Google Sheets</div>
   </div>
 </div>
@@ -486,6 +589,7 @@ const SHEET_URLS = {
   youth:       'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=837314920&single=true&output=csv',
   youngAdults: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=1492448223&single=true&output=csv',
   holiday:     'https://docs.google.com/spreadsheets/d/e/2PACX-1vRfD4tAKk-Ltf0c65jzuHpqVi-ovIg5vNtiukWs8Y65t7J-dDro43qSVhr-O2Ar0YVzh3wwUOLM3u-H/pub?gid=912394380&single=true&output=csv',
+  eventRegistrations: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQERQIu9rvIOGEH1SAWn5PhgGrrGGETSZAaaSBLFzpQ9BpKhCaTQD1nLH2FH1Pw5_-bHdV6vmbgT8dl/pub?gid=562943043&single=true&output=csv',
 };
 const AUTO_REFRESH_MS = 5*60*1000;
 const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
@@ -1082,6 +1186,282 @@ function hRenderTable(){
 }
 
 // ══════════════════════════════════════════════════════════════════════
+//  EVENT REGISTRATIONS
+// ══════════════════════════════════════════════════════════════════════
+let erRaw=[], erEvents=[], erSelected=[], erMetric='total', erView='chart', erCurveChart=null, erSortCol=-1, erSortAsc=true;
+
+const ER_COLORS=['#4a7f97','#7b6fa6','#c47a2e','#2e7d5b','#c0392b','#e67e22','#2980b9','#8e44ad','#16a085','#d35400','#27ae60','#e74c3c','#1abc9c','#9b59b6','#f39c12','#3498db'];
+
+function parseEventRegistrations(rows){
+  if(!rows||rows.length<2)return[];
+  const hdr=rows[0].map(h=>h.trim().toLowerCase());
+  const ci={name:hdr.indexOf('event name'),week:hdr.indexOf('registration week'),start:hdr.indexOf('event start date'),
+    wBefore:hdr.indexOf('weeks before event'),weekly:hdr.indexOf('weekly registrations'),running:hdr.indexOf('running total'),
+    final:hdr.indexOf('final total'),pct:hdr.indexOf('% of final')};
+  const data=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];if(!r||r.length<4)continue;
+    const name=(r[ci.name]||'').trim();if(!name)continue;
+    const weekStr=(r[ci.week]||'').trim();
+    const startStr=(r[ci.start]||'').trim();
+    const wBefore=parseInt(r[ci.wBefore]);
+    const weekly=num(r[ci.weekly]);
+    const running=num(r[ci.running]);
+    const final_=num(r[ci.final]);
+    const pctStr=(r[ci.pct]||'').replace('%','').trim();
+    const pct=pctStr&&pctStr!=='-'?parseFloat(pctStr):0;
+    const regWeek=parseDate(weekStr);
+    const startDate=parseDate(startStr);
+    if(weekly===0&&running===0&&final_===0)continue;
+    data.push({name,regWeek,startDate,wBefore:isNaN(wBefore)?null:wBefore,weekly,running,final:final_,pct,
+      weekStr,startStr});
+  }
+  return data;
+}
+
+function erBuildEvents(data){
+  const map=new Map();
+  for(const r of data){
+    if(!map.has(r.name))map.set(r.name,{name:r.name,startDate:r.startDate,startStr:r.startStr,final:r.final,rows:[]});
+    const e=map.get(r.name);
+    e.rows.push(r);
+    if(r.final>e.final)e.final=r.final;
+    if(r.startDate&&(!e.startDate||r.startDate>e.startDate))e.startDate=r.startDate;
+  }
+  const events=[...map.values()];
+  events.sort((a,b)=>{
+    if(a.startDate&&b.startDate)return b.startDate-a.startDate;
+    if(a.startDate)return-1;if(b.startDate)return 1;
+    return a.name.localeCompare(b.name);
+  });
+  for(const e of events)e.rows.sort((a,b)=>(b.wBefore??-999)-(a.wBefore??-999));
+  return events;
+}
+
+function erPopulateFilters(){
+  erEvents=erBuildEvents(erRaw);
+  erSelected=[];
+  erRenderOptions('');
+  erRenderChips();
+}
+
+function erRenderOptions(q){
+  const list=document.getElementById('erOptionsList');
+  const lq=q.toLowerCase();
+  let html='';
+  for(const ev of erEvents){
+    if(lq&&!ev.name.toLowerCase().includes(lq))continue;
+    const sel=erSelected.includes(ev.name);
+    const info=ev.startDate?fmtDate(ev.startDate):'No date';
+    html+=`<div class="er-option${sel?' selected':''}" onclick="erToggleEvent('${ev.name.replace(/'/g,"\\'")}')">
+      <span class="er-check">${sel?'&#10003;':''}</span>
+      <span style="flex:1">${ev.name}</span>
+      <span style="color:var(--muted);font-size:11px">${info} &middot; ${ev.final.toLocaleString()}</span>
+    </div>`;
+  }
+  if(!html)html='<div style="padding:12px;color:var(--muted);font-size:12px;">No events found</div>';
+  list.innerHTML=html;
+}
+
+function erToggleDropdown(){
+  const dd=document.getElementById('erDropdown');
+  dd.classList.toggle('open');
+  if(dd.classList.contains('open'))dd.querySelector('.er-search').focus();
+}
+document.addEventListener('click',function(e){
+  const ms=document.getElementById('erEventSelect');
+  if(ms&&!ms.contains(e.target)){document.getElementById('erDropdown').classList.remove('open');}
+});
+
+function erFilterOptions(q){erRenderOptions(q);}
+
+function erToggleEvent(name){
+  const idx=erSelected.indexOf(name);
+  if(idx>=0)erSelected.splice(idx,1);else erSelected.push(name);
+  erRenderOptions(document.querySelector('#erDropdown .er-search')?.value||'');
+  erRenderChips();
+  erApply();
+}
+
+function erRemoveEvent(name){
+  erSelected=erSelected.filter(n=>n!==name);
+  erRenderOptions(document.querySelector('#erDropdown .er-search')?.value||'');
+  erRenderChips();
+  erApply();
+}
+
+function erRenderChips(){
+  const box=document.getElementById('erChips');
+  if(!erSelected.length){box.innerHTML='<span style="color:var(--muted)">Choose events...</span>';return;}
+  box.innerHTML=erSelected.map((n,i)=>{
+    const c=ER_COLORS[i%ER_COLORS.length];
+    return`<span class="er-chip" style="background:${c}"><span class="er-chip-label">${n.length>30?n.substring(0,28)+'…':n}</span><span class="er-chip-x" onclick="event.stopPropagation();erRemoveEvent('${n.replace(/'/g,"\\'")}')">&times;</span></span>`;
+  }).join('');
+}
+
+function erSelectTop(n){
+  erSelected=erEvents.slice(0,Math.min(n,erEvents.length)).filter(e=>e.final>0).sort((a,b)=>b.final-a.final).slice(0,n).map(e=>e.name);
+  erRenderOptions('');erRenderChips();erApply();
+}
+function erSelectRecent(n){
+  const dated=erEvents.filter(e=>e.startDate);
+  erSelected=dated.slice(0,n).map(e=>e.name);
+  erRenderOptions('');erRenderChips();erApply();
+}
+function erClearAll(){erSelected=[];erRenderOptions('');erRenderChips();erApply();}
+
+function erSetMetric(m,btn){
+  erMetric=m;
+  document.querySelectorAll('#erFilters .filter-group:last-child .fbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  erRenderCurveChart();
+}
+
+function erSetView(v,btn){
+  erView=v;
+  document.getElementById('erViewChart').classList.toggle('active',v==='chart');
+  document.getElementById('erViewTable').classList.toggle('active',v==='table');
+  document.getElementById('erChartSection').style.display=v==='chart'?'':'none';
+  document.getElementById('erTableSection').style.display=v==='table'?'':'none';
+  if(v==='table')erRenderTable();
+}
+
+function erApply(){
+  erRenderKPIs();
+  erRenderCurveChart();
+  erRenderCompare();
+  if(erView==='table')erRenderTable();
+}
+
+function erRenderKPIs(){
+  const row=document.getElementById('erKpiRow');
+  if(!erSelected.length){row.innerHTML='';return;}
+  const selEvents=erSelected.map(n=>erEvents.find(e=>e.name===n)).filter(Boolean);
+  const totalRegs=selEvents.reduce((s,e)=>s+e.final,0);
+  const avgFinal=selEvents.length?Math.round(totalRegs/selEvents.length):0;
+  const maxEvent=selEvents.reduce((best,e)=>e.final>best.final?e:best,selEvents[0]);
+  // avg weeks of data
+  const avgWeeks=selEvents.length?Math.round(selEvents.reduce((s,e)=>s+e.rows.length,0)/selEvents.length):0;
+  row.innerHTML=`
+    <div class="kpi-card"><div class="accent-bar" style="background:var(--accent)"></div>
+      <div class="kpi-label">Events Selected</div><div class="kpi-value total">${selEvents.length}</div>
+      <div class="kpi-sub">of ${erEvents.length} total</div></div>
+    <div class="kpi-card"><div class="accent-bar" style="background:var(--mission)"></div>
+      <div class="kpi-label">Total Registrations</div><div class="kpi-value mission">${totalRegs.toLocaleString()}</div>
+      <div class="kpi-sub">across selected events</div></div>
+    <div class="kpi-card"><div class="accent-bar" style="background:var(--edinburg)"></div>
+      <div class="kpi-label">Avg per Event</div><div class="kpi-value edinburg">${avgFinal.toLocaleString()}</div>
+      <div class="kpi-sub">average final registrations</div></div>
+    <div class="kpi-card"><div class="accent-bar" style="background:var(--ipv)"></div>
+      <div class="kpi-label">Largest Event</div><div class="kpi-value ipv">${maxEvent?maxEvent.final.toLocaleString():'\u2014'}</div>
+      <div class="kpi-sub">${maxEvent?maxEvent.name:''}</div></div>
+  `;
+}
+
+function erRenderCurveChart(){
+  const ctx=document.getElementById('erCurveChart');
+  if(erCurveChart){erCurveChart.destroy();erCurveChart=null;}
+  if(!erSelected.length)return;
+  const datasets=[];
+  for(let i=0;i<erSelected.length;i++){
+    const ev=erEvents.find(e=>e.name===erSelected[i]);if(!ev)continue;
+    const color=ER_COLORS[i%ER_COLORS.length];
+    const pts=ev.rows.filter(r=>r.wBefore!==null).sort((a,b)=>b.wBefore-a.wBefore).map(r=>({x:r.wBefore,y:erMetric==='pct'?r.pct:r.running}));
+    datasets.push({label:ev.name,data:pts,borderColor:color,backgroundColor:color+'22',fill:false,tension:.3,pointRadius:3,pointHoverRadius:5,borderWidth:2});
+  }
+  erCurveChart=new Chart(ctx,{type:'line',data:{datasets},options:{
+    responsive:true,maintainAspectRatio:false,
+    scales:{
+      x:{type:'linear',reverse:true,title:{display:true,text:'Weeks Before Event',font:{size:12}},
+        ticks:{stepSize:1,callback:v=>v===0?'Event':v+'w'}},
+      y:{beginAtZero:true,title:{display:true,text:erMetric==='pct'?'% of Final Registrations':'Running Total'},
+        ticks:erMetric==='pct'?{callback:v=>v+'%'}:{}}
+    },
+    plugins:{legend:{position:'bottom',labels:{boxWidth:12,padding:10,font:{size:11}}},
+      tooltip:{mode:'nearest',intersect:false,callbacks:{
+        label:function(ctx){return ctx.dataset.label+': '+(erMetric==='pct'?ctx.parsed.y.toFixed(1)+'%':ctx.parsed.y.toLocaleString());}
+      }}
+    },interaction:{mode:'nearest',axis:'x',intersect:false}
+  }});
+}
+
+function erRenderCompare(){
+  const gridA=document.getElementById('erCompareA');
+  const gridB=document.getElementById('erCompareB');
+  if(erSelected.length<2){
+    gridA.innerHTML='<p style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center;">Select 2+ events to compare</p>';
+    gridB.innerHTML='<p style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center;">&nbsp;</p>';
+    return;
+  }
+  const a=erEvents.find(e=>e.name===erSelected[0]);
+  const b=erEvents.find(e=>e.name===erSelected[1]);
+  if(!a||!b)return;
+  gridA.innerHTML=erCompareCard(a,0);
+  gridB.innerHTML=erCompareCard(b,1);
+}
+
+function erCompareCard(ev,idx){
+  const c=ER_COLORS[idx%ER_COLORS.length];
+  const mid=ev.rows.find(r=>r.pct>=50);
+  const midWeek=mid?mid.wBefore+'w before':'N/A';
+  const at75=ev.rows.find(r=>r.pct>=75);
+  const w75=at75?at75.wBefore+'w before':'N/A';
+  const peakWeek=ev.rows.reduce((best,r)=>r.weekly>best.weekly?r:best,ev.rows[0]);
+  return`<div style="border-top:3px solid ${c};padding-top:12px;">
+    <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;">${ev.name}</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;">
+      <div><span style="color:var(--muted)">Final Total</span><br><strong>${ev.final.toLocaleString()}</strong></div>
+      <div><span style="color:var(--muted)">Event Date</span><br><strong>${ev.startDate?fmtDate(ev.startDate):'—'}</strong></div>
+      <div><span style="color:var(--muted)">50% Reached</span><br><strong>${midWeek}</strong></div>
+      <div><span style="color:var(--muted)">75% Reached</span><br><strong>${w75}</strong></div>
+      <div><span style="color:var(--muted)">Peak Week</span><br><strong>${peakWeek?peakWeek.weekly+' registrations':'\u2014'}</strong></div>
+      <div><span style="color:var(--muted)">Data Points</span><br><strong>${ev.rows.length} weeks</strong></div>
+    </div>
+  </div>`;
+}
+
+function erRenderTable(){
+  const container=document.getElementById('erTableContainer');
+  if(!erSelected.length){container.innerHTML='<p style="padding:20px;color:var(--muted);font-size:13px;">Select events to see data</p>';return;}
+  const rows=[];
+  for(const name of erSelected){
+    const ev=erEvents.find(e=>e.name===name);if(!ev)continue;
+    for(const r of ev.rows)rows.push(r);
+  }
+  const cols=['Event Name','Reg. Week','Event Date','Weeks Before','Weekly','Running Total','Final Total','% of Final'];
+  const getVal=(r,c)=>[r.name,r.weekStr||'',r.startStr||'',r.wBefore??'',r.weekly,r.running,r.final,r.pct][c];
+  if(erSortCol>=0){
+    rows.sort((a,b)=>{
+      let va=getVal(a,erSortCol),vb=getVal(b,erSortCol);
+      if(typeof va==='number'&&typeof vb==='number')return erSortAsc?va-vb:vb-va;
+      va=String(va);vb=String(vb);return erSortAsc?va.localeCompare(vb):vb.localeCompare(va);
+    });
+  }
+  let html='<table class="data-table"><thead><tr>';
+  cols.forEach((c,i)=>{
+    const arrow=erSortCol===i?(erSortAsc?' &#9650;':' &#9660;'):'';
+    const cls=i>=4?' class="num"':'';
+    html+=`<th${cls} onclick="erSort(${i})">${c}${arrow}</th>`;
+  });
+  html+='</tr></thead><tbody>';
+  for(const r of rows){
+    html+=`<tr><td>${r.name}</td><td>${r.weekStr||''}</td><td>${r.startStr||''}</td>
+      <td class="num">${r.wBefore!==null?r.wBefore:''}</td>
+      <td class="num">${r.weekly?r.weekly.toLocaleString():'\u2014'}</td>
+      <td class="num">${r.running?r.running.toLocaleString():'\u2014'}</td>
+      <td class="num">${r.final?r.final.toLocaleString():'\u2014'}</td>
+      <td class="num">${r.pct?r.pct.toFixed(1)+'%':'\u2014'}</td></tr>`;
+  }
+  html+='</tbody></table>';
+  container.innerHTML=html;
+}
+
+function erSort(col){
+  if(erSortCol===col)erSortAsc=!erSortAsc;else{erSortCol=col;erSortAsc=true;}
+  erRenderTable();
+}
+
+// ══════════════════════════════════════════════════════════════════════
 //  REFRESH & STARTUP
 // ══════════════════════════════════════════════════════════════════════
 let refreshTimer=null;
@@ -1094,6 +1474,7 @@ async function refreshAll(){
       fetchSheet(SHEET_URLS.edinburg),fetchSheet(SHEET_URLS.ipv),
       fetchSheet(SHEET_URLS.rooted),fetchSheet(SHEET_URLS.holiday),
       fetchSheet(SHEET_URLS.youth),fetchSheet(SHEET_URLS.youngAdults),
+      fetchSheet(SHEET_URLS.eventRegistrations),
     ]);
     // Sunday
     sRaw=sMerge(parseMM(parseCSV(results[0])),parseMK(parseCSV(results[1])),parseED(parseCSV(results[2])),parseIP(parseCSV(results[3])));
@@ -1110,6 +1491,9 @@ async function refreshAll(){
     // Young Adults
     yaRaw=parseYoungAdults(parseCSV(results[7]));
     yaPopulateFilters();yaApply();
+    // Event Registrations
+    erRaw=parseEventRegistrations(parseCSV(results[8]));
+    erPopulateFilters();
     document.getElementById('lastRefresh').textContent='Updated '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
   }catch(err){console.error('Refresh failed:',err);document.getElementById('lastRefresh').textContent='Refresh failed';}
   btn.classList.remove('loading');
