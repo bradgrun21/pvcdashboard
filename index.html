@@ -271,20 +271,13 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       <div class="charts-section">
         <div class="chart-grid"><div class="card"><h2>Weekly Attendance Trend</h2><div class="subtitle">All campuses</div><div class="chart-wrap tall"><canvas id="sTrendChart"></canvas></div></div></div>
         <div class="chart-grid-2">
-          <div class="card"><h2>Campus Comparison</h2><div class="subtitle">Average &mdash; last 4 weeks</div><div class="chart-wrap"><canvas id="sCampusChart"></canvas></div></div>
           <div class="card"><h2>Service Breakdown</h2>
             <div class="card-controls" id="sSvcBtns"><button class="cb active" onclick="sSvcCampus='mission';sRenderSvc();sSvcActive(this)">Mission</button><button class="cb" onclick="sSvcCampus='edinburg';sRenderSvc();sSvcActive(this)">Edinburg</button><button class="cb" onclick="sSvcCampus='ipv';sRenderSvc();sSvcActive(this)">IPV</button></div>
             <div class="subtitle">Last 8 weeks &mdash; per-service adults</div><div class="chart-wrap"><canvas id="sSvcChart"></canvas></div>
           </div>
-        </div>
-        <div class="chart-grid-2" style="margin-top:var(--gap)">
           <div class="card"><h2>Kids by Service</h2>
             <div class="card-controls" id="sKidsSvcBtns"><button class="cb active" onclick="sKidsSvcCampus='mission';sRenderKidsSvc();sKidsSvcActive(this)">Mission</button><button class="cb" onclick="sKidsSvcCampus='edinburg';sRenderKidsSvc();sKidsSvcActive(this)">Edinburg</button><button class="cb" onclick="sKidsSvcCampus='ipv';sRenderKidsSvc();sKidsSvcActive(this)">IPV</button></div>
             <div class="subtitle">Last 8 weeks &mdash; kids attendance per service</div><div class="chart-wrap"><canvas id="sKidsSvcChart"></canvas></div>
-          </div>
-          <div class="card"><h2>Kids Dream Team by Service</h2>
-            <div class="card-controls" id="sDtSvcBtns"><button class="cb active" onclick="sDtSvcCampus='mission';sRenderDtSvc();sDtSvcActive(this)">Mission</button><button class="cb" onclick="sDtSvcCampus='edinburg';sRenderDtSvc();sDtSvcActive(this)">Edinburg</button><button class="cb" onclick="sDtSvcCampus='ipv';sRenderDtSvc();sDtSvcActive(this)">IPV</button></div>
-            <div class="subtitle">Last 8 weeks &mdash; kids DT per service</div><div class="chart-wrap"><canvas id="sDtSvcChart"></canvas></div>
           </div>
         </div>
         <div class="chart-grid" style="margin-top:var(--gap)"><div class="card"><h2>Year-over-Year</h2>
@@ -336,6 +329,9 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       <div class="kpi-row" id="rKpiRow"></div>
       <div class="charts-section">
         <div class="chart-grid"><div class="card"><h2>Semester Attendance Progression</h2><div class="subtitle">Weekly attendance by semester &mdash; Rooted sessions only</div><div class="chart-wrap tall"><canvas id="rSemChart"></canvas></div></div></div>
+        <div class="chart-grid"><div class="card"><h2>Week-by-Week Across Semesters</h2>
+          <div class="card-controls" id="rWeekViewBtns"><button class="cb active" onclick="rWeekView='grouped';rRenderWeekComp();rWeekViewActive(this)">By Week</button><button class="cb" onclick="rWeekView='overlay';rRenderWeekComp();rWeekViewActive(this)">Overlay</button></div>
+          <div class="subtitle">Compare same week across all semesters</div><div class="chart-wrap tall"><canvas id="rWeekCompChart"></canvas></div></div></div>
         <div class="chart-grid-2">
           <div class="card"><h2>Campus Comparison by Semester</h2><div class="subtitle">Average weekly Rooted attendance</div><div class="chart-wrap"><canvas id="rCampusChart"></canvas></div></div>
           <div class="card"><h2>Retention Rate</h2><div class="subtitle">Week 10 vs Week 1 attendance per semester</div><div class="chart-wrap"><canvas id="rRetentionChart"></canvas></div></div>
@@ -366,13 +362,12 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       <div class="kpi-row" id="yKpiRow"></div>
       <div class="charts-section">
         <div class="chart-grid"><div class="card"><h2>Weekly Attendance Trend</h2><div class="subtitle">Total attendance over time</div><div class="chart-wrap tall"><canvas id="yTrendChart"></canvas></div></div></div>
-        <div class="chart-grid-2">
-          <div class="card"><h2>HS vs MS Breakdown</h2><div class="subtitle">Last 8 weeks</div><div class="chart-wrap"><canvas id="yBreakdownChart"></canvas></div></div>
-          <div class="card"><h2>Year-over-Year</h2>
+        <div class="chart-grid"><div class="card"><h2>HS vs MS Breakdown</h2><div class="subtitle">Last 8 weeks</div><div class="chart-wrap"><canvas id="yBreakdownChart"></canvas></div></div></div>
+        <div class="chart-grid"><div class="card"><h2>Year-over-Year</h2>
             <div class="card-controls" id="yYoyBtns"><button class="cb active" onclick="yYoyCampus='all';yRenderYoy();yYoyActive(this)">All</button><button class="cb" onclick="yYoyCampus='Mission';yRenderYoy();yYoyActive(this)">Mission</button><button class="cb" onclick="yYoyCampus='Edinburg';yRenderYoy();yYoyActive(this)">Edinburg</button></div>
-            <div class="subtitle">Same week of year across years</div><div class="chart-wrap"><canvas id="yYoyChart"></canvas></div>
-          </div>
-        </div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0;" id="yYoyEventChecks"></div>
+            <div class="subtitle">Same week of year across years — toggle events to include</div><div class="chart-wrap tall"><canvas id="yYoyChart"></canvas></div>
+        </div></div>
       </div>
       <div class="table-section"><div class="table-card"><h2>Youth Detail</h2><div class="subtitle">Click headers to sort</div><div class="table-scroll" id="yTableContainer"></div></div></div>
     </div>
@@ -489,7 +484,7 @@ const SHEET_URLS = {
   ipv:         'https://docs.google.com/spreadsheets/d/e/2PACX-1vSIES_Xjrn1kYI4vrfd0HshbJukA4DZDvi1Y34jS6MiLJrpIOt8cynPs4fxxMDfGRqCdBNuqnk87QWe/pub?gid=930027488&single=true&output=csv',
   rooted:      'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=421377062&single=true&output=csv',
   youth:       'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=837314920&single=true&output=csv',
-  youngAdults: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?output=csv',
+  youngAdults: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=1492448223&single=true&output=csv',
   holiday:     'https://docs.google.com/spreadsheets/d/e/2PACX-1vRfD4tAKk-Ltf0c65jzuHpqVi-ovIg5vNtiukWs8Y65t7J-dDro43qSVhr-O2Ar0YVzh3wwUOLM3u-H/pub?gid=912394380&single=true&output=csv',
 };
 const AUTO_REFRESH_MS = 5*60*1000;
@@ -527,7 +522,7 @@ const COLORS={mission:'#4a7f97',edinburg:'#7b6fa6',ipv:'#c47a2e'};
 const YCOLORS={2023:'#94a3b8',2024:'#7b6fa6',2025:'#4a7f97',2026:'#c47a2e'};
 const SVC_C=['#3b7d94','#5a9db0','#7dbdcc','#a1d5e0','#c5eaf1'];
 let sRaw=[],sFiltered=[],sCharts={},sFilters={year:'all',mode:'total',ds:null,de:null};
-let sSvcCampus='mission',sYoyCampus='all',sKidsSvcCampus='mission',sDtSvcCampus='mission';
+let sSvcCampus='mission',sYoyCampus='all',sKidsSvcCampus='mission';
 
 function parseMM(rows){const d={};for(let i=1;i<rows.length;i++){const r=rows[i],dt=parseDate(r[0]);if(!dt)continue;const sv=[];for(let s=0;s<5;s++){const b=1+s*3;sv.push({aud:num(r[b]),oth:num(r[b+1]),tot:num(r[b+2])});}d[dateKey(dt)]={date:dt,tAud:num(r[16]),tOth:num(r[17]),tAdult:num(r[18]),svc:sv};}return d;}
 function parseMK(rows){const d={};for(let i=1;i<rows.length;i++){const r=rows[i],dt=parseDate(r[0]);if(!dt)continue;const sv=[];for(let s=0;s<5;s++){const b=1+s*4;sv.push({kids:num(r[b]),aDT:num(r[b+1]),jDT:num(r[b+2]),tDT:num(r[b+3])});}d[dateKey(dt)]={date:dt,tKids:num(r[21]),aDT:num(r[22]),jDT:num(r[23]),tDT:num(r[24]),svc:sv};}return d;}
@@ -543,7 +538,7 @@ out.push({date:dt,key:k,mA,mAu,mK,mD,mission_svc:mSvc,eA,eAu,eK,eY,eD,edinburg_s
 function cT(r,c,m){if(c==='mission')return(m==='auditorium'?r.mAu:r.mA)+r.mK+r.mD;if(c==='edinburg')return(m==='auditorium'?r.eAu:r.eA)+r.eK+r.eY+r.eD;if(c==='ipv')return(m==='auditorium'?r.iAu:r.iA)+r.iK+r.iD;return 0;}
 function gT(r,m){return cT(r,'mission',m)+cT(r,'edinburg',m)+cT(r,'ipv',m);}
 
-function sApply(){let d=sRaw;const f=sFilters;if(f.year!=='all')d=d.filter(r=>r.date.getFullYear()===+f.year);if(f.ds){const ds=new Date(f.ds+'T00:00:00');d=d.filter(r=>r.date>=ds);}if(f.de){const de=new Date(f.de+'T23:59:59');d=d.filter(r=>r.date<=de);}sFiltered=d;sRenderKPI();sRenderTrend();sRenderCampus();sRenderSvc();sRenderKidsSvc();sRenderDtSvc();sRenderYoy();sRenderTable();}
+function sApply(){let d=sRaw;const f=sFilters;if(f.year!=='all')d=d.filter(r=>r.date.getFullYear()===+f.year);if(f.ds){const ds=new Date(f.ds+'T00:00:00');d=d.filter(r=>r.date>=ds);}if(f.de){const de=new Date(f.de+'T23:59:59');d=d.filter(r=>r.date<=de);}sFiltered=d;sRenderKPI();sRenderTrend();sRenderSvc();sRenderKidsSvc();sRenderYoy();sRenderTable();}
 
 function setSF(k,v,btn){if(k==='year'){sFilters.year=v;document.querySelectorAll('[data-filter="sy"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}else if(k==='mode'){sFilters.mode=v;document.querySelectorAll('[data-filter="sm"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}else if(k==='ds'){sFilters.ds=v||null;}else if(k==='de'){sFilters.de=v||null;}sApply();}
 
@@ -553,46 +548,55 @@ function sRenderKPI(){
   const L=d[d.length-1],last8=d.slice(-8);
   function avg8(fn){return Math.round(last8.reduce((s,r)=>s+fn(r),0)/last8.length);}
   function allAdults(r){return(m==='auditorium'?r.mAu:r.mA)+(m==='auditorium'?r.eAu:r.eA)+(m==='auditorium'?r.iAu:r.iA);}
-  function allKids(r){return r.mK+r.mD+r.eK+r.eD+r.iK+r.iD;}
-  // 8-week averages
-  const avgAll=avg8(r=>gT(r,m)),avgM=avg8(r=>cT(r,'mission',m)),avgE=avg8(r=>cT(r,'edinburg',m)),avgI=avg8(r=>cT(r,'ipv',m));
-  const avgAdults=avg8(allAdults),avgKids=avg8(allKids);
-  // YoY: same week of year from prior year (search sRaw, not filtered)
+  function allKids(r){return r.mK+r.eK+r.iK;}
+  function allDT(r){return r.mD+r.eD+r.iD;}
+  function campusAdults(r,c){if(c==='mission')return m==='auditorium'?r.mAu:r.mA;if(c==='edinburg')return m==='auditorium'?r.eAu:r.eA;return m==='auditorium'?r.iAu:r.iA;}
+  function campusKids(r,c){if(c==='mission')return r.mK;if(c==='edinburg')return r.eK;return r.iK;}
+  // YoY
   const wk=weekOfYear(L.date),yr=L.date.getFullYear();
   const pyMatch=sRaw.filter(r=>r.date.getFullYear()===yr-1&&weekOfYear(r.date)===wk);
   const PY=pyMatch.length?pyMatch[pyMatch.length-1]:null;
   const yLbl=PY?(yr-1)+' Wk '+wk:'last year';
   function ch(cur,prev){if(!prev)return'<span class="kpi-change neutral">\u2014</span>';const pc=((cur-prev)/prev*100);return'<span class="kpi-change '+(pc>0?'up':pc<0?'down':'neutral')+'">'+(pc>=0?'+':'')+pc.toFixed(1)+'% vs '+yLbl+'</span>';}
-  // Current & prior-year values
+  // Latest values
   const curAll=gT(L,m),pyAll=PY?gT(PY,m):null;
+  const curAdults=allAdults(L),pyAdults=PY?allAdults(PY):null;
   const curM=cT(L,'mission',m),pyM=PY?cT(PY,'mission',m):null;
   const curE=cT(L,'edinburg',m),pyE=PY?cT(PY,'edinburg',m):null;
   const curI=cT(L,'ipv',m),pyI=PY?cT(PY,'ipv',m):null;
-  const curAdults=allAdults(L),pyAdults=PY?allAdults(PY):null;
-  const curKids=allKids(L),pyKids=PY?allKids(PY):null;
-  el.innerHTML=`<div class="kpi-card"><div class="accent-bar" style="background:var(--text)"></div><div class="kpi-label">Total Attendance</div><div class="kpi-value total">${fmtNum(avgAll)}</div><div class="kpi-sub">8-Wk Avg &middot; Latest: ${fmtNum(curAll)} (${fmtDate(L.date)})</div>${ch(curAll,pyAll)}</div><div class="kpi-card"><div class="accent-bar" style="background:var(--positive)"></div><div class="kpi-label">Total Adults</div><div class="kpi-value" style="color:var(--positive)">${fmtNum(avgAdults)}</div><div class="kpi-sub">8-Wk Avg &middot; Latest: ${fmtNum(curAdults)}</div>${ch(curAdults,pyAdults)}</div><div class="kpi-card"><div class="accent-bar" style="background:#e67e22"></div><div class="kpi-label">Total Kids + DT</div><div class="kpi-value" style="color:#e67e22">${fmtNum(avgKids)}</div><div class="kpi-sub">8-Wk Avg &middot; Latest: ${fmtNum(curKids)}</div>${ch(curKids,pyKids)}</div><div class="kpi-card"><div class="accent-bar" style="background:var(--mission)"></div><div class="kpi-label">Mission</div><div class="kpi-value mission">${fmtNum(avgM)}</div><div class="kpi-sub">8-Wk Avg &middot; Adults ${fmtNum(m==='auditorium'?L.mAu:L.mA)} &middot; Kids ${fmtNum(L.mK+L.mD)}</div>${ch(curM,pyM)}</div><div class="kpi-card"><div class="accent-bar" style="background:var(--edinburg)"></div><div class="kpi-label">Edinburg</div><div class="kpi-value edinburg">${fmtNum(avgE)}</div><div class="kpi-sub">8-Wk Avg &middot; Adults ${fmtNum(m==='auditorium'?L.eAu:L.eA)} &middot; Kids ${fmtNum(L.eK+L.eD)}</div>${ch(curE,pyE)}</div><div class="kpi-card"><div class="accent-bar" style="background:var(--ipv)"></div><div class="kpi-label">Iglesia PV</div><div class="kpi-value ipv">${fmtNum(avgI)}</div><div class="kpi-sub">8-Wk Avg &middot; Adults ${fmtNum(m==='auditorium'?L.iAu:L.iA)} &middot; Kids ${fmtNum(L.iK+L.iD)}</div>${ch(curI,pyI)}</div>`;
+  // 8-week averages
+  const avgAll=avg8(r=>gT(r,m)),avgAdults=avg8(allAdults),avgKids=avg8(allKids),avgDT=avg8(allDT);
+  const avgM=avg8(r=>cT(r,'mission',m)),avgE=avg8(r=>cT(r,'edinburg',m)),avgI=avg8(r=>cT(r,'ipv',m));
+  // Row 1: Latest Sunday
+  let html=`<div style="margin-bottom:4px;padding:0 32px;font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">${fmtDate(L.date)}</div>`;
+  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--text)"></div><div class="kpi-label">Total Attendance</div><div class="kpi-value total">${fmtNum(curAll)}</div><div class="kpi-sub">Adults ${fmtNum(curAdults)}</div>${ch(curAll,pyAll)}</div>`;
+  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--positive)"></div><div class="kpi-label">Total Adults</div><div class="kpi-value" style="color:var(--positive)">${fmtNum(curAdults)}</div><div class="kpi-sub">Across all campuses</div>${ch(curAdults,pyAdults)}</div>`;
+  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--mission)"></div><div class="kpi-label">Mission</div><div class="kpi-value mission">${fmtNum(curM)}</div><div class="kpi-sub">Adults ${fmtNum(campusAdults(L,'mission'))} &middot; Kids ${fmtNum(campusKids(L,'mission'))}</div>${ch(curM,pyM)}</div>`;
+  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--edinburg)"></div><div class="kpi-label">Edinburg</div><div class="kpi-value edinburg">${fmtNum(curE)}</div><div class="kpi-sub">Adults ${fmtNum(campusAdults(L,'edinburg'))} &middot; Kids ${fmtNum(campusKids(L,'edinburg'))}</div>${ch(curE,pyE)}</div>`;
+  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--ipv)"></div><div class="kpi-label">Iglesia PV</div><div class="kpi-value ipv">${fmtNum(curI)}</div><div class="kpi-sub">Adults ${fmtNum(campusAdults(L,'ipv'))} &middot; Kids ${fmtNum(campusKids(L,'ipv'))}</div>${ch(curI,pyI)}</div>`;
+  // Row 2: 8-Week Averages
+  html+=`<div style="grid-column:1/-1;margin-top:12px;padding:0;font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">8-Week Rolling Averages</div>`;
+  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--text)"></div><div class="kpi-label">Avg Total Attendance</div><div class="kpi-value total">${fmtNum(avgAll)}</div></div>`;
+  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--positive)"></div><div class="kpi-label">Avg Adults</div><div class="kpi-value" style="color:var(--positive)">${fmtNum(avgAdults)}</div></div>`;
+  html+=`<div class="kpi-card"><div class="accent-bar" style="background:#e67e22"></div><div class="kpi-label">Avg Kids</div><div class="kpi-value" style="color:#e67e22">${fmtNum(avgKids)}</div></div>`;
+  html+=`<div class="kpi-card"><div class="accent-bar" style="background:#8e44ad"></div><div class="kpi-label">Avg Dream Team</div><div class="kpi-value" style="color:#8e44ad">${fmtNum(avgDT)}</div></div>`;
+  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--mission)"></div><div class="kpi-label">Avg Mission</div><div class="kpi-value mission">${fmtNum(avgM)}</div></div>`;
+  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--edinburg)"></div><div class="kpi-label">Avg Edinburg</div><div class="kpi-value edinburg">${fmtNum(avgE)}</div></div>`;
+  el.innerHTML=html;
 }
 
 function sRenderTrend(){const d=sFiltered,m=sFilters.mode,labels=d.map(r=>r.date);const ds=[{label:'Mission',data:d.map(r=>cT(r,'mission',m)),borderColor:COLORS.mission,backgroundColor:COLORS.mission+'18'},{label:'Edinburg',data:d.map(r=>cT(r,'edinburg',m)),borderColor:COLORS.edinburg,backgroundColor:COLORS.edinburg+'18'},{label:'IPV',data:d.map(r=>cT(r,'ipv',m)),borderColor:COLORS.ipv,backgroundColor:COLORS.ipv+'18'}];if(sCharts.trend){sCharts.trend.data.labels=labels;ds.forEach((x,i)=>{sCharts.trend.data.datasets[i].data=x.data;});sCharts.trend.update('none');return;}sCharts.trend=new Chart(document.getElementById('sTrendChart'),{type:'line',data:{labels,datasets:ds.map(x=>({...x,borderWidth:2,tension:.3,pointRadius:1.5,pointHoverRadius:5,fill:false}))},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:16,font:{size:12}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{type:'time',time:{unit:'month',tooltipFormat:'MMM d, yyyy'},grid:{display:false}},y:{beginAtZero:true,ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v}}}}});}
 
-function sRenderCampus(){const d=sFiltered,m=sFilters.mode,l4=d.slice(-4);if(!l4.length)return;function av(a,c){return Math.round(a.reduce((s,r)=>s+cT(r,c,m),0)/a.length);}function aAv(a,c){return Math.round(a.reduce((s,r)=>{if(c==='mission')return s+(m==='auditorium'?r.mAu:r.mA);if(c==='edinburg')return s+(m==='auditorium'?r.eAu:r.eA);return s+(m==='auditorium'?r.iAu:r.iA);},0)/a.length);}function kAv(a,c){return Math.round(a.reduce((s,r)=>{if(c==='mission')return s+r.mK+r.mD;if(c==='edinburg')return s+r.eK+r.eY+r.eD;return s+r.iK+r.iD;},0)/a.length);}
-const aD=[aAv(l4,'mission'),aAv(l4,'edinburg'),aAv(l4,'ipv')],kD=[kAv(l4,'mission'),kAv(l4,'edinburg'),kAv(l4,'ipv')];
-if(sCharts.campus){sCharts.campus.data.datasets[0].data=aD;sCharts.campus.data.datasets[1].data=kD;sCharts.campus.update('none');return;}
-sCharts.campus=new Chart(document.getElementById('sCampusChart'),{type:'bar',data:{labels:['Mission','Edinburg','IPV'],datasets:[{label:'Adults',data:aD,backgroundColor:[COLORS.mission+'CC',COLORS.edinburg+'CC',COLORS.ipv+'CC'],borderRadius:4},{label:'Kids+DT',data:kD,backgroundColor:[COLORS.mission+'55',COLORS.edinburg+'55',COLORS.ipv+'55'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:16,font:{size:12}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v}}}}});}
 
 function sRenderSvc(){const d=sFiltered,m=sFilters.mode,c=sSvcCampus,rec=d.slice(-8);if(!rec.length)return;const labels=rec.map(r=>fmtShort(r.date)),maxS=c==='mission'?5:c==='edinburg'?4:2,ds=[];for(let s=0;s<maxS;s++){const sd=rec.map(r=>{const sv=r[c==='ipv'?'ipv_svc':c==='edinburg'?'edinburg_svc':'mission_svc'];if(!sv||!sv[s])return 0;return m==='auditorium'?(sv[s].aud||0):(sv[s].tot||0);});if(sd.some(v=>v>0))ds.push({label:['1st','2nd','3rd','4th','5th'][s]+' Svc',data:sd,backgroundColor:SVC_C[s%SVC_C.length]+'CC',borderRadius:3});}
 if(sCharts.svc)sCharts.svc.destroy();sCharts.svc=new Chart(document.getElementById('sSvcChart'),{type:'bar',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,beginAtZero:true,ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v}}}}});}
 function sSvcActive(b){document.querySelectorAll('#sSvcBtns .cb').forEach(x=>x.classList.remove('active'));b.classList.add('active');}
 
 const KIDS_C=['#e67e22','#f39c12','#f5b041','#f8c471','#fad7a0'];
-const DT_C=['#27ae60','#2ecc71','#58d68d','#82e0aa','#abebc6'];
 function sRenderKidsSvc(){const d=sFiltered,c=sKidsSvcCampus,rec=d.slice(-8);if(!rec.length)return;const labels=rec.map(r=>fmtShort(r.date)),maxS=c==='mission'?5:c==='edinburg'?4:2,ds=[];for(let s=0;s<maxS;s++){const sd=rec.map(r=>{const sv=r[c==='ipv'?'ipv_svc':c==='edinburg'?'edinburg_svc':'mission_svc'];if(!sv||!sv[s])return 0;return sv[s].kids||0;});if(sd.some(v=>v>0))ds.push({label:['1st','2nd','3rd','4th','5th'][s]+' Svc',data:sd,backgroundColor:KIDS_C[s%KIDS_C.length]+'CC',borderRadius:3});}
 if(sCharts.kidsSvc)sCharts.kidsSvc.destroy();sCharts.kidsSvc=new Chart(document.getElementById('sKidsSvcChart'),{type:'bar',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,beginAtZero:true}}}});}
 function sKidsSvcActive(b){document.querySelectorAll('#sKidsSvcBtns .cb').forEach(x=>x.classList.remove('active'));b.classList.add('active');}
 
-function sRenderDtSvc(){const d=sFiltered,c=sDtSvcCampus,rec=d.slice(-8);if(!rec.length)return;const labels=rec.map(r=>fmtShort(r.date)),maxS=c==='mission'?5:c==='edinburg'?4:2,ds=[];for(let s=0;s<maxS;s++){const sd=rec.map(r=>{const sv=r[c==='ipv'?'ipv_svc':c==='edinburg'?'edinburg_svc':'mission_svc'];if(!sv||!sv[s])return 0;return c==='mission'?(sv[s].dt||0):(sv[s].kDT||0);});if(sd.some(v=>v>0))ds.push({label:['1st','2nd','3rd','4th','5th'][s]+' Svc',data:sd,backgroundColor:DT_C[s%DT_C.length]+'CC',borderRadius:3});}
-if(sCharts.dtSvc)sCharts.dtSvc.destroy();sCharts.dtSvc=new Chart(document.getElementById('sDtSvcChart'),{type:'bar',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10}}},y:{stacked:true,beginAtZero:true}}}});}
-function sDtSvcActive(b){document.querySelectorAll('#sDtSvcBtns .cb').forEach(x=>x.classList.remove('active'));b.classList.add('active');}
 
 function sRenderYoy(){const m=sFilters.mode,c=sYoyCampus,d=sRaw,years=[...new Set(d.map(r=>r.date.getFullYear()))].sort();const ds=years.map(y=>{const yd=d.filter(r=>r.date.getFullYear()===y);return{label:String(y),data:yd.map(r=>({x:weekOfYear(r.date),y:c==='all'?gT(r,m):cT(r,c,m)})),borderColor:YCOLORS[y]||'#999',backgroundColor:(YCOLORS[y]||'#999')+'18',borderWidth:y===years[years.length-1]?3:1.5,pointRadius:y===years[years.length-1]?2.5:1,pointHoverRadius:5,tension:.3,fill:false};});
 if(sCharts.yoy)sCharts.yoy.destroy();sCharts.yoy=new Chart(document.getElementById('sYoyChart'),{type:'line',data:{datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:16,font:{size:12}}},tooltip:{callbacks:{title:i=>'Week '+i[0].parsed.x,label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{type:'linear',title:{display:true,text:'Week of Year',font:{size:12}},min:1,max:53,ticks:{stepSize:4}},y:{beginAtZero:true,ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v}}}}});}
@@ -605,7 +609,7 @@ render(d);}
 // ══════════════════════════════════════════════════════════════════════
 //  YOUTH
 // ══════════════════════════════════════════════════════════════════════
-let yRaw=[],yFiltered=[],yCharts={},yFilters={event:'all',campus:'all'},yYoyCampus='all';
+let yRaw=[],yFiltered=[],yCharts={},yFilters={event:'all',campus:'all'},yYoyCampus='all',yYoyEvents=new Set();
 
 function parseYouth(rows){
   const d=[];
@@ -631,6 +635,10 @@ function yPopulateFilters(){
   let html2='<label>Campus</label><button class="fbtn active" data-filter="yc" onclick="setYF(\'campus\',\'all\',this)">All</button>';
   campuses.forEach(c=>{html2+='<button class="fbtn" data-filter="yc" onclick="setYF(\'campus\',\''+c+'\',this)">'+c+'</button>';});
   el2.innerHTML=html2;
+  // populate YoY event checkboxes
+  yYoyEvents=new Set(events);
+  const ec=document.getElementById('yYoyEventChecks');
+  if(ec){let h='';events.forEach(e=>{h+='<label style="display:inline-flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;"><input type="checkbox" checked onchange="yToggleYoyEvent(\''+e+'\',this.checked)" style="accent-color:#4a7f97;">'+e+'</label>';});ec.innerHTML=h;}
 }
 
 function setYF(k,v,btn){
@@ -692,9 +700,11 @@ function yRenderBreakdown(){
   yCharts.breakdown=new Chart(document.getElementById('yBreakdownChart'),{type:'bar',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true}}}});
 }
 
+function yToggleYoyEvent(ev,checked){if(checked)yYoyEvents.add(ev);else yYoyEvents.delete(ev);yRenderYoy();}
 function yRenderYoy(){
   const c=yYoyCampus,d=yRaw;
   let fd=c==='all'?d:d.filter(r=>r.campus===c);
+  fd=fd.filter(r=>yYoyEvents.has(r.event));
   const byWeek={};fd.forEach(r=>{const yr=r.date.getFullYear(),wk=weekOfYear(r.date),k=yr+'|'+wk;if(!byWeek[k])byWeek[k]={yr,wk,total:0};byWeek[k].total+=r.totalAtt;});
   const years=[...new Set(Object.values(byWeek).map(r=>r.yr))].sort();
   const ds=years.map(y=>{const pts=Object.values(byWeek).filter(r=>r.yr===y).map(r=>({x:r.wk,y:r.total}));return{label:String(y),data:pts,borderColor:YCOLORS[y]||'#999',backgroundColor:(YCOLORS[y]||'#999')+'18',borderWidth:y===years[years.length-1]?3:1.5,pointRadius:y===years[years.length-1]?2.5:1,tension:.3,fill:false};});
@@ -824,7 +834,7 @@ function rPopulateFilters(){const sel=document.getElementById('rSemFilter');cons
 
 function setRF(k,v,btn){if(k==='campus'){rFilters.campus=v;document.querySelectorAll('[data-filter="rc"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}else if(k==='event'){rFilters.event=v;document.querySelectorAll('[data-filter="re"]').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}rApplyFilters();}
 
-function rApplyFilters(){let d=rRaw;const f=rFilters;f.semester=document.getElementById('rSemFilter').value;if(f.semester!=='all')d=d.filter(r=>r.semester===f.semester);if(f.campus!=='all')d=d.filter(r=>r.campus===f.campus);if(f.event==='Rooted')d=d.filter(r=>r.event==='Rooted'||r.event==='Celebration');else if(f.event==='special')d=d.filter(r=>r.event==='Prayer Experience'||r.event==='Serve Experience');rFiltered=d;rRenderKPI();rRenderSemChart();rRenderCampus();rRenderRetention();rRenderTable();}
+function rApplyFilters(){let d=rRaw;const f=rFilters;f.semester=document.getElementById('rSemFilter').value;if(f.semester!=='all')d=d.filter(r=>r.semester===f.semester);if(f.campus!=='all')d=d.filter(r=>r.campus===f.campus);if(f.event==='Rooted')d=d.filter(r=>r.event==='Rooted'||r.event==='Celebration');else if(f.event==='special')d=d.filter(r=>r.event==='Prayer Experience'||r.event==='Serve Experience');rFiltered=d;rRenderKPI();rRenderSemChart();rRenderWeekComp();rRenderCampus();rRenderRetention();rRenderTable();}
 
 function rRenderKPI(){const d=rFiltered,el=document.getElementById('rKpiRow');const rooted=d.filter(r=>r.event==='Rooted'||r.event==='Celebration');if(!d.length){el.innerHTML='<div class="kpi-card"><div class="kpi-label">No Data</div><div class="kpi-value total">\u2014</div></div>';return;}
 // Find the most recent semester's data
@@ -843,6 +853,28 @@ function rRenderSemChart(){const rooted=rRaw.filter(r=>(r.event==='Rooted'||r.ev
 const sems=[...new Set(rooted.map(r=>r.semester))];const order=['Fall 2022','Spring 2023','Summer 2023','Fall 2023','Spring 2024','Summer 2024','Fall 2024','Spring 2025','Summer 2025','Fall 2025','Spring 2026'];sems.sort((a,b)=>(order.indexOf(a)===-1?99:order.indexOf(a))-(order.indexOf(b)===-1?99:order.indexOf(b)));
 const datasets=sems.map((sem,i)=>{const sd=rooted.filter(r=>r.semester===sem);const weekMap={};sd.forEach(r=>{weekMap[r.week]=(weekMap[r.week]||0)+r.attendance;});const weeks=Object.keys(weekMap).map(Number).sort((a,b)=>a-b);return{label:sem,data:weeks.map(w=>({x:w,y:weekMap[w]})),borderColor:SEM_COLORS[i%SEM_COLORS.length],backgroundColor:SEM_COLORS[i%SEM_COLORS.length]+'20',borderWidth:i===sems.length-1?3:1.5,pointRadius:i===sems.length-1?3:1.5,pointHoverRadius:6,tension:.3,fill:false};});
 if(rCharts.sem)rCharts.sem.destroy();rCharts.sem=new Chart(document.getElementById('rSemChart'),{type:'line',data:{datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:12,font:{size:11}}},tooltip:{callbacks:{title:i=>'Week '+i[0].parsed.x,label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{type:'linear',title:{display:true,text:'Week',font:{size:12}},min:1,max:11,ticks:{stepSize:1}},y:{beginAtZero:true,title:{display:true,text:'Attendance',font:{size:12}}}}}});}
+
+let rWeekView='grouped';
+function rWeekViewActive(b){document.querySelectorAll('#rWeekViewBtns .cb').forEach(x=>x.classList.remove('active'));b.classList.add('active');}
+function rRenderWeekComp(){
+  const rooted=rRaw.filter(r=>(r.event==='Rooted'||r.event==='Celebration')&&r.week>0);
+  let fd=rFilters.campus!=='all'?rooted.filter(r=>r.campus===rFilters.campus):rooted;
+  const order=['Fall 2022','Spring 2023','Summer 2023','Fall 2023','Spring 2024','Summer 2024','Fall 2024','Spring 2025','Summer 2025','Fall 2025','Spring 2026','Summer 2026','Fall 2026'];
+  const sems=[...new Set(fd.map(r=>r.semester))];sems.sort((a,b)=>(order.indexOf(a)===-1?99:order.indexOf(a))-(order.indexOf(b)===-1?99:order.indexOf(b)));
+  const weeks=[...new Set(fd.map(r=>r.week))].sort((a,b)=>a-b);
+  if(rWeekView==='grouped'){
+    // Grouped bar: x-axis = weeks, one bar per semester
+    const datasets=sems.map((sem,i)=>{return{label:sem,data:weeks.map(w=>{const d=fd.filter(r=>r.semester===sem&&r.week===w);return d.reduce((s,r)=>s+r.attendance,0);}),backgroundColor:SEM_COLORS[i%SEM_COLORS.length]+'CC',borderRadius:3};});
+    if(rCharts.weekComp)rCharts.weekComp.destroy();
+    rCharts.weekComp=new Chart(document.getElementById('rWeekCompChart'),{type:'bar',data:{labels:weeks.map(w=>'Wk '+w),datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:10,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,title:{display:true,text:'Attendance'}}}}});
+  } else {
+    // Overlay line: x-axis = semesters, one line per week
+    const WEEK_COLORS=['#e74c3c','#3498db','#2ecc71','#9b59b6','#f39c12','#1abc9c','#e67e22','#c0392b','#2c3e50','#d35400','#16a085'];
+    const datasets=weeks.map((w,i)=>{return{label:'Week '+w,data:sems.map(s=>{const d=fd.filter(r=>r.semester===s&&r.week===w);return d.reduce((sum,r)=>sum+r.attendance,0);}),borderColor:WEEK_COLORS[i%WEEK_COLORS.length],backgroundColor:WEEK_COLORS[i%WEEK_COLORS.length]+'18',borderWidth:2,pointRadius:3,pointHoverRadius:6,tension:.3,fill:false};});
+    if(rCharts.weekComp)rCharts.weekComp.destroy();
+    rCharts.weekComp=new Chart(document.getElementById('rWeekCompChart'),{type:'line',data:{labels:sems,datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:10,font:{size:10}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{grid:{display:false},ticks:{font:{size:10},maxRotation:45}},y:{beginAtZero:true,title:{display:true,text:'Attendance'}}}}});
+  }
+}
 
 function rRenderCampus(){const rooted=rFiltered.filter(r=>r.event==='Rooted'||r.event==='Celebration');const sems=[...new Set(rooted.map(r=>r.semester))];const order=['Fall 2022','Spring 2023','Spring 2024','Summer 2024','Fall 2024','Spring 2025','Summer 2025','Fall 2025','Spring 2026'];sems.sort((a,b)=>(order.indexOf(a)===-1?99:order.indexOf(a))-(order.indexOf(b)===-1?99:order.indexOf(b)));
 const campuses=['Mission','Edinburg','Spanish'];const datasets=campuses.map(c=>{const cd=rooted.filter(r=>r.campus===c);return{label:c,data:sems.map(s=>{const sd=cd.filter(r=>r.semester===s);return sd.length?Math.round(sd.reduce((sum,r)=>sum+r.attendance,0)/sd.length):0;}),backgroundColor:RCOLORS[c]+'CC',borderRadius:4};}).filter(ds=>ds.data.some(v=>v>0));
