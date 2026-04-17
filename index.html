@@ -198,11 +198,116 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 .er-view-toggle{display:flex;gap:6px;}
 
 /* ── Ministry Sub-Tabs ── */
-.ministry-tabs{display:flex;gap:4px;padding:16px 32px 0;border-bottom:1px solid var(--border);background:#fff;}
-.ministry-tab{padding:10px 24px;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;transition:all .15s;}
+.ministry-tabs{display:flex;gap:4px;padding:16px 32px 0;border-bottom:1px solid var(--border);background:#fff;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
+.ministry-tabs::-webkit-scrollbar{height:3px;}
+.ministry-tabs::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.ministry-tab{padding:10px 20px;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap;flex-shrink:0;position:relative;}
 .ministry-tab:hover{color:var(--text);}
 .ministry-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.ministry-tab .tab-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;background:var(--border);vertical-align:middle;}
+.ministry-tab .tab-dot.ok{background:var(--positive);}
+.ministry-tab .tab-dot.empty{background:#f59e0b;}
+.ministry-tab .tab-dot.fail{background:var(--negative);}
 .ministry-panel{display:none;} .ministry-panel.active{display:block;}
+
+/* ── Next Steps Sub-Tabs ── (scoped separately so switching doesn't clobber Ministry) */
+.ns-tabs{display:flex;gap:4px;padding:16px 32px 0;border-bottom:1px solid var(--border);background:#fff;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.ns-tab{padding:10px 20px;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap;flex-shrink:0;}
+.ns-tab:hover{color:var(--text);}
+.ns-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.ns-tab .tab-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;background:var(--border);vertical-align:middle;}
+.ns-tab .tab-dot.ok{background:var(--positive);}
+.ns-tab .tab-dot.empty{background:#f59e0b;}
+.ns-tab .tab-dot.fail{background:var(--negative);}
+.ns-panel{display:none;} .ns-panel.active{display:block;}
+
+/* ── Hero KPI strip (shared by generic ministry panels) ── */
+.gm-hero{padding:20px 32px 0;display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap);}
+.gm-hero .hero-card{background:var(--card);border-radius:var(--radius);padding:18px 20px;border:1px solid var(--border);position:relative;overflow:hidden;}
+.gm-hero .hero-card.primary{grid-column:span 2;}
+.gm-hero .hero-card.primary::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent-color,var(--accent));}
+.gm-hero .hero-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:6px;}
+.gm-hero .hero-value{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;color:var(--text);}
+.gm-hero .hero-value.big{font-size:40px;}
+.gm-hero .hero-sub{font-size:12px;color:var(--muted);margin-top:6px;}
+.gm-hero .hero-delta{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:600;margin-top:8px;padding:2px 8px;border-radius:10px;}
+.gm-hero .hero-delta.up{background:rgba(46,125,91,.12);color:var(--positive);}
+.gm-hero .hero-delta.down{background:rgba(192,57,43,.12);color:var(--negative);}
+.gm-hero .hero-delta.flat{background:#eef0f4;color:var(--muted);}
+.gm-hero .spark{position:absolute;right:12px;bottom:10px;opacity:.4;width:82px;height:26px;pointer-events:none;}
+@media(max-width:900px){ .gm-hero{grid-template-columns:repeat(2,1fr);padding:16px 20px 0;} .gm-hero .hero-card.primary{grid-column:span 2;} }
+@media(max-width:600px){ .gm-hero{grid-template-columns:1fr;} .gm-hero .hero-card.primary{grid-column:span 1;} }
+
+/* Empty state */
+.gm-empty{padding:80px 32px;text-align:center;color:var(--muted);}
+.gm-empty svg{width:52px;height:52px;opacity:.35;margin-bottom:14px;stroke:var(--muted);}
+.gm-empty h3{font-size:16px;margin-bottom:6px;color:var(--text);font-weight:700;}
+.gm-empty p{font-size:13px;max-width:420px;margin:0 auto;line-height:1.5;}
+
+/* ── Data-freshness popover (sidebar footer trigger) ── */
+.sidebar-footer{cursor:pointer;transition:background .15s;position:relative;}
+.sidebar-footer:hover{background:rgba(255,255,255,.04);}
+.sidebar-footer .fresh-compact{display:flex;align-items:center;gap:8px;font-size:11px;color:rgba(255,255,255,.5);}
+.freshness-dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.freshness-dot.ok{background:var(--positive);box-shadow:0 0 0 0 rgba(46,125,91,.5);animation:freshPulse 2.6s infinite;}
+.freshness-dot.stale{background:#f59e0b;}
+.freshness-dot.fail{background:var(--negative);}
+.freshness-dot.pending{background:rgba(255,255,255,.25);}
+@keyframes freshPulse{0%{box-shadow:0 0 0 0 rgba(46,125,91,.5);}70%{box-shadow:0 0 0 6px rgba(46,125,91,0);}100%{box-shadow:0 0 0 0 rgba(46,125,91,0);}}
+
+.sheet-status-popover{position:fixed;bottom:16px;left:calc(var(--sidebar-w) + 12px);background:#1a1f2e;color:#fff;border-radius:10px;padding:14px 18px;font-size:12px;box-shadow:0 10px 32px rgba(0,0,0,.35);z-index:200;min-width:300px;max-width:380px;max-height:70vh;overflow-y:auto;display:none;border:1px solid rgba(255,255,255,.08);}
+.sheet-status-popover.open{display:block;}
+.sheet-status-popover h4{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.55);margin:10px 0 6px;font-weight:700;}
+.sheet-status-popover h4:first-child{margin-top:0;}
+.sheet-status-popover .sheet-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;gap:12px;border-bottom:1px solid rgba(255,255,255,.06);}
+.sheet-status-popover .sheet-row:last-child{border-bottom:none;}
+.sheet-status-popover .sheet-name{color:rgba(255,255,255,.9);display:flex;align-items:center;gap:8px;font-size:12px;}
+.sheet-status-popover .sheet-meta{color:rgba(255,255,255,.45);font-size:10px;text-align:right;white-space:nowrap;}
+.sheet-status-popover .sheet-meta.fail{color:#fca5a5;}
+.sheet-status-popover .close-x{position:absolute;top:10px;right:12px;color:rgba(255,255,255,.45);cursor:pointer;font-size:16px;line-height:1;}
+.sheet-status-popover .close-x:hover{color:#fff;}
+@media(max-width:900px){ .sheet-status-popover{left:72px;max-width:calc(100vw - 90px);} }
+@media(max-width:600px){ .sheet-status-popover{left:12px;right:12px;bottom:12px;max-width:none;min-width:0;} }
+
+/* Failure/stale banner */
+.load-banner{margin:12px 32px 0;padding:10px 14px;border-radius:8px;font-size:13px;display:flex;align-items:center;gap:10px;}
+.load-banner.warn{background:#fef3c7;border:1px solid #fbbf24;color:#78350f;}
+.load-banner.err{background:#fee2e2;border:1px solid #fca5a5;color:#7f1d1d;}
+.load-banner svg{flex-shrink:0;}
+.load-banner .banner-close{margin-left:auto;cursor:pointer;opacity:.6;background:none;border:none;font-size:16px;line-height:1;color:inherit;}
+.load-banner .banner-close:hover{opacity:1;}
+@media(max-width:900px){ .load-banner{margin:10px 20px 0;} }
+
+/* Loading skeletons */
+.skeleton{background:linear-gradient(90deg,#eef0f4 0%,#f7f8fa 50%,#eef0f4 100%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:6px;display:inline-block;}
+@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+.skel-line{height:14px;margin:6px 0;}
+.skel-card{height:92px;border-radius:var(--radius);}
+
+/* Compact mobile refinements */
+@media(max-width:600px){
+  .dash-header{padding:14px 16px 10px;}
+  .dash-header .title-area h1{font-size:18px;}
+  .filter-bar{padding:10px 16px;gap:8px;}
+  .filter-group{gap:4px;}
+  .filter-sep{display:none;}
+  .kpi-row{padding:14px 16px;gap:10px;}
+  .kpi-card{padding:14px 16px;}
+  .kpi-card .kpi-value{font-size:26px;}
+  .charts-section{padding:0 16px 12px;}
+  .card{padding:14px 16px;}
+  .chart-wrap{height:260px;} .chart-wrap.tall{height:300px;}
+  .table-section{padding:0 16px 16px;}
+  .auto-badge{display:none;}
+}
+
+/* Semester color chips */
+.gm-sem-chip{display:inline-block;padding:2px 10px;border-radius:10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+.gm-sem-chip.spring{background:#e0f2f1;color:#00695c;}
+.gm-sem-chip.summer{background:#fff3e0;color:#e65100;}
+.gm-sem-chip.fall{background:#ede7f6;color:#4527a0;}
+.gm-sem-chip.winter{background:#e3f2fd;color:#1565c0;}
+.gm-sem-chip.neutral{background:#eef0f4;color:#475569;}
 </style>
 </head>
 <body>
@@ -269,12 +374,24 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
         <span>Next Steps</span>
       </div>
     </nav>
-    <div class="sidebar-footer">
-      <span class="last-refresh" id="lastRefresh">Not yet loaded</span>
+    <div class="sidebar-footer" onclick="toggleSheetStatus(event)" title="Click for sheet-by-sheet status">
+      <div class="fresh-compact">
+        <span class="freshness-dot pending" id="freshDot"></span>
+        <span class="last-refresh" id="lastRefresh">Not yet loaded</span>
+      </div>
     </div>
+
+  <!-- ── Sheet status popover (per-sheet freshness) ── -->
+  <div class="sheet-status-popover" id="sheetStatusPopover" onclick="event.stopPropagation()">
+    <span class="close-x" onclick="toggleSheetStatus()">&times;</span>
+    <div id="sheetStatusBody"></div>
+  </div>
   </aside>
 
   <div class="main">
+
+    <!-- Global load banner (populated when any sheet fails) -->
+    <div id="loadBannerHost"></div>
 
     <!-- ═══════════════════════════════════════════ -->
     <!--           SUNDAY ATTENDANCE TAB             -->
@@ -350,10 +467,16 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
           </button>
         </div>
       </div>
-      <div class="ministry-tabs">
+      <div class="ministry-tabs" id="ministryTabs">
         <button class="ministry-tab active" onclick="switchMinistry('youth',this)">Youth</button>
         <button class="ministry-tab" onclick="switchMinistry('youngadults',this)">Young Adults</button>
         <button class="ministry-tab" onclick="switchMinistry('rooted',this)">Rooted</button>
+        <button class="ministry-tab" onclick="switchMinistry('womens',this)" id="mtab-womens"><span class="tab-dot pending"></span>Women's</button>
+        <button class="ministry-tab" onclick="switchMinistry('mens',this)" id="mtab-mens"><span class="tab-dot pending"></span>Men's</button>
+        <button class="ministry-tab" onclick="switchMinistry('regen',this)" id="mtab-regen"><span class="tab-dot pending"></span>Re:Generation</button>
+        <button class="ministry-tab" onclick="switchMinistry('reengage',this)" id="mtab-reengage"><span class="tab-dot pending"></span>Re|Engage</button>
+        <button class="ministry-tab" onclick="switchMinistry('ptw',this)" id="mtab-ptw"><span class="tab-dot pending"></span>Practicing the Way</button>
+        <button class="ministry-tab" onclick="switchMinistry('griefshare',this)" id="mtab-griefshare"><span class="tab-dot pending"></span>GriefShare</button>
       </div>
 
       <!-- ── Youth Sub-Panel ── -->
@@ -452,6 +575,15 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
         </div>
         <div class="table-section"><div class="table-card"><h2>Rooted Detail</h2><div class="subtitle">Click headers to sort</div><div class="table-scroll" id="rTableContainer"></div></div></div>
       </div>
+
+      <!-- ── Generic ministry panels (Women's, Men's, Re:Gen, Re|Engage, Practicing the Way, GriefShare) ── -->
+      <!-- Each panel is hydrated by the GenericMinistry renderer using MINISTRY_CONFIG. -->
+      <div class="ministry-panel" id="mp-womens"></div>
+      <div class="ministry-panel" id="mp-mens"></div>
+      <div class="ministry-panel" id="mp-regen"></div>
+      <div class="ministry-panel" id="mp-reengage"></div>
+      <div class="ministry-panel" id="mp-ptw"></div>
+      <div class="ministry-panel" id="mp-griefshare"></div>
     </div>
 
     <!-- ═══════════════════════════════════════════ -->
@@ -605,7 +737,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       <div class="dash-header">
         <div class="title-area">
           <h1>Next Steps</h1>
-          <p>First-time guests &middot; Return tracking (next 4 Sundays)</p>
+          <p>First-time guests &middot; Baptism &middot; Growth Track</p>
         </div>
         <div class="header-actions">
           <span class="auto-badge">Auto-refresh 5 min</span>
@@ -615,6 +747,14 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
           </button>
         </div>
       </div>
+      <div class="ns-tabs">
+        <button class="ns-tab active" onclick="switchNextSteps('fttg',this)">First-Time Guests</button>
+        <button class="ns-tab" onclick="switchNextSteps('baptism',this)" id="nstab-baptism"><span class="tab-dot pending"></span>Baptism</button>
+        <button class="ns-tab" onclick="switchNextSteps('growthtrack',this)" id="nstab-growthtrack"><span class="tab-dot pending"></span>Growth Track</button>
+      </div>
+
+      <!-- ── First-Time Guests (original Next Steps content) ── -->
+      <div class="ns-panel active" id="nsp-fttg">
       <div class="filter-bar" id="nsFilters">
         <div class="filter-group"><label>Range</label>
           <button class="fbtn" data-filter="nsr" data-value="90" onclick="setNSF('range','90',this)">Last 90d</button>
@@ -661,6 +801,11 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
         <div class="subtitle">Click headers to sort</div>
         <div class="table-scroll" id="nsTableContainer"></div>
       </div></div>
+      </div><!-- /nsp-fttg -->
+
+      <!-- Baptism / Growth Track panels hydrated by GenericMinistry renderer -->
+      <div class="ns-panel" id="nsp-baptism"></div>
+      <div class="ns-panel" id="nsp-growthtrack"></div>
     </div>
 
     <div class="dash-footer">Palm Valley Church &mdash; Dashboard &middot; Data refreshes from Google Sheets</div>
@@ -685,6 +830,15 @@ const SHEET_URLS = {
   // Replace both URLs when the Qlik tables are exported to Google Sheets.
   nextStepsSummary: 'PENDING_QLIK_PUBLISH',
   nextStepsDetail:  'PENDING_QLIK_PUBLISH',
+  // Generic ministry feeds (same schema: Date,Event,Campus,Semester|Year,Week|Month,Attendance,Dream Team,Total Attendance)
+  womens:      'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=29895188&single=true&output=csv',
+  mens:        'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=183217494&single=true&output=csv',
+  regen:       'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=39689321&single=true&output=csv',
+  reengage:    'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=1850374243&single=true&output=csv',
+  ptw:         'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=680217590&single=true&output=csv',
+  griefshare:  'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=1495622097&single=true&output=csv',
+  baptism:     'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=2038715904&single=true&output=csv',
+  growthtrack: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=1809025252&single=true&output=csv',
 };
 const AUTO_REFRESH_MS = 5*60*1000;
 const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
@@ -743,10 +897,52 @@ function switchTab(tab, el){
 
 // ── Ministry Sub-Tab Switching ────────────────────────────────────────
 function switchMinistry(sub,btn){
-  document.querySelectorAll('.ministry-tab').forEach(t=>t.classList.remove('active'));
-  if(btn)btn.classList.add('active');
-  document.querySelectorAll('.ministry-panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('mp-'+sub).classList.add('active');
+  // Scope within the Ministry tab so we don't clobber other tabs' panels.
+  const host=document.getElementById('tab-ministry');
+  host.querySelectorAll('.ministry-tab').forEach(t=>t.classList.remove('active'));
+  if(btn){btn.classList.add('active');try{btn.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});}catch(e){}}
+  host.querySelectorAll('.ministry-panel').forEach(p=>p.classList.remove('active'));
+  const panel=document.getElementById('mp-'+sub);
+  if(panel){panel.classList.add('active');if(typeof GM!=='undefined')GM.onShow(sub);}
+}
+
+// ── Next Steps Sub-Tab Switching ──────────────────────────────────────
+function switchNextSteps(sub,btn){
+  const host=document.getElementById('tab-nextsteps');
+  host.querySelectorAll('.ns-tab').forEach(t=>t.classList.remove('active'));
+  if(btn){btn.classList.add('active');try{btn.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});}catch(e){}}
+  host.querySelectorAll('.ns-panel').forEach(p=>p.classList.remove('active'));
+  const panel=document.getElementById('nsp-'+sub);
+  if(panel){panel.classList.add('active');if(typeof GM!=='undefined')GM.onShow(sub);}
+}
+
+// ── Sheet Status Popover ──────────────────────────────────────────────
+function toggleSheetStatus(e){
+  if(e)e.stopPropagation();
+  const p=document.getElementById('sheetStatusPopover');
+  if(!p)return;
+  p.classList.toggle('open');
+  if(p.classList.contains('open')){renderSheetStatus();setTimeout(()=>{document.addEventListener('click',closeSheetStatusOnce,{once:true});},0);}
+}
+function closeSheetStatusOnce(){document.getElementById('sheetStatusPopover')?.classList.remove('open');}
+function renderSheetStatus(){
+  const body=document.getElementById('sheetStatusBody');if(!body)return;
+  const groups={'Sunday & Services':['missionMain','missionKids','edinburg','ipv','holiday'],'Ministries':['rooted','youth','youngAdults','womens','mens','regen','reengage','ptw','griefshare'],'Next Steps':['nextStepsSummary','nextStepsDetail','baptism','growthtrack'],'Events':['eventRegistrations']};
+  const labels={missionMain:'Mission Main',missionKids:'Mission Kids',edinburg:'Edinburg',ipv:'IPV',holiday:'Holiday Services',rooted:'Rooted',youth:'Youth',youngAdults:'Young Adults',womens:"Women's",mens:"Men's",regen:'Re:Generation',reengage:'Re|Engage',ptw:'Practicing the Way',griefshare:'GriefShare',nextStepsSummary:'First-Time Summary',nextStepsDetail:'First-Time Detail',baptism:'Baptism',growthtrack:'Growth Track',eventRegistrations:'Event Registrations'};
+  let h='';
+  for(const g in groups){
+    h+='<h4>'+g+'</h4>';
+    groups[g].forEach(k=>{
+      const s=SHEET_STATUS[k]||{state:'pending'};
+      let dotCls='pending',metaCls='',metaText='Pending';
+      if(s.state==='ok'){dotCls='ok';metaText=s.rows!=null?s.rows.toLocaleString()+' rows':'OK';}
+      else if(s.state==='empty'){dotCls='stale';metaText='Empty';}
+      else if(s.state==='fail'){dotCls='fail';metaCls=' fail';metaText=s.msg||'Failed';}
+      else if(s.state==='skipped'){dotCls='pending';metaText='Not configured';}
+      h+='<div class="sheet-row"><span class="sheet-name"><span class="freshness-dot '+dotCls+'"></span>'+labels[k]+'</span><span class="sheet-meta'+metaCls+'">'+metaText+'</span></div>';
+    });
+  }
+  body.innerHTML=h;
 }
 
 // ── PDF Download ─────────────────────────────────────────────────────
@@ -1818,51 +2014,470 @@ function nsRenderTable(){
 }
 
 // ══════════════════════════════════════════════════════════════════════
+//  GENERIC MINISTRY RENDERER
+//  Drives: Women's, Men's, Re:Generation, Re|Engage, Practicing the Way,
+//          GriefShare, Baptism, Growth Track
+//  All share schema: Date, Event, Campus, Semester|Year, Week|Month,
+//                    Attendance, Dream Team, Total Attendance
+// ══════════════════════════════════════════════════════════════════════
+const MINISTRY_CONFIG={
+  womens:     {label:"Women's Ministry",   sheetKey:'womens',     tabDotId:'mtab-womens',      host:'mp-womens',     color:'#b83366', parent:'ministry'},
+  mens:       {label:"Men's Ministry",     sheetKey:'mens',       tabDotId:'mtab-mens',        host:'mp-mens',       color:'#2d5ea7', parent:'ministry'},
+  regen:      {label:'Re:Generation',      sheetKey:'regen',      tabDotId:'mtab-regen',       host:'mp-regen',      color:'#6b4c93', parent:'ministry', periodColumn:'Year'},
+  reengage:   {label:'Re|Engage',          sheetKey:'reengage',   tabDotId:'mtab-reengage',    host:'mp-reengage',   color:'#5e8a6d', parent:'ministry'},
+  ptw:        {label:'Practicing the Way', sheetKey:'ptw',        tabDotId:'mtab-ptw',         host:'mp-ptw',        color:'#d98639', parent:'ministry'},
+  griefshare: {label:'GriefShare',         sheetKey:'griefshare', tabDotId:'mtab-griefshare',  host:'mp-griefshare', color:'#8a8778', parent:'ministry'},
+  baptism:    {label:'Baptism',            sheetKey:'baptism',    tabDotId:'nstab-baptism',    host:'nsp-baptism',   color:'#4a7f97', parent:'nextsteps', bucketColumn:'Month'},
+  growthtrack:{label:'Growth Track',       sheetKey:'growthtrack',tabDotId:'nstab-growthtrack',host:'nsp-growthtrack',color:'#a07533',parent:'nextsteps', bucketColumn:'Month'}
+};
+
+// Flexible date parser: handles MM/DD/YYYY and 'Wed, Oct 18, 2023'
+function gmParseDate(s){
+  if(!s)return null; s=String(s).trim().replace(/^"|"$/g,''); if(!s)return null;
+  // MM/DD/YYYY
+  const m1=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(m1){let y=+m1[3]; if(y<100)y+=2000; return new Date(y,+m1[1]-1,+m1[2]);}
+  // "Wed, Oct 18, 2023" or "Oct 18, 2023"
+  const d=new Date(s); if(!isNaN(d.getTime()))return d;
+  return null;
+}
+function gmSemClass(s){if(!s)return 'neutral';s=String(s).toLowerCase();if(s.includes('spring'))return 'spring';if(s.includes('summer'))return 'summer';if(s.includes('fall'))return 'fall';if(s.includes('winter'))return 'winter';return 'neutral';}
+
+// Parse CSV rows -> typed objects
+function gmParseCSV(text,cfg){
+  if(!text)return [];
+  const rows=parseCSV(text); if(rows.length<2)return [];
+  const hdr=rows[0].map(h=>String(h).trim());
+  const idx=n=>hdr.findIndex(h=>h.toLowerCase()===n.toLowerCase());
+  const iDate=idx('Date'),iEvent=idx('Event'),iCampus=idx('Campus');
+  const iSem=idx('Semester'),iYear=idx('Year');
+  const iWeek=idx('Week'),iMonth=idx('Month');
+  const iAtt=idx('Attendance'),iDT=idx('Dream Team'),iTot=idx('Total Attendance');
+  const out=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i]; if(!r||r.every(c=>!String(c||'').trim()))continue;
+    const d=gmParseDate(r[iDate]); if(!d)continue;
+    const period=(iSem>=0?r[iSem]:'')||(iYear>=0?r[iYear]:'')||'';
+    const bucket=(iWeek>=0?r[iWeek]:'')||(iMonth>=0?r[iMonth]:'')||'';
+    const att=num(r[iAtt]),dt=num(r[iDT]),tot=num(r[iTot])||att+dt;
+    out.push({
+      date:d, event:String(r[iEvent]||'').trim(), campus:String(r[iCampus]||'').trim(),
+      period:String(period||'').trim(), bucket:String(bucket||'').trim(),
+      attendance:att, dreamTeam:dt, total:tot
+    });
+  }
+  return out;
+}
+
+// Build a panel's DOM skeleton (once per panel, first time it's shown)
+function gmBuildPanel(key,cfg){
+  const host=document.getElementById(cfg.host); if(!host||host.dataset.built==='1')return;
+  const k=key,C=cfg;
+  host.innerHTML=`
+    <div class="filter-bar" id="gm-${k}-filters">
+      <div class="filter-group"><label>Event</label><div id="gm-${k}-eventBtns" style="display:flex;gap:4px;flex-wrap:wrap;"></div></div>
+      <div class="filter-sep"></div>
+      <div class="filter-group"><label>Campus</label><div id="gm-${k}-campusBtns" style="display:flex;gap:4px;flex-wrap:wrap;"></div></div>
+      <div class="filter-sep"></div>
+      <div class="filter-group"><label id="gm-${k}-periodLbl">Semester</label><select id="gm-${k}-period"><option value="all">All</option></select></div>
+      <div class="filter-sep"></div>
+      <div class="filter-group"><label>From</label><input type="date" id="gm-${k}-from"></div>
+      <div class="filter-group"><label>To</label><input type="date" id="gm-${k}-to"></div>
+    </div>
+    <div class="gm-hero" id="gm-${k}-hero" style="--accent-color:${C.color}">
+      <div class="hero-card primary"><div class="hero-label">This Period</div><div class="hero-value big" id="gm-${k}-heroCurrent">&mdash;</div><div class="hero-sub" id="gm-${k}-heroCurrentSub"></div><canvas class="spark" id="gm-${k}-spark"></canvas></div>
+      <div class="hero-card"><div class="hero-label">Most Recent Week</div><div class="hero-value" id="gm-${k}-heroRecent">&mdash;</div><div class="hero-sub" id="gm-${k}-heroRecentSub"></div></div>
+      <div class="hero-card"><div class="hero-label">Avg / Event</div><div class="hero-value" id="gm-${k}-heroAvg">&mdash;</div><div class="hero-sub" id="gm-${k}-heroAvgSub"></div></div>
+      <div class="hero-card"><div class="hero-label">Peak Week</div><div class="hero-value" id="gm-${k}-heroPeak">&mdash;</div><div class="hero-sub" id="gm-${k}-heroPeakSub"></div></div>
+    </div>
+    <div class="charts-section">
+      <div class="chart-grid"><div class="card"><h2>Weekly Attendance Trend</h2><div class="subtitle">Filtered rows &middot; dotted line is 4-week rolling average</div><div class="chart-wrap tall"><canvas id="gm-${k}-trend"></canvas></div></div></div>
+      <div class="chart-grid-2" style="margin-top:var(--gap)">
+        <div class="card"><h2>By <span id="gm-${k}-periodLbl2">Semester</span></h2><div class="subtitle">Weekly progression &mdash; hover a series to isolate</div><div class="chart-wrap"><canvas id="gm-${k}-periodChart"></canvas></div></div>
+        <div class="card"><h2>Campus Breakdown</h2><div class="subtitle">Total attendance by campus (filtered)</div><div class="chart-wrap"><canvas id="gm-${k}-campus"></canvas></div></div>
+      </div>
+      <div class="chart-grid" style="margin-top:var(--gap)"><div class="card"><h2>Event Comparison</h2><div class="subtitle">Average attendance per event type</div><div class="chart-wrap"><canvas id="gm-${k}-event"></canvas></div></div></div>
+    </div>
+    <div class="table-section"><div class="table-card"><h2>${C.label} Detail</h2><div class="subtitle">Click headers to sort</div><div class="table-scroll" id="gm-${k}-table"></div></div></div>
+  `;
+  host.dataset.built='1';
+}
+
+// Render empty state in place of full panel
+function gmShowEmpty(key,cfg,title,msg){
+  const host=document.getElementById(cfg.host); if(!host)return;
+  host.innerHTML=`<div class="gm-empty"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="4" x2="9" y2="20"/></svg><h3>${title}</h3><p>${msg}</p></div>`;
+  host.dataset.built='empty';
+}
+
+// Main GM namespace
+const GM={
+  state:{},   // per-key: {raw, filtered, charts, filters}
+  init(){
+    // Build the Baptism + Growth Track panels eagerly? No — lazy on first show.
+    // Pre-parse when refreshAll completes; render when panel becomes visible.
+  },
+  onShow(key){
+    const cfg=MINISTRY_CONFIG[key]; if(!cfg)return;
+    const s=this.state[key]; if(!s||!s.raw)return;  // truly nothing fetched yet
+    const built=document.getElementById(cfg.host)?.dataset.built;
+    // If panel hasn't been hydrated yet (or only empty placeholder), hydrate now
+    if(built!=='1'){this.hydrate(key);}
+    // Resize charts (Chart.js needs this after becoming visible)
+    if(s.charts){Object.values(s.charts).forEach(c=>{try{c&&c.resize();}catch(e){}});}
+  },
+  setData(key,rows){
+    this.state[key]=this.state[key]||{};
+    this.state[key].raw=rows||[];
+    this.state[key].charts=this.state[key].charts||{};
+    // Reset filters
+    this.state[key].filters={events:new Set(['__all__']),campuses:new Set(['__all__']),period:'all',from:null,to:null};
+    // Update tab dot
+    this.updateTabDot(key);
+    // If panel is currently visible, hydrate & render now
+    const cfg=MINISTRY_CONFIG[key];
+    const host=document.getElementById(cfg.host);
+    if(host&&host.classList.contains('active')){this.hydrate(key);}
+  },
+  setFailed(key,msg){
+    const cfg=MINISTRY_CONFIG[key]; if(!cfg)return;
+    gmShowEmpty(key,cfg,'Data unavailable',msg||'Could not load this sheet. It may be unpublished, private, or temporarily unreachable.');
+    this.updateTabDot(key,'fail');
+  },
+  updateTabDot(key,forceState){
+    const cfg=MINISTRY_CONFIG[key]; if(!cfg)return;
+    const tabBtn=document.getElementById(cfg.tabDotId); if(!tabBtn)return;
+    const dot=tabBtn.querySelector('.tab-dot'); if(!dot)return;
+    dot.classList.remove('pending','ok','empty','fail');
+    const s=this.state[key];
+    const st=forceState||(s&&s.raw&&s.raw.length?'ok':(s?'empty':'pending'));
+    dot.classList.add(st);
+  },
+  hydrate(key){
+    const cfg=MINISTRY_CONFIG[key]; const s=this.state[key];
+    if(!s||!s.raw){return;}
+    if(!s.raw.length){
+      gmShowEmpty(key,cfg,'No data yet',`The <strong>${cfg.label}</strong> sheet is published but has no rows. This panel will populate automatically once data lands.`);
+      return;
+    }
+    gmBuildPanel(key,cfg);
+    // Populate filter controls
+    this.buildFilters(key);
+    this.render(key);
+  },
+  buildFilters(key){
+    const cfg=MINISTRY_CONFIG[key]; const s=this.state[key]; const raw=s.raw;
+    const events=[...new Set(raw.map(r=>r.event).filter(Boolean))].sort();
+    const campuses=[...new Set(raw.map(r=>r.campus).filter(Boolean))].sort();
+    const periods=[...new Set(raw.map(r=>r.period).filter(Boolean))];
+    // sort periods: try to order by typical pattern (Fall > Summer > Spring > Winter) within year
+    periods.sort((a,b)=>{const ya=(a.match(/\d{4}/)||[0])[0],yb=(b.match(/\d{4}/)||[0])[0];if(ya!==yb)return yb-ya;const ord={Fall:1,Summer:2,Spring:3,Winter:4};const oa=ord[Object.keys(ord).find(k=>a.includes(k))]||9,ob=ord[Object.keys(ord).find(k=>b.includes(k))]||9;return oa-ob;});
+    // Period label
+    const periodLbl=cfg.periodColumn==='Year'?'Year':(cfg.bucketColumn==='Month'?'Cohort':'Semester');
+    document.getElementById(`gm-${key}-periodLbl`).textContent=periodLbl;
+    const lbl2=document.getElementById(`gm-${key}-periodLbl2`);if(lbl2)lbl2.textContent=periodLbl;
+    // Events
+    const evBtns=document.getElementById(`gm-${key}-eventBtns`);
+    evBtns.innerHTML='<button class="fbtn active" onclick="GM.toggleFilter(\''+key+'\',\'events\',\'__all__\',this)">All</button>'+events.map(e=>`<button class="fbtn" onclick="GM.toggleFilter('${key}','events','${e.replace(/'/g,"\\'")}',this)">${e}</button>`).join('');
+    // Campuses
+    const caBtns=document.getElementById(`gm-${key}-campusBtns`);
+    if(campuses.length){
+      caBtns.innerHTML='<button class="fbtn active" onclick="GM.toggleFilter(\''+key+'\',\'campuses\',\'__all__\',this)">All</button>'+campuses.map(c=>`<button class="fbtn" onclick="GM.toggleFilter('${key}','campuses','${c.replace(/'/g,"\\'")}',this)">${c}</button>`).join('');
+    }else{caBtns.innerHTML='<span style="font-size:12px;color:var(--muted)">n/a</span>';}
+    // Period select
+    const psel=document.getElementById(`gm-${key}-period`);
+    psel.innerHTML='<option value="all">All</option>'+periods.map(p=>`<option value="${p}">${p}</option>`).join('');
+    psel.onchange=()=>{s.filters.period=psel.value;this.render(key);};
+    // Dates
+    const fromI=document.getElementById(`gm-${key}-from`),toI=document.getElementById(`gm-${key}-to`);
+    fromI.onchange=()=>{s.filters.from=fromI.value?new Date(fromI.value):null;this.render(key);};
+    toI.onchange=()=>{s.filters.to=toI.value?new Date(toI.value):null;this.render(key);};
+  },
+  toggleFilter(key,dim,val,btn){
+    const s=this.state[key]; const set=s.filters[dim];
+    if(val==='__all__'){set.clear();set.add('__all__');
+      const wrap=btn.parentElement; wrap.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+    }else{
+      set.delete('__all__');
+      if(set.has(val)){set.delete(val);btn.classList.remove('active');}
+      else{set.add(val);btn.classList.add('active');}
+      if(!set.size){set.add('__all__');const wrap=btn.parentElement;wrap.querySelector('.fbtn').classList.add('active');}
+      else{const wrap=btn.parentElement;wrap.querySelector('.fbtn').classList.remove('active');}
+    }
+    this.render(key);
+  },
+  filter(key){
+    const s=this.state[key],f=s.filters;
+    return s.raw.filter(r=>{
+      if(!f.events.has('__all__')&&!f.events.has(r.event))return false;
+      if(!f.campuses.has('__all__')&&r.campus&&!f.campuses.has(r.campus))return false;
+      if(!f.campuses.has('__all__')&&!r.campus&&!f.campuses.has(''))return false;
+      if(f.period!=='all'&&r.period!==f.period)return false;
+      if(f.from&&r.date<f.from)return false;
+      if(f.to&&r.date>f.to)return false;
+      return true;
+    });
+  },
+  render(key){
+    const cfg=MINISTRY_CONFIG[key]; const s=this.state[key]; const data=this.filter(key);
+    s.filtered=data;
+    this.renderHero(key,cfg,data);
+    this.renderTrend(key,cfg,data);
+    this.renderPeriod(key,cfg,data);
+    this.renderCampus(key,cfg,data);
+    this.renderEvent(key,cfg,data);
+    this.renderTable(key,cfg,data);
+  },
+  destroyChart(key,name){
+    const s=this.state[key]; if(s.charts&&s.charts[name]){try{s.charts[name].destroy();}catch(e){}s.charts[name]=null;}
+  },
+  renderHero(key,cfg,data){
+    const fmt=n=>n==null||isNaN(n)?'—':Math.round(n).toLocaleString();
+    // Aggregate by week (same date may have multiple campus/event rows → sum)
+    const byWeek=new Map();
+    data.forEach(r=>{const k=dateKey(r.date);if(!byWeek.has(k))byWeek.set(k,{date:r.date,total:0});byWeek.get(k).total+=r.total;});
+    const weeks=[...byWeek.values()].sort((a,b)=>a.date-b.date);
+    // Period scope: if a specific period is selected, use it; else latest
+    let periodScope=s=>s;
+    const periods=[...new Set(data.map(r=>r.period).filter(Boolean))];
+    // Hero 1 — current period total
+    let currentPeriodLabel='All Time', currentTotal=0, prevTotal=null, isFallback=false;
+    if(this.state[key].filters.period!=='all'){
+      currentPeriodLabel=this.state[key].filters.period;
+      currentTotal=data.reduce((a,r)=>a+r.total,0);
+    }else if(periods.length){
+      // Find latest *non-empty* period by max-date within each period
+      const periodOrder=periods.map(p=>{const rs=data.filter(r=>r.period===p);const maxD=rs.reduce((m,r)=>r.date>m?r.date:m,rs[0].date);return{p,maxD};}).sort((a,b)=>a.maxD-b.maxD);
+      const last=periodOrder[periodOrder.length-1];
+      currentPeriodLabel=last.p;
+      currentTotal=data.filter(r=>r.period===currentPeriodLabel).reduce((a,r)=>a+r.total,0);
+      const idx=periodOrder.findIndex(x=>x.p===currentPeriodLabel);
+      if(idx>0){const prev=periodOrder[idx-1].p;prevTotal=data.filter(r=>r.period===prev).reduce((a,r)=>a+r.total,0);}
+      // If the latest period's coverage is much older than the most recent rows in the data,
+      // there are recent un-categorized rows — fall back to last-90-day total instead.
+      const newestRowDate=data.reduce((m,r)=>r.date>m?r.date:m,data[0].date);
+      if(newestRowDate-last.maxD>1000*60*60*24*30){
+        const cutoff=new Date(newestRowDate.getTime()-90*86400000);
+        currentTotal=data.filter(r=>r.date>=cutoff).reduce((a,r)=>a+r.total,0);
+        currentPeriodLabel='Last 90 days';
+        prevTotal=null; isFallback=true;
+      }
+    }else{
+      // No period column at all — use last 90 days
+      const newestRowDate=data.reduce((m,r)=>r.date>m?r.date:m,data[0].date);
+      const cutoff=new Date(newestRowDate.getTime()-90*86400000);
+      currentTotal=data.filter(r=>r.date>=cutoff).reduce((a,r)=>a+r.total,0);
+      currentPeriodLabel='Last 90 days';
+    }
+    document.getElementById(`gm-${key}-heroCurrent`).textContent=fmt(currentTotal);
+    document.getElementById(`gm-${key}-heroCurrentSub`).innerHTML=`<span class="gm-sem-chip ${gmSemClass(currentPeriodLabel)}">${currentPeriodLabel||'—'}</span>`+(prevTotal!=null?this.renderDelta(currentTotal,prevTotal):'');
+    // Hero 2 — most recent week
+    const last=weeks[weeks.length-1], prev=weeks[weeks.length-2];
+    document.getElementById(`gm-${key}-heroRecent`).textContent=last?fmt(last.total):'—';
+    document.getElementById(`gm-${key}-heroRecentSub`).innerHTML=last?(fmtDate(last.date)+(prev?' '+this.renderDelta(last.total,prev.total,true):'')):'No data in range';
+    // Hero 3 — avg per event
+    const avg=data.length?data.reduce((a,r)=>a+r.total,0)/data.length:0;
+    document.getElementById(`gm-${key}-heroAvg`).textContent=fmt(avg);
+    document.getElementById(`gm-${key}-heroAvgSub`).textContent=`Across ${data.length} record${data.length===1?'':'s'}`;
+    // Hero 4 — peak week
+    const peak=weeks.reduce((m,w)=>!m||w.total>m.total?w:m,null);
+    document.getElementById(`gm-${key}-heroPeak`).textContent=peak?fmt(peak.total):'—';
+    document.getElementById(`gm-${key}-heroPeakSub`).textContent=peak?fmtDate(peak.date):'—';
+    // Sparkline
+    this.renderSpark(key,cfg,weeks);
+  },
+  renderDelta(cur,prev,inline){
+    if(prev==null||prev===0)return '';
+    const pct=((cur-prev)/prev)*100; const cls=pct>0.5?'up':pct<-0.5?'down':'flat';
+    const arrow=cls==='up'?'▲':cls==='down'?'▼':'•';
+    return `<span class="hero-delta ${cls}" style="${inline?'margin-left:6px;margin-top:0;':''}">${arrow} ${pct>=0?'+':''}${pct.toFixed(1)}%</span>`;
+  },
+  renderSpark(key,cfg,weeks){
+    const el=document.getElementById(`gm-${key}-spark`); if(!el)return;
+    this.destroyChart(key,'spark');
+    const recent=weeks.slice(-12);
+    if(recent.length<2){el.style.display='none';return;}
+    el.style.display='';
+    this.state[key].charts.spark=new Chart(el,{type:'line',data:{labels:recent.map(w=>fmtShort(w.date)),datasets:[{data:recent.map(w=>w.total),borderColor:cfg.color,backgroundColor:cfg.color+'22',fill:true,tension:.35,pointRadius:0,borderWidth:1.5}]},options:{responsive:false,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}},animation:false}});
+  },
+  renderTrend(key,cfg,data){
+    const el=document.getElementById(`gm-${key}-trend`); if(!el)return;
+    this.destroyChart(key,'trend');
+    const byWeek=new Map();
+    data.forEach(r=>{const k=dateKey(r.date);if(!byWeek.has(k))byWeek.set(k,{date:r.date,total:0});byWeek.get(k).total+=r.total;});
+    const weeks=[...byWeek.values()].sort((a,b)=>a.date-b.date);
+    if(!weeks.length){el.parentElement.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted);font-size:13px">No data for current filters</div>';return;}
+    // 4-week rolling avg
+    const roll=weeks.map((w,i)=>{const start=Math.max(0,i-3);const slice=weeks.slice(start,i+1);return slice.reduce((a,x)=>a+x.total,0)/slice.length;});
+    this.state[key].charts.trend=new Chart(el,{type:'line',data:{labels:weeks.map(w=>fmtShort(w.date)),datasets:[
+      {label:'Weekly total',data:weeks.map(w=>w.total),borderColor:cfg.color,backgroundColor:cfg.color+'22',fill:true,tension:.25,pointRadius:3,pointHoverRadius:5,borderWidth:2},
+      {label:'4-week avg',data:roll,borderColor:cfg.color,borderDash:[4,4],borderWidth:1.5,tension:.25,pointRadius:0,fill:false}
+    ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',align:'end',labels:{usePointStyle:true,boxWidth:8,font:{size:11}}},tooltip:{callbacks:{title:ctx=>{const i=ctx[0].dataIndex;return fmtDate(weeks[i].date);},label:c=>c.dataset.label+': '+fmtNum(Math.round(c.parsed.y))}}},scales:{y:{beginAtZero:true,ticks:{font:{size:11}}},x:{ticks:{font:{size:11},maxRotation:0,autoSkipPadding:16}}}}});
+  },
+  renderPeriod(key,cfg,data){
+    const el=document.getElementById(`gm-${key}-periodChart`); if(!el)return;
+    this.destroyChart(key,'period');
+    // Group by period, then by bucket (week/month number)
+    const periods=[...new Set(data.map(r=>r.period).filter(Boolean))].sort();
+    if(!periods.length){el.parentElement.style.display='none';return;}
+    el.parentElement.style.display='';
+    // Build x-axis: numeric bucket if available, else by week sequence within period
+    const usesBucket=data.some(r=>r.bucket);
+    const maxBucket=usesBucket?Math.max(...data.map(r=>+r.bucket||0)):0;
+    const labels=usesBucket?Array.from({length:maxBucket},(_,i)=>String(i+1)):[];
+    const palette=['#4a7f97','#7b6fa6','#c47a2e','#2e7d5b','#c0392b','#d98639','#5e8a6d','#6b4c93','#b83366','#2d5ea7','#8a8778','#a07533'];
+    const datasets=periods.map((p,i)=>{
+      const rows=data.filter(r=>r.period===p);
+      if(usesBucket){
+        const byBucket=new Map();
+        rows.forEach(r=>{const b=+r.bucket||0;if(!b)return;byBucket.set(b,(byBucket.get(b)||0)+r.total);});
+        return{label:p,data:labels.map(l=>byBucket.get(+l)||null),borderColor:palette[i%palette.length],backgroundColor:palette[i%palette.length]+'22',tension:.2,pointRadius:3,spanGaps:true,borderWidth:2};
+      }else{
+        const byWeek=new Map();
+        rows.forEach(r=>{const k=dateKey(r.date);byWeek.set(k,(byWeek.get(k)||0)+r.total);});
+        const wk=[...byWeek.entries()].sort().map(([,v])=>v);
+        return{label:p,data:wk,borderColor:palette[i%palette.length],tension:.2,pointRadius:2,borderWidth:2};
+      }
+    });
+    this.state[key].charts.period=new Chart(el,{type:'line',data:{labels:usesBucket?labels:datasets[0]?.data.map((_,i)=>String(i+1))||[],datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',align:'end',labels:{usePointStyle:true,boxWidth:8,font:{size:11}}},tooltip:{mode:'index',intersect:false}},scales:{y:{beginAtZero:true,ticks:{font:{size:11}}},x:{title:{display:true,text:usesBucket?(cfg.bucketColumn==='Month'?'Month':'Week'):'Week',font:{size:11}},ticks:{font:{size:11}}}}}});
+  },
+  renderCampus(key,cfg,data){
+    const el=document.getElementById(`gm-${key}-campus`); if(!el)return;
+    this.destroyChart(key,'campus');
+    const byC=new Map();
+    data.forEach(r=>{const c=r.campus||'(Unspecified)';byC.set(c,(byC.get(c)||0)+r.total);});
+    const entries=[...byC.entries()].sort((a,b)=>b[1]-a[1]);
+    if(!entries.length||(entries.length===1&&entries[0][0]==='(Unspecified)')){el.parentElement.style.display='none';return;}
+    el.parentElement.style.display='';
+    const palette={'Mission':'#4a7f97','Edinburg':'#7b6fa6','IPV':'#c47a2e','Spanish':'#2e7d5b','Central':'#b83366','(Unspecified)':'#94a3b8'};
+    this.state[key].charts.campus=new Chart(el,{type:'bar',data:{labels:entries.map(e=>e[0]),datasets:[{data:entries.map(e=>e[1]),backgroundColor:entries.map(e=>palette[e[0]]||cfg.color),borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmtNum(c.parsed.x)}}},scales:{x:{beginAtZero:true,ticks:{font:{size:11}}},y:{ticks:{font:{size:12,weight:600}}}}}});
+  },
+  renderEvent(key,cfg,data){
+    const el=document.getElementById(`gm-${key}-event`); if(!el)return;
+    this.destroyChart(key,'event');
+    const byE=new Map();
+    data.forEach(r=>{const e=r.event||'(n/a)';if(!byE.has(e))byE.set(e,{total:0,n:0});const o=byE.get(e);o.total+=r.total;o.n++;});
+    const entries=[...byE.entries()].sort((a,b)=>b[1].total/b[1].n-a[1].total/a[1].n);
+    if(entries.length<=1){el.parentElement.style.display='none';return;}
+    el.parentElement.style.display='';
+    this.state[key].charts.event=new Chart(el,{type:'bar',data:{labels:entries.map(e=>e[0]),datasets:[
+      {label:'Avg per session',data:entries.map(e=>Math.round(e[1].total/e[1].n)),backgroundColor:cfg.color,borderRadius:6},
+      {label:'Total',data:entries.map(e=>e[1].total),backgroundColor:cfg.color+'55',borderRadius:6}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',align:'end',labels:{usePointStyle:true,boxWidth:8,font:{size:11}}},tooltip:{mode:'index',intersect:false}},scales:{y:{beginAtZero:true,ticks:{font:{size:11}}},x:{ticks:{font:{size:11},maxRotation:30,minRotation:0}}}}});
+  },
+  renderTable(key,cfg,data){
+    const el=document.getElementById(`gm-${key}-table`); if(!el)return;
+    if(!data.length){el.innerHTML='<div style="padding:20px;color:var(--muted);font-size:13px">No rows match current filters.</div>';return;}
+    const sorted=[...data].sort((a,b)=>b.date-a.date);
+    const cols=[
+      {k:'date',l:'Date',n:true,f:r=>fmtDate(r.date),v:r=>r.date.getTime()},
+      {k:'event',l:'Event',n:false,f:r=>r.event||'—',v:r=>(r.event||'').toLowerCase()},
+      {k:'campus',l:'Campus',n:false,f:r=>r.campus||'—',v:r=>(r.campus||'').toLowerCase()},
+      {k:'period',l:(cfg.periodColumn==='Year'?'Year':(cfg.bucketColumn==='Month'?'Cohort':'Semester')),n:false,f:r=>r.period?'<span class="gm-sem-chip '+gmSemClass(r.period)+'">'+r.period+'</span>':'—',v:r=>(r.period||'').toLowerCase()},
+      {k:'bucket',l:(cfg.bucketColumn==='Month'?'Month':'Week'),n:true,f:r=>r.bucket||'—',v:r=>+r.bucket||0},
+      {k:'attendance',l:'Attendance',n:true,f:r=>fmtNum(r.attendance),v:r=>r.attendance},
+      {k:'dreamTeam',l:'Dream Team',n:true,f:r=>fmtNum(r.dreamTeam),v:r=>r.dreamTeam},
+      {k:'total',l:'Total',n:true,f:r=>'<strong>'+fmtNum(r.total)+'</strong>',v:r=>r.total}
+    ];
+    let sc='date',sd='desc';
+    const render=rows=>{
+      let h='<table class="data-table"><thead><tr>';
+      cols.forEach(c=>{const a=sc===c.k?(sd==='asc'?' ▲':' ▼'):'';h+='<th'+(c.n?' class="num"':'')+' data-col="'+c.k+'">'+c.l+'<span style="font-size:10px;margin-left:4px">'+a+'</span></th>';});
+      h+='</tr></thead><tbody>';
+      rows.slice(0,500).forEach(r=>{h+='<tr>';cols.forEach(c=>{h+='<td'+(c.n?' class="num"':'')+'>'+c.f(r)+'</td>';});h+='</tr>';});
+      h+='</tbody></table>';
+      if(rows.length>500)h+='<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px">Showing first 500 of '+rows.length+' rows</div>';
+      el.innerHTML=h;
+      el.querySelectorAll('th').forEach(th=>{th.onclick=()=>{const col=th.dataset.col;if(sc===col)sd=sd==='asc'?'desc':'asc';else{sc=col;sd='desc';}const c=cols.find(x=>x.k===col);render([...rows].sort((a,b)=>{const av=c.v(a),bv=c.v(b),cmp=av<bv?-1:av>bv?1:0;return sd==='asc'?cmp:-cmp;}));};});
+    };
+    render(sorted);
+  }
+};
+
+// ══════════════════════════════════════════════════════════════════════
+//  PER-SHEET STATUS TRACKING
+// ══════════════════════════════════════════════════════════════════════
+const SHEET_STATUS={};  // key: {state:'ok'|'empty'|'fail'|'skipped'|'pending', rows:n, msg, at}
+function markSheet(k,state,extra){SHEET_STATUS[k]={state,...extra,at:new Date()};}
+async function safeFetch(k){
+  const url=SHEET_URLS[k];
+  if(!url||(typeof url==='string'&&url.startsWith('PENDING_'))){markSheet(k,'skipped');return null;}
+  try{const t=await fetchSheet(url);return t;}
+  catch(e){markSheet(k,'fail',{msg:String(e.message||e).slice(0,80)});return null;}
+}
+function updateGlobalFreshness(){
+  const any=Object.values(SHEET_STATUS);
+  const fails=any.filter(s=>s.state==='fail').length;
+  const oks=any.filter(s=>s.state==='ok').length;
+  const dot=document.getElementById('freshDot'); if(!dot)return;
+  dot.classList.remove('ok','stale','fail','pending');
+  if(fails>0)dot.classList.add('fail');
+  else if(oks===0)dot.classList.add('pending');
+  else if(any.some(s=>s.state==='empty'))dot.classList.add('stale');
+  else dot.classList.add('ok');
+  // Banner
+  const host=document.getElementById('loadBannerHost'); if(!host)return;
+  host.innerHTML='';
+  if(fails>0){
+    const names=Object.entries(SHEET_STATUS).filter(([,s])=>s.state==='fail').map(([k])=>k).slice(0,4).join(', ');
+    host.innerHTML=`<div class="load-banner warn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="10"/></svg>${fails} sheet${fails>1?'s':''} failed to load (${names}). Other tabs are still up to date. <button class="banner-close" onclick="this.parentElement.remove()">×</button></div>`;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════
 //  REFRESH & STARTUP
 // ══════════════════════════════════════════════════════════════════════
 let refreshTimer=null;
 
 async function refreshAll(){
-  const btn=document.getElementById('refreshBtn');btn.classList.add('loading');
+  const btn=document.getElementById('refreshBtn');if(btn)btn.classList.add('loading');
+  // Kick off every fetch in parallel — each one tracks its own success/failure
+  const coreKeys=['missionMain','missionKids','edinburg','ipv','rooted','holiday','youth','youngAdults','eventRegistrations'];
+  const gmKeys=['womens','mens','regen','reengage','ptw','griefshare','baptism','growthtrack'];
+  const nsConfigured=SHEET_URLS.nextStepsSummary&&!SHEET_URLS.nextStepsSummary.startsWith('PENDING_')&&SHEET_URLS.nextStepsDetail&&!SHEET_URLS.nextStepsDetail.startsWith('PENDING_');
+  const allKeys=[...coreKeys,...gmKeys,...(nsConfigured?['nextStepsSummary','nextStepsDetail']:[])];
+  if(!nsConfigured){markSheet('nextStepsSummary','skipped');markSheet('nextStepsDetail','skipped');}
+  const texts=Object.fromEntries(await Promise.all(allKeys.map(async k=>[k,await safeFetch(k)])));
+
+  // --- Core (existing logic), but defensive if a fetch returned null ---
   try{
-    const results=await Promise.all([
-      fetchSheet(SHEET_URLS.missionMain),fetchSheet(SHEET_URLS.missionKids),
-      fetchSheet(SHEET_URLS.edinburg),fetchSheet(SHEET_URLS.ipv),
-      fetchSheet(SHEET_URLS.rooted),fetchSheet(SHEET_URLS.holiday),
-      fetchSheet(SHEET_URLS.youth),fetchSheet(SHEET_URLS.youngAdults),
-      fetchSheet(SHEET_URLS.eventRegistrations),
-    ]);
-    // Sunday
-    sRaw=sMerge(parseMM(parseCSV(results[0])),parseMK(parseCSV(results[1])),parseED(parseCSV(results[2])),parseIP(parseCSV(results[3])));
-    sApply();
-    // Rooted
-    rRaw=parseRooted(parseCSV(results[4]));
-    rPopulateFilters();rApplyFilters();
-    // Holiday
-    hRaw=parseHoliday(parseCSV(results[5]));
-    hApplyFilters();
-    // Youth
-    yRaw=parseYouth(parseCSV(results[6]));
-    yPopulateFilters();yApply();
-    // Young Adults
-    yaRaw=parseYoungAdults(parseCSV(results[7]));
-    yaPopulateFilters();yaApply();
-    // Event Registrations
-    erRaw=parseEventRegistrations(parseCSV(results[8]));
-    erPopulateFilters();
-    // Next Steps — gracefully skip if Qlik publish URLs aren't configured yet
-    const nsOk=SHEET_URLS.nextStepsSummary&&!SHEET_URLS.nextStepsSummary.startsWith('PENDING_')&&SHEET_URLS.nextStepsDetail&&!SHEET_URLS.nextStepsDetail.startsWith('PENDING_');
-    if(nsOk){
-      try{
-        const [nsSumTxt,nsDetTxt]=await Promise.all([fetchSheet(SHEET_URLS.nextStepsSummary),fetchSheet(SHEET_URLS.nextStepsDetail)]);
-        nsSummaryRaw=parseNextStepsSummary(parseCSV(nsSumTxt));
-        nsDetailRaw=parseNextStepsDetail(parseCSV(nsDetTxt));
-      }catch(e){console.error('Next Steps fetch failed:',e);nsSummaryRaw=[];nsDetailRaw=[];}
-    }else{nsSummaryRaw=[];nsDetailRaw=[];}
-    nsApply();
-    document.getElementById('lastRefresh').textContent='Updated '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  }catch(err){console.error('Refresh failed:',err);document.getElementById('lastRefresh').textContent='Refresh failed';}
-  btn.classList.remove('loading');
+    if(texts.missionMain&&texts.missionKids&&texts.edinburg&&texts.ipv){
+      sRaw=sMerge(parseMM(parseCSV(texts.missionMain)),parseMK(parseCSV(texts.missionKids)),parseED(parseCSV(texts.edinburg)),parseIP(parseCSV(texts.ipv)));
+      sApply();
+      markSheet('missionMain','ok',{rows:(parseCSV(texts.missionMain).length-1)});
+      markSheet('missionKids','ok',{rows:(parseCSV(texts.missionKids).length-1)});
+      markSheet('edinburg','ok',{rows:(parseCSV(texts.edinburg).length-1)});
+      markSheet('ipv','ok',{rows:(parseCSV(texts.ipv).length-1)});
+    }
+  }catch(e){console.error('Sunday parse failed',e);}
+  try{if(texts.rooted){rRaw=parseRooted(parseCSV(texts.rooted));rPopulateFilters();rApplyFilters();markSheet('rooted','ok',{rows:rRaw.length});}}catch(e){console.error('Rooted parse failed',e);markSheet('rooted','fail',{msg:'parse error'});}
+  try{if(texts.holiday){hRaw=parseHoliday(parseCSV(texts.holiday));hApplyFilters();markSheet('holiday','ok',{rows:hRaw.length});}}catch(e){console.error('Holiday parse failed',e);markSheet('holiday','fail',{msg:'parse error'});}
+  try{if(texts.youth){yRaw=parseYouth(parseCSV(texts.youth));yPopulateFilters();yApply();markSheet('youth','ok',{rows:yRaw.length});}}catch(e){console.error('Youth parse failed',e);markSheet('youth','fail',{msg:'parse error'});}
+  try{if(texts.youngAdults){yaRaw=parseYoungAdults(parseCSV(texts.youngAdults));yaPopulateFilters();yaApply();markSheet('youngAdults','ok',{rows:yaRaw.length});}}catch(e){console.error('YA parse failed',e);markSheet('youngAdults','fail',{msg:'parse error'});}
+  try{if(texts.eventRegistrations){erRaw=parseEventRegistrations(parseCSV(texts.eventRegistrations));erPopulateFilters();markSheet('eventRegistrations','ok',{rows:erRaw.length});}}catch(e){console.error('ER parse failed',e);markSheet('eventRegistrations','fail',{msg:'parse error'});}
+
+  // Next Steps original tables
+  if(nsConfigured&&texts.nextStepsSummary&&texts.nextStepsDetail){
+    try{nsSummaryRaw=parseNextStepsSummary(parseCSV(texts.nextStepsSummary));nsDetailRaw=parseNextStepsDetail(parseCSV(texts.nextStepsDetail));markSheet('nextStepsSummary','ok',{rows:nsSummaryRaw.length});markSheet('nextStepsDetail','ok',{rows:nsDetailRaw.length});}
+    catch(e){console.error('Next Steps parse failed',e);nsSummaryRaw=[];nsDetailRaw=[];markSheet('nextStepsSummary','fail',{msg:'parse error'});}
+  }else{nsSummaryRaw=[];nsDetailRaw=[];}
+  nsApply();
+
+  // --- Generic ministry panels ---
+  for(const k of gmKeys){
+    const txt=texts[k]; const cfg=MINISTRY_CONFIG[k];
+    if(!txt){GM.setFailed(k,SHEET_STATUS[k]?.msg||'Fetch failed');continue;}
+    try{
+      const rows=gmParseCSV(txt,cfg);
+      GM.setData(k,rows);
+      if(!rows.length){markSheet(k,'empty',{rows:0});}else{markSheet(k,'ok',{rows:rows.length});}
+    }catch(e){console.error('GM parse failed for',k,e);GM.setFailed(k,'Parse error');markSheet(k,'fail',{msg:'parse error'});}
+  }
+
+  // --- Done ---
+  updateGlobalFreshness();
+  document.getElementById('lastRefresh').textContent='Updated '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  if(btn)btn.classList.remove('loading');
 }
 
 async function startDashboard(){
