@@ -737,7 +737,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       <div class="dash-header">
         <div class="title-area">
           <h1>Next Steps</h1>
-          <p>First-time guests &middot; Baptism &middot; Growth Track</p>
+          <p>First-time guests &middot; Baptism &middot; Growth Track &middot; Dream Team</p>
         </div>
         <div class="header-actions">
           <span class="auto-badge">Auto-refresh 5 min</span>
@@ -751,6 +751,8 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
         <button class="ns-tab active" onclick="switchNextSteps('fttg',this)">First-Time Guests</button>
         <button class="ns-tab" onclick="switchNextSteps('baptism',this)" id="nstab-baptism"><span class="tab-dot pending"></span>Baptism</button>
         <button class="ns-tab" onclick="switchNextSteps('growthtrack',this)" id="nstab-growthtrack"><span class="tab-dot pending"></span>Growth Track</button>
+        <button class="ns-tab" onclick="switchNextSteps('nextstepcard',this)" id="nstab-nextstepcard"><span class="tab-dot pending"></span>Next Step Card</button>
+        <button class="ns-tab" onclick="switchNextSteps('dreamteam',this)" id="nstab-dreamteam"><span class="tab-dot pending"></span>Dream Team</button>
       </div>
 
       <!-- ── First-Time Guests (original Next Steps content) ── -->
@@ -806,6 +808,26 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       <!-- Baptism / Growth Track panels hydrated by GenericMinistry renderer -->
       <div class="ns-panel" id="nsp-baptism"></div>
       <div class="ns-panel" id="nsp-growthtrack"></div>
+
+      <!-- Next Step Card panel hydrated by NSC renderer (custom schema) -->
+      <div class="ns-panel" id="nsp-nextstepcard"></div>
+
+      <!-- ── Dream Team (volunteer scheduling + onboarding) ── -->
+      <div class="ns-panel" id="nsp-dreamteam">
+        <div class="kpi-row" id="dtKpiRow"></div>
+        <div class="charts-section">
+          <div class="chart-grid"><div class="card">
+            <h2>Onboarding Pipeline</h2>
+            <div class="subtitle">People added to each &ldquo;Onboarding&rdquo; workflow, and how recently those same people have been scheduled.</div>
+            <div id="dtOnboardingBody" style="padding:24px 4px;color:var(--muted);font-size:13px;">
+              <em>Awaiting loader fix.</em> The workflow-cards feed is currently missing <code>PCO_Person_ID</code> because
+              <code>PCO_Workflows_Loader.qvs</code> pulls <code>person_id</code> from <code>attributes</code>, but the PCO API returns it
+              under <code>relationships</code>. Once that loader is fixed and the Workflows Loader + People Dashboard apps are reloaded,
+              this section will populate automatically.
+            </div>
+          </div></div>
+        </div>
+      </div>
     </div>
 
     <div class="dash-footer">Palm Valley Church &mdash; Dashboard &middot; Data refreshes from Google Sheets</div>
@@ -830,6 +852,16 @@ const SHEET_URLS = {
   // Replace both URLs when the Qlik tables are exported to Google Sheets.
   nextStepsSummary: 'PENDING_QLIK_PUBLISH',
   nextStepsDetail:  'PENDING_QLIK_PUBLISH',
+  // Next Step Card — responses from the PCO "Next Step Form".
+  // Expected CSV schema (one row per person-option selection):
+  //   Date, Campus, PersonID, PersonName, Option
+  // Option must be one of the 9 canonical values defined in NSC_OPTIONS below.
+  // Campus must be one of: Mission, Edinburg, IPV.
+  nextStepCard: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRqJw0Jm_4eAia75fuk4NLCvdJunr_GsS-Lw_fVoagKiXyjliHlakZsstFsO2ar4tW7P3L6i0Y1lk6R/pub?gid=2096479046&single=true&output=csv',
+  // Dream Team KPIs — fed by "Dream Team (KPIs)" sheet in Qlik → DreamTeam_KPIs table
+  // → Google Sheet tab "DreamTeam_KPIs" → Publish to Web as CSV.
+  // Expected columns: As_Of_Date, Scheduled_Last_30d, Scheduled_Last_90d, Scheduled_Last_180d
+  dreamTeamKpis: 'PENDING_QLIK_PUBLISH',
   // Generic ministry feeds (same schema: Date,Event,Campus,Semester|Year,Week|Month,Attendance,Dream Team,Total Attendance)
   womens:      'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=29895188&single=true&output=csv',
   mens:        'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=183217494&single=true&output=csv',
@@ -900,7 +932,7 @@ function switchMinistry(sub,btn){
   // Scope within the Ministry tab so we don't clobber other tabs' panels.
   const host=document.getElementById('tab-ministry');
   host.querySelectorAll('.ministry-tab').forEach(t=>t.classList.remove('active'));
-  if(btn){btn.classList.add('active');try{btn.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});}catch(e){}}
+  if(btn)btn.classList.add('active');
   host.querySelectorAll('.ministry-panel').forEach(p=>p.classList.remove('active'));
   const panel=document.getElementById('mp-'+sub);
   if(panel){panel.classList.add('active');if(typeof GM!=='undefined')GM.onShow(sub);}
@@ -910,10 +942,14 @@ function switchMinistry(sub,btn){
 function switchNextSteps(sub,btn){
   const host=document.getElementById('tab-nextsteps');
   host.querySelectorAll('.ns-tab').forEach(t=>t.classList.remove('active'));
-  if(btn){btn.classList.add('active');try{btn.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});}catch(e){}}
+  if(btn)btn.classList.add('active');
   host.querySelectorAll('.ns-panel').forEach(p=>p.classList.remove('active'));
   const panel=document.getElementById('nsp-'+sub);
-  if(panel){panel.classList.add('active');if(typeof GM!=='undefined')GM.onShow(sub);}
+  if(panel){
+    panel.classList.add('active');
+    if(typeof GM!=='undefined')GM.onShow(sub);
+    if(sub==='nextstepcard'&&typeof NSC!=='undefined')NSC.onShow();
+  }
 }
 
 // ── Sheet Status Popover ──────────────────────────────────────────────
@@ -927,8 +963,8 @@ function toggleSheetStatus(e){
 function closeSheetStatusOnce(){document.getElementById('sheetStatusPopover')?.classList.remove('open');}
 function renderSheetStatus(){
   const body=document.getElementById('sheetStatusBody');if(!body)return;
-  const groups={'Sunday & Services':['missionMain','missionKids','edinburg','ipv','holiday'],'Ministries':['rooted','youth','youngAdults','womens','mens','regen','reengage','ptw','griefshare'],'Next Steps':['nextStepsSummary','nextStepsDetail','baptism','growthtrack'],'Events':['eventRegistrations']};
-  const labels={missionMain:'Mission Main',missionKids:'Mission Kids',edinburg:'Edinburg',ipv:'IPV',holiday:'Holiday Services',rooted:'Rooted',youth:'Youth',youngAdults:'Young Adults',womens:"Women's",mens:"Men's",regen:'Re:Generation',reengage:'Re|Engage',ptw:'Practicing the Way',griefshare:'GriefShare',nextStepsSummary:'First-Time Summary',nextStepsDetail:'First-Time Detail',baptism:'Baptism',growthtrack:'Growth Track',eventRegistrations:'Event Registrations'};
+  const groups={'Sunday & Services':['missionMain','missionKids','edinburg','ipv','holiday'],'Ministries':['rooted','youth','youngAdults','womens','mens','regen','reengage','ptw','griefshare'],'Next Steps':['nextStepsSummary','nextStepsDetail','baptism','growthtrack','nextStepCard','dreamTeamKpis'],'Events':['eventRegistrations']};
+  const labels={missionMain:'Mission Main',missionKids:'Mission Kids',edinburg:'Edinburg',ipv:'IPV',holiday:'Holiday Services',rooted:'Rooted',youth:'Youth',youngAdults:'Young Adults',womens:"Women's",mens:"Men's",regen:'Re:Generation',reengage:'Re|Engage',ptw:'Practicing the Way',griefshare:'GriefShare',nextStepsSummary:'First-Time Summary',nextStepsDetail:'First-Time Detail',baptism:'Baptism',growthtrack:'Growth Track',nextStepCard:'Next Step Card',dreamTeamKpis:'Dream Team KPIs',eventRegistrations:'Event Registrations'};
   let h='';
   for(const g in groups){
     h+='<h4>'+g+'</h4>';
@@ -2014,6 +2050,45 @@ function nsRenderTable(){
 }
 
 // ══════════════════════════════════════════════════════════════════════
+//  NEXT STEPS — Dream Team KPIs (data from Qlik → Google Sheets)
+//  Source: "Dream Team (KPIs)" sheet in Qlik → DreamTeam_KPIs table
+//  Schema: As_Of_Date, Scheduled_Last_30d, Scheduled_Last_90d, Scheduled_Last_180d
+// ══════════════════════════════════════════════════════════════════════
+let dtKpiRaw=null;
+
+function parseDreamTeamKpis(rows){
+  if(!rows||rows.length<2)return null;
+  const h=rows[0].map(s=>String(s||'').trim());
+  const ix=(k)=>h.indexOf(k);
+  const iAs=ix('As_Of_Date'),i30=ix('Scheduled_Last_30d'),i90=ix('Scheduled_Last_90d'),i180=ix('Scheduled_Last_180d');
+  if(i30<0||i90<0||i180<0)return null;
+  const r=rows[1]; if(!r)return null;
+  return {asOf:iAs>=0?parseDate(r[iAs]):null, d30:num(r[i30]), d90:num(r[i90]), d180:num(r[i180])};
+}
+
+function dtRenderKPI(){
+  const el=document.getElementById('dtKpiRow');if(!el)return;
+  if(!dtKpiRaw){
+    el.innerHTML='<div class="kpi-card"><div class="kpi-label">Awaiting Data</div><div class="kpi-value total">\u2014</div><div class="kpi-sub">Publish DreamTeam_KPIs from Qlik, then update <code>SHEET_URLS.dreamTeamKpis</code>.</div></div>';
+    return;
+  }
+  const k=dtKpiRaw;
+  const asOf=k.asOf?fmtDate(k.asOf):'\u2014';
+  let html='';
+  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--positive)"></div><div class="kpi-label">Scheduled Last 30 Days</div><div class="kpi-value" style="color:var(--positive)">${fmtNum(k.d30)}</div><div class="kpi-sub">Unique Dream Team members</div></div>`;
+  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--accent)"></div><div class="kpi-label">Scheduled Last 3 Months</div><div class="kpi-value total">${fmtNum(k.d90)}</div><div class="kpi-sub">Unique Dream Team members</div></div>`;
+  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--mission)"></div><div class="kpi-label">Scheduled Last 6 Months</div><div class="kpi-value mission">${fmtNum(k.d180)}</div><div class="kpi-sub">Unique Dream Team members &middot; as of ${asOf}</div></div>`;
+  el.innerHTML=html;
+}
+
+function dtMarkTabDot(state){
+  const btn=document.getElementById('nstab-dreamteam');if(!btn)return;
+  const dot=btn.querySelector('.tab-dot');if(!dot)return;
+  dot.classList.remove('ok','empty','fail','pending');
+  dot.classList.add(state==='ok'?'ok':state==='empty'?'empty':state==='fail'?'fail':'pending');
+}
+
+// ══════════════════════════════════════════════════════════════════════
 //  GENERIC MINISTRY RENDERER
 //  Drives: Women's, Men's, Re:Generation, Re|Engage, Practicing the Way,
 //          GriefShare, Baptism, Growth Track
@@ -2093,7 +2168,7 @@ function gmBuildPanel(key,cfg){
     <div class="charts-section">
       <div class="chart-grid"><div class="card"><h2>Weekly Attendance Trend</h2><div class="subtitle">Filtered rows &middot; dotted line is 4-week rolling average</div><div class="chart-wrap tall"><canvas id="gm-${k}-trend"></canvas></div></div></div>
       <div class="chart-grid-2" style="margin-top:var(--gap)">
-        <div class="card"><h2>By <span id="gm-${k}-periodLbl2">Semester</span></h2><div class="subtitle">Weekly progression &mdash; hover a series to isolate</div><div class="chart-wrap"><canvas id="gm-${k}-periodChart"></canvas></div></div>
+        <div class="card"><h2>By <span id="gm-${k}-periodLbl2">Semester</span></h2><div class="subtitle">Weekly progression &mdash; hover a series to isolate</div><div class="chart-wrap"><canvas id="gm-${k}-period"></canvas></div></div>
         <div class="card"><h2>Campus Breakdown</h2><div class="subtitle">Total attendance by campus (filtered)</div><div class="chart-wrap"><canvas id="gm-${k}-campus"></canvas></div></div>
       </div>
       <div class="chart-grid" style="margin-top:var(--gap)"><div class="card"><h2>Event Comparison</h2><div class="subtitle">Average attendance per event type</div><div class="chart-wrap"><canvas id="gm-${k}-event"></canvas></div></div></div>
@@ -2119,12 +2194,11 @@ const GM={
   },
   onShow(key){
     const cfg=MINISTRY_CONFIG[key]; if(!cfg)return;
-    const s=this.state[key]; if(!s||!s.raw)return;  // truly nothing fetched yet
-    const built=document.getElementById(cfg.host)?.dataset.built;
-    // If panel hasn't been hydrated yet (or only empty placeholder), hydrate now
-    if(built!=='1'){this.hydrate(key);}
+    const s=this.state[key]; if(!s||!s.raw||!s.raw.length)return;
+    // If panel hasn't been built yet (lazy), build & hydrate
+    if(document.getElementById(cfg.host)?.dataset.built!=='1'){this.hydrate(key);}
     // Resize charts (Chart.js needs this after becoming visible)
-    if(s.charts){Object.values(s.charts).forEach(c=>{try{c&&c.resize();}catch(e){}});}
+    if(s.charts){Object.values(s.charts).forEach(c=>{try{c.resize();}catch(e){}});}
   },
   setData(key,rows){
     this.state[key]=this.state[key]||{};
@@ -2241,34 +2315,20 @@ const GM={
     let periodScope=s=>s;
     const periods=[...new Set(data.map(r=>r.period).filter(Boolean))];
     // Hero 1 — current period total
-    let currentPeriodLabel='All Time', currentTotal=0, prevTotal=null, isFallback=false;
+    let currentPeriodLabel='All Time', currentTotal=0, prevTotal=null;
     if(this.state[key].filters.period!=='all'){
       currentPeriodLabel=this.state[key].filters.period;
       currentTotal=data.reduce((a,r)=>a+r.total,0);
     }else if(periods.length){
-      // Find latest *non-empty* period by max-date within each period
-      const periodOrder=periods.map(p=>{const rs=data.filter(r=>r.period===p);const maxD=rs.reduce((m,r)=>r.date>m?r.date:m,rs[0].date);return{p,maxD};}).sort((a,b)=>a.maxD-b.maxD);
-      const last=periodOrder[periodOrder.length-1];
-      currentPeriodLabel=last.p;
+      // Infer latest period by scanning rows' most recent date
+      const latest=data.reduce((m,r)=>r.date>m.date?r:m,data[0]);
+      currentPeriodLabel=latest.period||'Latest';
       currentTotal=data.filter(r=>r.period===currentPeriodLabel).reduce((a,r)=>a+r.total,0);
+      // Previous period: nearest prior period alphabetically... better: sort by first-date
+      const periodOrder=[...new Set(data.map(r=>r.period))].map(p=>{const rs=data.filter(r=>r.period===p);const minD=rs.reduce((m,r)=>r.date<m?r.date:m,rs[0].date);return{p,minD};}).sort((a,b)=>a.minD-b.minD);
       const idx=periodOrder.findIndex(x=>x.p===currentPeriodLabel);
       if(idx>0){const prev=periodOrder[idx-1].p;prevTotal=data.filter(r=>r.period===prev).reduce((a,r)=>a+r.total,0);}
-      // If the latest period's coverage is much older than the most recent rows in the data,
-      // there are recent un-categorized rows — fall back to last-90-day total instead.
-      const newestRowDate=data.reduce((m,r)=>r.date>m?r.date:m,data[0].date);
-      if(newestRowDate-last.maxD>1000*60*60*24*30){
-        const cutoff=new Date(newestRowDate.getTime()-90*86400000);
-        currentTotal=data.filter(r=>r.date>=cutoff).reduce((a,r)=>a+r.total,0);
-        currentPeriodLabel='Last 90 days';
-        prevTotal=null; isFallback=true;
-      }
-    }else{
-      // No period column at all — use last 90 days
-      const newestRowDate=data.reduce((m,r)=>r.date>m?r.date:m,data[0].date);
-      const cutoff=new Date(newestRowDate.getTime()-90*86400000);
-      currentTotal=data.filter(r=>r.date>=cutoff).reduce((a,r)=>a+r.total,0);
-      currentPeriodLabel='Last 90 days';
-    }
+    }else{currentTotal=data.reduce((a,r)=>a+r.total,0);}
     document.getElementById(`gm-${key}-heroCurrent`).textContent=fmt(currentTotal);
     document.getElementById(`gm-${key}-heroCurrentSub`).innerHTML=`<span class="gm-sem-chip ${gmSemClass(currentPeriodLabel)}">${currentPeriodLabel||'—'}</span>`+(prevTotal!=null?this.renderDelta(currentTotal,prevTotal):'');
     // Hero 2 — most recent week
@@ -2315,7 +2375,7 @@ const GM={
     ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',align:'end',labels:{usePointStyle:true,boxWidth:8,font:{size:11}}},tooltip:{callbacks:{title:ctx=>{const i=ctx[0].dataIndex;return fmtDate(weeks[i].date);},label:c=>c.dataset.label+': '+fmtNum(Math.round(c.parsed.y))}}},scales:{y:{beginAtZero:true,ticks:{font:{size:11}}},x:{ticks:{font:{size:11},maxRotation:0,autoSkipPadding:16}}}}});
   },
   renderPeriod(key,cfg,data){
-    const el=document.getElementById(`gm-${key}-periodChart`); if(!el)return;
+    const el=document.getElementById(`gm-${key}-period`); if(!el)return;
     this.destroyChart(key,'period');
     // Group by period, then by bucket (week/month number)
     const periods=[...new Set(data.map(r=>r.period).filter(Boolean))].sort();
@@ -2395,6 +2455,264 @@ const GM={
 };
 
 // ══════════════════════════════════════════════════════════════════════
+//  NEXT STEP CARD RENDERER (NSC)
+//  Drives: Next Step Card sub-tab under Next Steps.
+//  Schema (one row per person-option selection):
+//    Date, Campus, PersonID, PersonName, Option
+// ══════════════════════════════════════════════════════════════════════
+// Canonical option list (order = display order). Input values are matched
+// case-insensitively with punctuation/whitespace ignored, so light variants
+// from PCO ("More Info - Kids", "More Info: Kids", etc.) all collapse in.
+const NSC_OPTIONS=[
+  {key:'decided',     label:'I have decided',                aliases:['i have decided','decided','made a decision','first time decision']},
+  {key:'recommit',    label:'I recommit my life',            aliases:['i recommit my life','recommit my life','recommit','rededicate','rededication']},
+  {key:'baptism',     label:'Baptism',                       aliases:['baptism','get baptized','baptized']},
+  {key:'info_kids',   label:'More info: Kids',               aliases:['more info kids','more information kids','kids info','more info - kids','more info: kids']},
+  {key:'info_youth',  label:'More info: Youth',              aliases:['more info youth','more information youth','youth info','more info - youth','more info: youth']},
+  {key:'info_ya',     label:'More info: Young Adults',       aliases:['more info young adults','more information young adults','young adults info','more info - young adults','more info: young adults']},
+  {key:'info_groups', label:'More info: Groups & Classes',   aliases:['more info groups','more information groups','groups and classes','groups & classes','more info - groups & classes','more info: groups & classes','more info groups & classes','more info groups and classes']},
+  {key:'growthtrack', label:'Growth Track',                  aliases:['growth track','growthtrack']},
+  {key:'dreamteam',   label:'Serve on the Dream Team',       aliases:['serve on the dream team','dream team','serve dream team']}
+];
+const NSC_CAMPUSES=['Mission','Edinburg','IPV'];
+const NSC_CAMPUS_COLORS={Mission:'#4a7f97',Edinburg:'#7b6fa6',IPV:'#c47a2e'};
+
+// Normalize a free-form option string to a canonical key (or null if unknown)
+function nscCanon(s){
+  const n=String(s||'').toLowerCase().replace(/[^a-z0-9&]+/g,' ').trim();
+  if(!n)return null;
+  for(const o of NSC_OPTIONS){
+    if(o.aliases.some(a=>a.toLowerCase().replace(/[^a-z0-9&]+/g,' ').trim()===n))return o.key;
+  }
+  return null;
+}
+// Normalize campus — tolerate "Mission Main", "mission", etc.
+function nscCanonCampus(s){
+  const n=String(s||'').toLowerCase().trim();
+  if(!n)return '';
+  if(n.startsWith('mission'))return 'Mission';
+  if(n.startsWith('edinburg'))return 'Edinburg';
+  if(n==='ipv'||n.includes('ipv'))return 'IPV';
+  return String(s).trim();
+}
+
+// Flexible date parser that accepts MM/DD/YYYY, YYYY-MM-DD, "Apr 18, 2026", etc.
+function nscParseDate(s){
+  if(!s)return null; s=String(s).trim().replace(/^"|"$/g,''); if(!s)return null;
+  const m1=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(m1){let y=+m1[3]; if(y<100)y+=2000; return new Date(y,+m1[1]-1,+m1[2]);}
+  const m2=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m2)return new Date(+m2[1],+m2[2]-1,+m2[3]);
+  const d=new Date(s); if(!isNaN(d.getTime()))return d;
+  return null;
+}
+
+function nscParseCSV(text){
+  if(!text)return [];
+  const rows=parseCSV(text); if(rows.length<2)return [];
+  const hdr=rows[0].map(h=>String(h).trim());
+  const idx=n=>hdr.findIndex(h=>h.toLowerCase()===n.toLowerCase());
+  const iDate=idx('Date'),iCampus=idx('Campus'),iPID=idx('PersonID'),iName=idx('PersonName'),iOpt=idx('Option');
+  const out=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i]; if(!r||r.every(c=>!String(c||'').trim()))continue;
+    const d=iDate>=0?nscParseDate(r[iDate]):null;
+    const optRaw=iOpt>=0?r[iOpt]:''; const optKey=nscCanon(optRaw);
+    if(!optKey)continue; // skip unknown options silently
+    out.push({
+      date:d,
+      campus:iCampus>=0?nscCanonCampus(r[iCampus]):'',
+      personId:iPID>=0?String(r[iPID]||'').trim():'',
+      personName:iName>=0?String(r[iName]||'').trim():'',
+      optionKey:optKey,
+      optionLabel:(NSC_OPTIONS.find(o=>o.key===optKey)||{}).label||optRaw
+    });
+  }
+  return out;
+}
+
+const NSC={
+  raw:[], filtered:[], charts:{}, built:false,
+  filters:{range:'180',ds:null,de:null},
+  setData(rows){
+    this.raw=rows||[];
+    this.updateTabDot();
+    const host=document.getElementById('nsp-nextstepcard');
+    if(host&&host.classList.contains('active'))this.hydrate();
+  },
+  setFailed(msg){
+    const host=document.getElementById('nsp-nextstepcard'); if(!host)return;
+    host.innerHTML=`<div class="gm-empty"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="4" x2="9" y2="20"/></svg><h3>Data unavailable</h3><p>${msg||'Could not load the Next Step Card sheet. Publish <code>NextStepCard</code> from Qlik and update <code>SHEET_URLS.nextStepCard</code>.'}</p></div>`;
+    host.dataset.built='empty';
+    this.updateTabDot('fail');
+  },
+  updateTabDot(forceState){
+    const btn=document.getElementById('nstab-nextstepcard'); if(!btn)return;
+    const dot=btn.querySelector('.tab-dot'); if(!dot)return;
+    dot.classList.remove('pending','ok','empty','fail');
+    const st=forceState||(this.raw&&this.raw.length?'ok':(this.raw?'empty':'pending'));
+    dot.classList.add(st);
+  },
+  onShow(){
+    if(!this.raw)return;
+    const host=document.getElementById('nsp-nextstepcard');
+    if(host&&host.dataset.built!=='1')this.hydrate();
+    if(this.charts)Object.values(this.charts).forEach(c=>{try{c.resize();}catch(e){}});
+  },
+  hydrate(){
+    const host=document.getElementById('nsp-nextstepcard'); if(!host)return;
+    if(!this.raw||!this.raw.length){
+      host.innerHTML=`<div class="gm-empty"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="4" x2="9" y2="20"/></svg><h3>No data yet</h3><p>The <strong>Next Step Card</strong> sheet is published but has no rows. Submit a form response or check the PCO \u2192 Qlik extractor.</p></div>`;
+      host.dataset.built='empty'; return;
+    }
+    this.buildPanel();
+    this.render();
+  },
+  buildPanel(){
+    const host=document.getElementById('nsp-nextstepcard'); if(!host||host.dataset.built==='1')return;
+    host.innerHTML=`
+      <div class="filter-bar">
+        <div class="filter-group"><label>Range</label>
+          <button class="fbtn" data-filter="nscr" data-value="90" onclick="NSC.setFilter('range','90',this)">Last 90d</button>
+          <button class="fbtn active" data-filter="nscr" data-value="180" onclick="NSC.setFilter('range','180',this)">Last 6mo</button>
+          <button class="fbtn" data-filter="nscr" data-value="365" onclick="NSC.setFilter('range','365',this)">Last 12mo</button>
+          <button class="fbtn" data-filter="nscr" data-value="all" onclick="NSC.setFilter('range','all',this)">All</button>
+        </div>
+        <div class="filter-sep"></div>
+        <div class="filter-group"><label>From</label><input type="date" id="nscFrom" onchange="NSC.setFilter('ds',this.value)"></div>
+        <div class="filter-group"><label>To</label><input type="date" id="nscTo" onchange="NSC.setFilter('de',this.value)"></div>
+      </div>
+      <div class="kpi-row" id="nscKpiRow"></div>
+      <div class="charts-section">
+        <div class="chart-grid"><div class="card">
+          <h2>Selections by Option</h2>
+          <div class="subtitle">Total selections across all responses in range</div>
+          <div class="chart-wrap tall"><canvas id="nscOverallChart"></canvas></div>
+        </div></div>
+        <div class="chart-grid" style="margin-top:var(--gap)"><div class="card">
+          <h2>Selections by Campus</h2>
+          <div class="subtitle">Each option broken down by Mission / Edinburg / IPV</div>
+          <div class="chart-wrap tall"><canvas id="nscCampusChart"></canvas></div>
+        </div></div>
+      </div>
+      <div class="table-section"><div class="table-card">
+        <h2>Next Step Card Detail</h2>
+        <div class="subtitle">Click headers to sort &middot; one row per person-option selection</div>
+        <div class="table-scroll" id="nscTable"></div>
+      </div></div>
+    `;
+    host.dataset.built='1';
+  },
+  setFilter(k,v,btn){
+    if(k==='range'){
+      this.filters.range=v;
+      document.querySelectorAll('[data-filter="nscr"]').forEach(b=>b.classList.remove('active'));
+      if(btn)btn.classList.add('active');
+      // Clear custom dates when preset is picked
+      const f=document.getElementById('nscFrom'),t=document.getElementById('nscTo');
+      if(f)f.value=''; if(t)t.value='';
+      this.filters.ds=null; this.filters.de=null;
+    }else if(k==='ds'){this.filters.ds=v||null;}
+    else if(k==='de'){this.filters.de=v||null;}
+    this.render();
+  },
+  filter(){
+    const f=this.filters; let d=this.raw;
+    if(f.ds){const ds=new Date(f.ds+'T00:00:00');d=d.filter(r=>r.date&&r.date>=ds);}
+    if(f.de){const de=new Date(f.de+'T23:59:59');d=d.filter(r=>r.date&&r.date<=de);}
+    if(!f.ds&&!f.de&&f.range!=='all'){
+      const days=+f.range; const cutoff=new Date(); cutoff.setDate(cutoff.getDate()-days);
+      d=d.filter(r=>r.date&&r.date>=cutoff);
+    }
+    return d;
+  },
+  render(){
+    const data=this.filter(); this.filtered=data;
+    this.renderKPI(data);
+    this.renderOverall(data);
+    this.renderCampus(data);
+    this.renderTable(data);
+  },
+  destroyChart(name){if(this.charts[name]){try{this.charts[name].destroy();}catch(e){}this.charts[name]=null;}},
+  renderKPI(data){
+    const el=document.getElementById('nscKpiRow'); if(!el)return;
+    const totalSelections=data.length;
+    const uniquePeople=new Set(data.map(r=>r.personId||r.personName).filter(Boolean)).size;
+    const latest=data.reduce((m,r)=>!m||(r.date&&r.date>m)?r.date:m,null);
+    const avgPerPerson=uniquePeople?(totalSelections/uniquePeople):0;
+    el.innerHTML=`
+      <div class="kpi-card"><div class="accent-bar" style="background:#4a7f97"></div><div class="kpi-label">Responses</div><div class="kpi-value total">${fmtNum(uniquePeople)}</div><div class="kpi-sub">Unique people in range</div></div>
+      <div class="kpi-card"><div class="accent-bar" style="background:#7b6fa6"></div><div class="kpi-label">Selections</div><div class="kpi-value total">${fmtNum(totalSelections)}</div><div class="kpi-sub">Total options chosen</div></div>
+      <div class="kpi-card"><div class="accent-bar" style="background:#c47a2e"></div><div class="kpi-label">Avg / Person</div><div class="kpi-value total">${avgPerPerson?avgPerPerson.toFixed(1):'\u2014'}</div><div class="kpi-sub">Options per response</div></div>
+      <div class="kpi-card"><div class="accent-bar" style="background:#2e7d5b"></div><div class="kpi-label">Most Recent</div><div class="kpi-value total" style="font-size:20px">${latest?fmtDate(latest):'\u2014'}</div><div class="kpi-sub">Latest response date</div></div>
+    `;
+  },
+  renderOverall(data){
+    const el=document.getElementById('nscOverallChart'); if(!el)return;
+    this.destroyChart('overall');
+    const counts=new Map(NSC_OPTIONS.map(o=>[o.key,0]));
+    data.forEach(r=>counts.set(r.optionKey,(counts.get(r.optionKey)||0)+1));
+    const labels=NSC_OPTIONS.map(o=>o.label);
+    const vals=NSC_OPTIONS.map(o=>counts.get(o.key)||0);
+    this.charts.overall=new Chart(el,{
+      type:'bar',
+      data:{labels,datasets:[{data:vals,backgroundColor:'#4a7f97',borderRadius:6,borderSkipped:false}]},
+      options:{
+        responsive:true,maintainAspectRatio:false,indexAxis:'y',
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmtNum(c.parsed.x)+' selection'+(c.parsed.x===1?'':'s')}}},
+        scales:{x:{beginAtZero:true,ticks:{font:{size:11}}},y:{ticks:{font:{size:12,weight:600}}}}
+      }
+    });
+  },
+  renderCampus(data){
+    const el=document.getElementById('nscCampusChart'); if(!el)return;
+    this.destroyChart('campus');
+    // Matrix: option × campus
+    const m={}; NSC_OPTIONS.forEach(o=>{m[o.key]={};NSC_CAMPUSES.forEach(c=>{m[o.key][c]=0;});});
+    data.forEach(r=>{if(m[r.optionKey]&&NSC_CAMPUSES.includes(r.campus))m[r.optionKey][r.campus]++;});
+    const labels=NSC_OPTIONS.map(o=>o.label);
+    const datasets=NSC_CAMPUSES.map(c=>({
+      label:c,
+      data:NSC_OPTIONS.map(o=>m[o.key][c]),
+      backgroundColor:NSC_CAMPUS_COLORS[c],
+      borderRadius:4,borderSkipped:false
+    }));
+    this.charts.campus=new Chart(el,{
+      type:'bar',
+      data:{labels,datasets},
+      options:{
+        responsive:true,maintainAspectRatio:false,indexAxis:'y',
+        plugins:{legend:{position:'top',align:'end',labels:{usePointStyle:true,boxWidth:10,font:{size:11}}},tooltip:{mode:'index',intersect:false,callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.x)}}},
+        scales:{x:{stacked:true,beginAtZero:true,ticks:{font:{size:11}}},y:{stacked:true,ticks:{font:{size:12,weight:600}}}}
+      }
+    });
+  },
+  renderTable(data){
+    const el=document.getElementById('nscTable'); if(!el)return;
+    if(!data.length){el.innerHTML='<div style="padding:20px;color:var(--muted);font-size:13px">No rows match current filters.</div>';return;}
+    const sorted=[...data].sort((a,b)=>(b.date?.getTime()||0)-(a.date?.getTime()||0));
+    const cols=[
+      {k:'date',l:'Date',n:true,f:r=>r.date?fmtDate(r.date):'\u2014',v:r=>r.date?r.date.getTime():0},
+      {k:'campus',l:'Campus',n:false,f:r=>r.campus||'\u2014',v:r=>(r.campus||'').toLowerCase()},
+      {k:'personName',l:'Name',n:false,f:r=>r.personName||'\u2014',v:r=>(r.personName||'').toLowerCase()},
+      {k:'optionLabel',l:'Option',n:false,f:r=>r.optionLabel,v:r=>r.optionLabel}
+    ];
+    let sc='date',sd='desc';
+    const render=rows=>{
+      let h='<table class="data-table"><thead><tr>';
+      cols.forEach(c=>{const a=sc===c.k?(sd==='asc'?' \u25B2':' \u25BC'):'';h+='<th'+(c.n?' class="num"':'')+' data-col="'+c.k+'">'+c.l+'<span style="font-size:10px;margin-left:4px">'+a+'</span></th>';});
+      h+='</tr></thead><tbody>';
+      rows.slice(0,500).forEach(r=>{h+='<tr>';cols.forEach(c=>{h+='<td'+(c.n?' class="num"':'')+'>'+c.f(r)+'</td>';});h+='</tr>';});
+      h+='</tbody></table>';
+      if(rows.length>500)h+='<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px">Showing first 500 of '+rows.length+' rows</div>';
+      el.innerHTML=h;
+      el.querySelectorAll('th').forEach(th=>{th.onclick=()=>{const col=th.dataset.col;if(sc===col)sd=sd==='asc'?'desc':'asc';else{sc=col;sd='desc';}const c=cols.find(x=>x.k===col);render([...rows].sort((a,b)=>{const av=c.v(a),bv=c.v(b),cmp=av<bv?-1:av>bv?1:0;return sd==='asc'?cmp:-cmp;}));};});
+    };
+    render(sorted);
+  }
+};
+
+// ══════════════════════════════════════════════════════════════════════
 //  PER-SHEET STATUS TRACKING
 // ══════════════════════════════════════════════════════════════════════
 const SHEET_STATUS={};  // key: {state:'ok'|'empty'|'fail'|'skipped'|'pending', rows:n, msg, at}
@@ -2435,8 +2753,12 @@ async function refreshAll(){
   const coreKeys=['missionMain','missionKids','edinburg','ipv','rooted','holiday','youth','youngAdults','eventRegistrations'];
   const gmKeys=['womens','mens','regen','reengage','ptw','griefshare','baptism','growthtrack'];
   const nsConfigured=SHEET_URLS.nextStepsSummary&&!SHEET_URLS.nextStepsSummary.startsWith('PENDING_')&&SHEET_URLS.nextStepsDetail&&!SHEET_URLS.nextStepsDetail.startsWith('PENDING_');
-  const allKeys=[...coreKeys,...gmKeys,...(nsConfigured?['nextStepsSummary','nextStepsDetail']:[])];
+  const nscConfigured=SHEET_URLS.nextStepCard&&!SHEET_URLS.nextStepCard.startsWith('PENDING_');
+  const dtConfigured=SHEET_URLS.dreamTeamKpis&&!SHEET_URLS.dreamTeamKpis.startsWith('PENDING_');
+  const allKeys=[...coreKeys,...gmKeys,...(nsConfigured?['nextStepsSummary','nextStepsDetail']:[]),...(nscConfigured?['nextStepCard']:[]),...(dtConfigured?['dreamTeamKpis']:[])];
   if(!nsConfigured){markSheet('nextStepsSummary','skipped');markSheet('nextStepsDetail','skipped');}
+  if(!nscConfigured){markSheet('nextStepCard','skipped');}
+  if(!dtConfigured){markSheet('dreamTeamKpis','skipped');dtMarkTabDot('pending');}
   const texts=Object.fromEntries(await Promise.all(allKeys.map(async k=>[k,await safeFetch(k)])));
 
   // --- Core (existing logic), but defensive if a fetch returned null ---
@@ -2462,6 +2784,21 @@ async function refreshAll(){
     catch(e){console.error('Next Steps parse failed',e);nsSummaryRaw=[];nsDetailRaw=[];markSheet('nextStepsSummary','fail',{msg:'parse error'});}
   }else{nsSummaryRaw=[];nsDetailRaw=[];}
   nsApply();
+
+  // Next Step Card
+  if(nscConfigured){
+    if(texts.nextStepCard){
+      try{const rows=nscParseCSV(texts.nextStepCard);NSC.setData(rows);if(!rows.length)markSheet('nextStepCard','empty',{rows:0});else markSheet('nextStepCard','ok',{rows:rows.length});}
+      catch(e){console.error('Next Step Card parse failed',e);NSC.setFailed('Parse error');markSheet('nextStepCard','fail',{msg:'parse error'});}
+    }else{NSC.setFailed(SHEET_STATUS.nextStepCard?.msg||'Fetch failed');}
+  }else{NSC.setData([]);}
+
+  // Dream Team KPIs
+  if(dtConfigured&&texts.dreamTeamKpis){
+    try{dtKpiRaw=parseDreamTeamKpis(parseCSV(texts.dreamTeamKpis));if(dtKpiRaw){markSheet('dreamTeamKpis','ok',{rows:1});dtMarkTabDot('ok');}else{markSheet('dreamTeamKpis','empty',{rows:0});dtMarkTabDot('empty');}}
+    catch(e){console.error('Dream Team parse failed',e);dtKpiRaw=null;markSheet('dreamTeamKpis','fail',{msg:'parse error'});dtMarkTabDot('fail');}
+  }else{dtKpiRaw=null;}
+  dtRenderKPI();
 
   // --- Generic ministry panels ---
   for(const k of gmKeys){
