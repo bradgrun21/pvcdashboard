@@ -373,6 +373,11 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M12 11v4"/><path d="M10 13h4"/></svg>
         <span>Next Steps</span>
       </div>
+      <div class="nav-label">Tools</div>
+      <div class="nav-item" data-tab="facilities" onclick="switchTab('facilities',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h2"/><path d="M13 9h2"/><path d="M9 13h2"/><path d="M13 13h2"/><path d="M9 17h6"/></svg>
+        <span>Facilities</span>
+      </div>
     </nav>
     <div class="sidebar-footer" onclick="toggleSheetStatus(event)" title="Click for sheet-by-sheet status">
       <div class="fresh-compact">
@@ -830,6 +835,50 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       </div>
     </div>
 
+    <!-- ═══════════════════════════════════════════ -->
+    <!--                FACILITIES TAB                -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-facilities">
+      <div class="dash-header">
+        <div class="title-area">
+          <h1>Facility Layout Planner</h1>
+          <p>Drop tables, chairs, and other icons onto a building map. Download the result and attach it to your Asana task.</p>
+        </div>
+        <div class="header-actions">
+          <button class="refresh-btn" onclick="FAC.pickMap()">Upload Map (PNG/JPG/PDF)</button>
+          <button class="refresh-btn" onclick="FAC.download()">Download PNG</button>
+        </div>
+      </div>
+      <div class="filter-bar" id="facToolbar">
+        <div class="filter-group"><label>Place:</label>
+          <button class="fbtn fac-tool" data-tool="rect6">6ft Table</button>
+          <button class="fbtn fac-tool" data-tool="rect8">8ft Table</button>
+          <button class="fbtn fac-tool" data-tool="round60">Round 60&Prime;</button>
+          <button class="fbtn fac-tool" data-tool="chair">Chair</button>
+          <button class="fbtn fac-tool" data-tool="trash">Trash</button>
+          <button class="fbtn fac-tool" data-tool="stage">Stage</button>
+          <button class="fbtn fac-tool" data-tool="text">Text Label</button>
+        </div>
+        <div class="filter-sep"></div>
+        <div class="filter-group">
+          <button class="fbtn" onclick="FAC.rotateSelected()">Rotate 90&deg;</button>
+          <button class="fbtn" onclick="FAC.deleteSelected()">Delete</button>
+          <button class="fbtn" onclick="FAC.clearAll()">Clear All</button>
+        </div>
+        <div class="filter-sep"></div>
+        <div class="filter-group" style="color:var(--muted);font-size:12px;">
+          <span id="facStatus">Upload a map to get started.</span>
+        </div>
+      </div>
+      <div style="padding:20px 32px;">
+        <div id="facCanvasWrap" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;overflow:auto;max-height:calc(100vh - 260px);">
+          <canvas id="facCanvas" style="display:none;max-width:100%;background:#fff;"></canvas>
+          <div id="facEmpty" style="text-align:center;color:var(--muted);padding:60px 20px;">No map loaded. Click <strong>Upload Map</strong> above to begin.</div>
+        </div>
+        <input type="file" id="facFileInput" accept="image/*,application/pdf" style="display:none;">
+      </div>
+    </div>
+
     <div class="dash-footer">Palm Valley Church &mdash; Dashboard &middot; Data refreshes from Google Sheets</div>
   </div>
 </div>
@@ -925,7 +974,252 @@ function switchTab(tab, el){
   if(el)el.classList.add('active');else document.querySelector('[data-tab="'+tab+'"]').classList.add('active');
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
+  if(tab==='facilities' && typeof FAC!=='undefined') FAC.onShow();
 }
+
+// ── Facilities Planner ────────────────────────────────────────────────
+const FAC = (function(){
+  const state = {bg:null, bgW:0, bgH:0, items:[], nextId:1, selectedId:null, tool:null, dragging:null, initialized:false};
+  const defs = {
+    rect6:   {w:180,h:40, fill:'#d9e4ec',stroke:'#4a7f97',label:"6'"},
+    rect8:   {w:240,h:40, fill:'#d9e4ec',stroke:'#4a7f97',label:"8'"},
+    round60: {w:90, h:90, fill:'#d9e4ec',stroke:'#4a7f97',label:'60"'},
+    chair:   {w:22, h:22, fill:'#e8d5a9',stroke:'#8a6a2e',label:""},
+    trash:   {w:30, h:30, fill:'#4a4a4a',stroke:'#222',   label:"T"},
+    stage:   {w:300,h:80, fill:'#c9c0d8',stroke:'#5b4e85',label:"STAGE"},
+    text:    {w:120,h:30, fill:'transparent',stroke:'transparent',label:"Label"}
+  };
+  let cvs, ctx;
+
+  function onShow(){
+    if(state.initialized) return;
+    state.initialized = true;
+    cvs = document.getElementById('facCanvas');
+    ctx = cvs.getContext('2d');
+    document.querySelectorAll('#facToolbar .fac-tool').forEach(b=>{
+      b.addEventListener('click', ()=>setTool(b.dataset.tool, b));
+    });
+    document.getElementById('facFileInput').addEventListener('change', onFile);
+    cvs.addEventListener('pointerdown', onDown);
+    cvs.addEventListener('pointermove', onMove);
+    cvs.addEventListener('pointerup', onUp);
+    cvs.addEventListener('pointercancel', onUp);
+    document.addEventListener('keydown', e=>{
+      const active = document.getElementById('tab-facilities');
+      if(!active || !active.classList.contains('active')) return;
+      if((e.key==='Delete' || e.key==='Backspace') && state.selectedId!=null
+         && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){
+        e.preventDefault(); deleteSelected();
+      }
+    });
+  }
+
+  function pickMap(){ document.getElementById('facFileInput').click(); }
+
+  function onFile(e){
+    const f = e.target.files[0]; if(!f) return;
+    if(f.type==='application/pdf') loadPdf(f);
+    else loadImage(URL.createObjectURL(f));
+    e.target.value = '';
+  }
+
+  function loadImage(src){
+    const img = new Image();
+    img.onload = ()=>{
+      state.bg = img; state.bgW = img.naturalWidth; state.bgH = img.naturalHeight;
+      state.items = []; state.selectedId = null;
+      cvs.width = state.bgW; cvs.height = state.bgH;
+      cvs.style.display = 'block';
+      document.getElementById('facEmpty').style.display = 'none';
+      draw();
+      status('Map loaded. Pick an icon, then click the map to place it.');
+    };
+    img.onerror = ()=>status('Failed to load image.');
+    img.src = src;
+  }
+
+  async function loadPdf(file){
+    status('Loading PDF…');
+    try{
+      if(!window.pdfjsLib){
+        await loadScript('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js');
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+      }
+      const buf = await file.arrayBuffer();
+      const pdf = await window.pdfjsLib.getDocument({data:buf}).promise;
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({scale:2});
+      const off = document.createElement('canvas');
+      off.width = viewport.width; off.height = viewport.height;
+      await page.render({canvasContext:off.getContext('2d'), viewport}).promise;
+      loadImage(off.toDataURL('image/png'));
+    } catch(err){ console.error(err); status('Failed to load PDF: '+err.message); }
+  }
+
+  function loadScript(src){
+    return new Promise((res,rej)=>{
+      const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej;
+      document.head.appendChild(s);
+    });
+  }
+
+  function setTool(t, btn){
+    state.tool = t;
+    document.querySelectorAll('#facToolbar .fac-tool').forEach(b=>b.classList.toggle('active', b===btn));
+    if(!state.bg){ status('Upload a map first.'); return; }
+    cvs.style.cursor = 'copy';
+    status('Click the map to place a '+btn.textContent+'.');
+  }
+
+  function canvasCoords(ev){
+    const r = cvs.getBoundingClientRect();
+    return {x:(ev.clientX-r.left)*(cvs.width/r.width), y:(ev.clientY-r.top)*(cvs.height/r.height)};
+  }
+
+  function hitTest(x,y){
+    for(let i=state.items.length-1; i>=0; i--){
+      const it = state.items[i];
+      const dx=x-it.x, dy=y-it.y;
+      const cos=Math.cos(-it.rot), sin=Math.sin(-it.rot);
+      const lx=dx*cos-dy*sin, ly=dx*sin+dy*cos;
+      const hw=Math.max(it.w/2, it.type==='text'?40:0), hh=it.h/2;
+      if(it.type==='round60'){ if(lx*lx+ly*ly <= (it.w/2)*(it.w/2)) return it; }
+      else { if(Math.abs(lx)<=hw && Math.abs(ly)<=hh) return it; }
+    }
+    return null;
+  }
+
+  function onDown(ev){
+    if(!state.bg) return;
+    const p = canvasCoords(ev);
+    if(state.tool && state.tool!=='select'){
+      const def = defs[state.tool];
+      let label = def.label;
+      if(state.tool==='text'){
+        const v = prompt('Label text:', 'Label'); if(v==null) return;
+        label = v;
+      }
+      const item = {id:state.nextId++, type:state.tool, x:p.x, y:p.y, w:def.w, h:def.h, rot:0, label};
+      state.items.push(item);
+      state.selectedId = item.id;
+      state.tool = 'select';
+      document.querySelectorAll('#facToolbar .fac-tool').forEach(b=>b.classList.remove('active'));
+      cvs.style.cursor = 'default';
+      status('Placed. Drag to reposition, or pick another icon.');
+      draw();
+      return;
+    }
+    const hit = hitTest(p.x, p.y);
+    if(hit){
+      state.selectedId = hit.id;
+      state.dragging = {id:hit.id, dx:p.x-hit.x, dy:p.y-hit.y};
+      try{ cvs.setPointerCapture(ev.pointerId); }catch(_){}
+      cvs.style.cursor = 'move';
+    } else {
+      state.selectedId = null;
+    }
+    draw();
+  }
+
+  function onMove(ev){
+    if(!state.dragging) return;
+    const p = canvasCoords(ev);
+    const it = state.items.find(i=>i.id===state.dragging.id);
+    if(!it) return;
+    it.x = p.x - state.dragging.dx;
+    it.y = p.y - state.dragging.dy;
+    draw();
+  }
+
+  function onUp(ev){
+    if(state.dragging){
+      state.dragging = null;
+      try{ cvs.releasePointerCapture(ev.pointerId); }catch(_){}
+      cvs.style.cursor = (state.tool && state.tool!=='select') ? 'copy' : 'default';
+    }
+  }
+
+  function rotateSelected(){
+    const it = state.items.find(i=>i.id===state.selectedId);
+    if(!it) return;
+    it.rot += Math.PI/2;
+    draw();
+  }
+
+  function deleteSelected(){
+    if(state.selectedId==null) return;
+    state.items = state.items.filter(i=>i.id!==state.selectedId);
+    state.selectedId = null;
+    draw();
+  }
+
+  function clearAll(){
+    if(!state.items.length) return;
+    if(!confirm('Remove all placed items? (Map stays.)')) return;
+    state.items = []; state.selectedId = null; draw();
+  }
+
+  function draw(){
+    if(!state.bg) return;
+    ctx.clearRect(0,0,cvs.width,cvs.height);
+    ctx.drawImage(state.bg, 0, 0);
+    state.items.forEach(it=>drawItem(it, it.id===state.selectedId));
+  }
+
+  function drawItem(it, selected){
+    const def = defs[it.type];
+    ctx.save();
+    ctx.translate(it.x, it.y);
+    ctx.rotate(it.rot);
+    ctx.fillStyle = def.fill;
+    ctx.strokeStyle = def.stroke;
+    ctx.lineWidth = 2;
+    if(it.type==='round60'){
+      ctx.beginPath(); ctx.arc(0,0,it.w/2,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    } else if(it.type!=='text'){
+      ctx.fillRect(-it.w/2, -it.h/2, it.w, it.h);
+      ctx.strokeRect(-it.w/2, -it.h/2, it.w, it.h);
+    }
+    if(it.label){
+      ctx.fillStyle = it.type==='trash' ? '#fff' : '#111';
+      const fontSize = it.type==='stage' ? 20 : (it.type==='text' ? 18 : 12);
+      ctx.font = 'bold '+fontSize+'px system-ui, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(it.label, 0, 0);
+    }
+    ctx.restore();
+    if(selected){
+      ctx.save();
+      ctx.translate(it.x, it.y); ctx.rotate(it.rot);
+      ctx.strokeStyle = '#ff8800'; ctx.lineWidth = 2; ctx.setLineDash([6,4]);
+      const pad = 4;
+      if(it.type==='round60'){
+        ctx.beginPath(); ctx.arc(0,0,it.w/2+pad,0,Math.PI*2); ctx.stroke();
+      } else {
+        const w = it.type==='text' ? Math.max(80, (it.label.length*10)+20) : it.w;
+        ctx.strokeRect(-w/2-pad, -it.h/2-pad, w+pad*2, it.h+pad*2);
+      }
+      ctx.restore();
+    }
+  }
+
+  function download(){
+    if(!state.bg){ status('Upload a map first.'); return; }
+    const prev = state.selectedId; state.selectedId = null; draw();
+    cvs.toBlob(blob=>{
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'facility-layout-'+new Date().toISOString().slice(0,10)+'.png';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+      state.selectedId = prev; draw();
+    }, 'image/png');
+  }
+
+  function status(msg){ const el=document.getElementById('facStatus'); if(el) el.textContent=msg; }
+
+  return {onShow, pickMap, download, rotateSelected, deleteSelected, clearAll};
+})();
 
 // ── Ministry Sub-Tab Switching ────────────────────────────────────────
 function switchMinistry(sub,btn){
