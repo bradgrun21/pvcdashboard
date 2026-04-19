@@ -845,7 +845,16 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
           <p>Drop tables, chairs, and other icons onto a building map. Download the result and attach it to your Asana task.</p>
         </div>
         <div class="header-actions">
-          <button class="refresh-btn" onclick="FAC.pickMap()">Upload Map (PNG/JPG/PDF)</button>
+          <select id="facPreset" onchange="FAC.loadPreset(this.value)" style="padding:8px 12px;border:2px solid var(--accent);border-radius:8px;background:#fff;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;">
+            <option value="">— Pick a preset map —</option>
+            <option value="maps/mission-south-1st.png">Mission · South Building · 1st Floor</option>
+            <option value="maps/mission-south-2nd.png">Mission · South Building · 2nd Floor</option>
+            <option value="maps/mission-north-1st.png">Mission · North Building · 1st Floor</option>
+            <option value="maps/mission-north-2nd.png">Mission · North Building · 2nd Floor</option>
+            <option value="maps/mission-westend-1st.png">Mission · West End Building · 1st Floor</option>
+            <option value="maps/mission-westend-2nd.png">Mission · West End Building · 2nd Floor</option>
+          </select>
+          <button class="refresh-btn" onclick="FAC.pickMap()">Upload Custom Map</button>
           <button class="refresh-btn" onclick="FAC.download()">Download PNG</button>
         </div>
       </div>
@@ -1015,6 +1024,16 @@ const FAC = (function(){
   }
 
   function pickMap(){ document.getElementById('facFileInput').click(); }
+
+  function loadPreset(url){
+    if(!url) return;
+    if(state.items.length && !confirm('Loading a preset will replace the current map and clear placed items. Continue?')){
+      document.getElementById('facPreset').value = '';
+      return;
+    }
+    status('Loading preset map…');
+    loadImage(url);
+  }
 
   function onFile(e){
     const f = e.target.files[0]; if(!f) return;
@@ -1218,7 +1237,7 @@ const FAC = (function(){
 
   function status(msg){ const el=document.getElementById('facStatus'); if(el) el.textContent=msg; }
 
-  return {onShow, pickMap, download, rotateSelected, deleteSelected, clearAll};
+  return {onShow, pickMap, loadPreset, download, rotateSelected, deleteSelected, clearAll};
 })();
 
 // ── Ministry Sub-Tab Switching ────────────────────────────────────────
