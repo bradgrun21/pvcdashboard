@@ -823,13 +823,11 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
         <div class="charts-section">
           <div class="chart-grid"><div class="card">
             <h2>Onboarding Pipeline</h2>
-            <div class="subtitle">People added to each &ldquo;Onboarding&rdquo; workflow, and how recently those same people have been scheduled.</div>
-            <div id="dtOnboardingBody" style="padding:24px 4px;color:var(--muted);font-size:13px;">
-              <em>Awaiting loader fix.</em> The workflow-cards feed is currently missing <code>PCO_Person_ID</code> because
-              <code>PCO_Workflows_Loader.qvs</code> pulls <code>person_id</code> from <code>attributes</code>, but the PCO API returns it
-              under <code>relationships</code>. Once that loader is fixed and the Workflows Loader + People Dashboard apps are reloaded,
-              this section will populate automatically.
-            </div>
+            <div class="subtitle">People added to each &ldquo;Onboarding&rdquo; workflow, and whether those same people are showing up on the schedule.</div>
+            <div id="obKpiRow" class="kpi-row" style="margin:8px 0 4px 0;"></div>
+            <div id="obControls" style="display:flex;gap:10px;align-items:center;margin:12px 0 6px 2px;font-size:12px;color:var(--muted);"></div>
+            <div id="obTableWrap" style="overflow-x:auto;"></div>
+            <div id="obNote" style="margin-top:8px;font-size:11px;color:var(--muted);"></div>
           </div></div>
         </div>
       </div>
@@ -910,6 +908,10 @@ const SHEET_URLS = {
   // Replace both URLs when the Qlik tables are exported to Google Sheets.
   nextStepsSummary: 'PENDING_QLIK_PUBLISH',
   nextStepsDetail:  'PENDING_QLIK_PUBLISH',
+  // First-Time Guests (Kids + Youth, U18, 2026+) — fed by PCO_FTG_Loader in Qlik →
+  // FTG Export (2026+) table in PCO - People Dashboard app → Google Sheet tab → published CSV.
+  // Columns: Bucket, Date, Campus, Service, FTG_Count
+  ftg: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSgjeGVQzJDtEXNJ177Zk8eEtAknls5xxMQMeDI3_3-1ja2VDiztjl0lzjkQ_MtzViuFFmoc4LW_7uU/pub?gid=1331346170&single=true&output=csv',
   // Next Step Card — responses from the PCO "Next Step Form".
   // Expected CSV schema (one row per person-option selection):
   //   Date, Campus, PersonID, PersonName, Option
@@ -920,6 +922,12 @@ const SHEET_URLS = {
   // → Google Sheet tab "DreamTeam_KPIs" → Publish to Web as CSV.
   // Expected columns: As_Of_Date, Scheduled_Last_30d, Scheduled_Last_90d, Scheduled_Last_180d
   dreamTeamKpis: 'PENDING_QLIK_PUBLISH',
+  // Onboarding Pipeline — fed by "Onboarding_Pipeline_Summary" table in Qlik
+  // (PCO_Dashboard_v6.qvs, Onboarding section) → Google Sheet tab "Onboarding_Pipeline".
+  // Expected columns: Workflow_Name, Campus, People_Added_Ever, People_Still_Active,
+  //   Ever_Scheduled, Never_Scheduled, Scheduled_Last_30d, Scheduled_Last_90d,
+  //   Scheduled_Last_180d, Served_Pct, As_Of_Date
+  onboardingPipeline: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTO8SnQ5knhU093p-rLeXlr_JvU3-WyfwvGEX9qFx799CB_5QaN8NO8Q4TFwrl1hsSktcGALXWn9Rn1/pub?gid=71547669&single=true&output=csv',
   // Generic ministry feeds (same schema: Date,Event,Campus,Semester|Year,Week|Month,Attendance,Dream Team,Total Attendance)
   womens:      'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=29895188&single=true&output=csv',
   mens:        'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=183217494&single=true&output=csv',
@@ -1276,8 +1284,8 @@ function toggleSheetStatus(e){
 function closeSheetStatusOnce(){document.getElementById('sheetStatusPopover')?.classList.remove('open');}
 function renderSheetStatus(){
   const body=document.getElementById('sheetStatusBody');if(!body)return;
-  const groups={'Sunday & Services':['missionMain','missionKids','edinburg','ipv','holiday'],'Ministries':['rooted','youth','youngAdults','womens','mens','regen','reengage','ptw','griefshare'],'Next Steps':['nextStepsSummary','nextStepsDetail','baptism','growthtrack','nextStepCard','dreamTeamKpis'],'Events':['eventRegistrations']};
-  const labels={missionMain:'Mission Main',missionKids:'Mission Kids',edinburg:'Edinburg',ipv:'IPV',holiday:'Holiday Services',rooted:'Rooted',youth:'Youth',youngAdults:'Young Adults',womens:"Women's",mens:"Men's",regen:'Re:Generation',reengage:'Re|Engage',ptw:'Practicing the Way',griefshare:'GriefShare',nextStepsSummary:'First-Time Summary',nextStepsDetail:'First-Time Detail',baptism:'Baptism',growthtrack:'Growth Track',nextStepCard:'Next Step Card',dreamTeamKpis:'Dream Team KPIs',eventRegistrations:'Event Registrations'};
+  const groups={'Sunday & Services':['missionMain','missionKids','edinburg','ipv','holiday'],'Ministries':['rooted','youth','youngAdults','womens','mens','regen','reengage','ptw','griefshare'],'Next Steps':['nextStepsSummary','nextStepsDetail','baptism','growthtrack','nextStepCard','dreamTeamKpis','onboardingPipeline'],'Events':['eventRegistrations']};
+  const labels={missionMain:'Mission Main',missionKids:'Mission Kids',edinburg:'Edinburg',ipv:'IPV',holiday:'Holiday Services',rooted:'Rooted',youth:'Youth',youngAdults:'Young Adults',womens:"Women's",mens:"Men's",regen:'Re:Generation',reengage:'Re|Engage',ptw:'Practicing the Way',griefshare:'GriefShare',nextStepsSummary:'First-Time Summary',nextStepsDetail:'First-Time Detail',baptism:'Baptism',growthtrack:'Growth Track',nextStepCard:'Next Step Card',dreamTeamKpis:'Dream Team KPIs',onboardingPipeline:'Onboarding Pipeline',eventRegistrations:'Event Registrations'};
   let h='';
   for(const g in groups){
     h+='<h4>'+g+'</h4>';
@@ -2402,6 +2410,139 @@ function dtMarkTabDot(state){
 }
 
 // ══════════════════════════════════════════════════════════════════════
+//  DREAM TEAM — Onboarding Pipeline (data from Qlik → Google Sheets)
+//  Source: Onboarding_Pipeline_Summary table in PCO_Dashboard_v6.qvs
+//  Schema: Workflow_Name, Campus, People_Added_Ever, People_Still_Active,
+//          Ever_Scheduled, Never_Scheduled, Scheduled_Last_30d,
+//          Scheduled_Last_90d, Scheduled_Last_180d, Served_Pct, As_Of_Date
+// ══════════════════════════════════════════════════════════════════════
+let obRaw=[];
+let obSort={key:'added',dir:'desc'};
+let obCampusFilter='all';
+
+function parseOnboardingPipeline(rows){
+  if(!rows||rows.length<2)return [];
+  const h=rows[0].map(s=>String(s||'').trim());
+  const ix=k=>h.indexOf(k);
+  const iName=ix('Workflow_Name'),iCampus=ix('Campus'),iAdded=ix('People_Added_Ever'),
+        iActive=ix('People_Still_Active'),iEver=ix('Ever_Scheduled'),iNever=ix('Never_Scheduled'),
+        i30=ix('Scheduled_Last_30d'),i90=ix('Scheduled_Last_90d'),i180=ix('Scheduled_Last_180d'),
+        iPct=ix('Served_Pct'),iAs=ix('As_Of_Date');
+  if(iName<0||iAdded<0||iEver<0)return [];
+  const out=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];if(!r||!r[iName])continue;
+    out.push({
+      name:String(r[iName]).trim(),
+      campus:iCampus>=0?String(r[iCampus]||'').trim():'',
+      added:num(r[iAdded]),
+      active:iActive>=0?num(r[iActive]):0,
+      ever:num(r[iEver]),
+      never:iNever>=0?num(r[iNever]):(num(r[iAdded])-num(r[iEver])),
+      d30:i30>=0?num(r[i30]):0,
+      d90:i90>=0?num(r[i90]):0,
+      d180:i180>=0?num(r[i180]):0,
+      pct:iPct>=0?num(r[iPct]):(num(r[iAdded])>0?100*num(r[iEver])/num(r[iAdded]):0),
+      asOf:iAs>=0?parseDate(r[iAs]):null
+    });
+  }
+  return out;
+}
+
+function obFiltered(){
+  if(obCampusFilter==='all')return obRaw.slice();
+  return obRaw.filter(r=>r.campus===obCampusFilter);
+}
+
+function obRenderControls(){
+  const el=document.getElementById('obControls');if(!el)return;
+  if(!obRaw.length){el.innerHTML='';return;}
+  const campuses=Array.from(new Set(obRaw.map(r=>r.campus).filter(Boolean))).sort();
+  const opts=['all',...campuses].map(c=>{
+    const lbl=c==='all'?'All campuses':c;
+    const active=c===obCampusFilter;
+    return `<button type="button" onclick="obSetCampus('${c}')" style="padding:4px 10px;border-radius:4px;border:1px solid var(--border);cursor:pointer;font-size:11px;background:${active?'var(--accent)':'var(--bg-card)'};color:${active?'#fff':'var(--text)'}">${lbl}</button>`;
+  }).join('');
+  el.innerHTML=`<span>Filter:</span>${opts}`;
+}
+
+function obSetCampus(c){obCampusFilter=c;obRender();}
+function obSetSort(k){if(obSort.key===k)obSort.dir=obSort.dir==='desc'?'asc':'desc';else{obSort.key=k;obSort.dir='desc';}obRender();}
+
+function obRenderKPI(){
+  const el=document.getElementById('obKpiRow');if(!el)return;
+  if(!obRaw.length){el.innerHTML='';return;}
+  const d=obFiltered();
+  const totalAdded=d.reduce((s,r)=>s+r.added,0);
+  const totalEver=d.reduce((s,r)=>s+r.ever,0);
+  const totalActive=d.reduce((s,r)=>s+r.active,0);
+  const totalNever=d.reduce((s,r)=>s+r.never,0);
+  const pct=totalAdded>0?Math.round(1000*totalEver/totalAdded)/10:0;
+  el.innerHTML=
+    `<div class="kpi-card"><div class="accent-bar" style="background:var(--accent)"></div><div class="kpi-label">People Added</div><div class="kpi-value total">${fmtNum(totalAdded)}</div><div class="kpi-sub">across ${d.length} active workflows</div></div>`+
+    `<div class="kpi-card"><div class="accent-bar" style="background:var(--positive)"></div><div class="kpi-label">Ended Up Serving</div><div class="kpi-value" style="color:var(--positive)">${fmtNum(totalEver)}</div><div class="kpi-sub">${pct.toFixed(1)}% of people added</div></div>`+
+    `<div class="kpi-card"><div class="accent-bar" style="background:var(--mission)"></div><div class="kpi-label">Never Scheduled</div><div class="kpi-value mission">${fmtNum(totalNever)}</div><div class="kpi-sub">no plan on the schedule yet</div></div>`+
+    `<div class="kpi-card"><div class="accent-bar" style="background:var(--edinburg)"></div><div class="kpi-label">Still In Pipeline</div><div class="kpi-value edinburg">${fmtNum(totalActive)}</div><div class="kpi-sub">card not removed</div></div>`;
+}
+
+function obRenderTable(){
+  const wrap=document.getElementById('obTableWrap');if(!wrap)return;
+  if(!obRaw.length){
+    wrap.innerHTML='<div style="padding:24px 4px;color:var(--muted);font-size:13px;"><em>Awaiting data.</em> Publish the <code>Onboarding_Pipeline</code> sheet from Qlik, then set <code>SHEET_URLS.onboardingPipeline</code>.</div>';
+    return;
+  }
+  const d=obFiltered().slice();
+  const cmp=(a,b)=>{const av=a[obSort.key],bv=b[obSort.key];if(av==null&&bv==null)return 0;if(av==null)return 1;if(bv==null)return -1;if(typeof av==='number'&&typeof bv==='number')return av-bv;return String(av).localeCompare(String(bv));};
+  d.sort((a,b)=>obSort.dir==='asc'?cmp(a,b):-cmp(a,b));
+  const th=(k,l,align)=>{const arrow=obSort.key===k?(obSort.dir==='desc'?' \u25BE':' \u25B4'):'';return `<th onclick="obSetSort('${k}')" style="cursor:pointer;text-align:${align||'left'};padding:8px 10px;border-bottom:2px solid var(--border);white-space:nowrap;user-select:none;">${l}${arrow}</th>`;};
+  const rows=d.map(r=>{
+    const pctBar=Math.max(0,Math.min(100,r.pct||0));
+    return `<tr style="border-bottom:1px solid var(--border)">`+
+      `<td style="padding:6px 10px">${r.name}</td>`+
+      `<td style="padding:6px 10px">${r.campus||'\u2014'}</td>`+
+      `<td style="padding:6px 10px;text-align:right">${fmtNum(r.added)}</td>`+
+      `<td style="padding:6px 10px;text-align:right">${fmtNum(r.active)}</td>`+
+      `<td style="padding:6px 10px;text-align:right;color:var(--positive);font-weight:600">${fmtNum(r.ever)}</td>`+
+      `<td style="padding:6px 10px;text-align:right;color:var(--muted)">${fmtNum(r.never)}</td>`+
+      `<td style="padding:6px 10px;text-align:right">${fmtNum(r.d30)}</td>`+
+      `<td style="padding:6px 10px;text-align:right">${fmtNum(r.d90)}</td>`+
+      `<td style="padding:6px 10px;text-align:right">${fmtNum(r.d180)}</td>`+
+      `<td style="padding:6px 10px;min-width:140px">`+
+        `<div style="display:flex;align-items:center;gap:8px">`+
+          `<div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden"><div style="height:100%;width:${pctBar}%;background:var(--positive)"></div></div>`+
+          `<span style="font-variant-numeric:tabular-nums;font-size:12px;min-width:42px;text-align:right">${(r.pct||0).toFixed(1)}%</span>`+
+        `</div>`+
+      `</td>`+
+    `</tr>`;
+  }).join('');
+  wrap.innerHTML=
+    `<table style="width:100%;border-collapse:collapse;font-size:12.5px">`+
+      `<thead><tr>`+
+        th('name','Workflow')+
+        th('campus','Campus')+
+        th('added','Added','right')+
+        th('active','In Pipeline','right')+
+        th('ever','Served','right')+
+        th('never','Never','right')+
+        th('d30','30d','right')+
+        th('d90','90d','right')+
+        th('d180','180d','right')+
+        th('pct','Served %','left')+
+      `</tr></thead>`+
+      `<tbody>${rows}</tbody>`+
+    `</table>`;
+  const note=document.getElementById('obNote');
+  if(note){
+    const asOf=obRaw.find(r=>r.asOf);
+    note.innerHTML='Note: "Served" relies on PCO Services data currently in Qlik (~recent window). '+
+      'If a person\u2019s last plan predates that window, they count as "Never Scheduled" here.'+
+      (asOf?` &middot; As of ${fmtDate(asOf.asOf)}`:'');
+  }
+}
+
+function obRender(){obRenderControls();obRenderKPI();obRenderTable();}
+
+// ══════════════════════════════════════════════════════════════════════
 //  GENERIC MINISTRY RENDERER
 //  Drives: Women's, Men's, Re:Generation, Re|Engage, Practicing the Way,
 //          GriefShare, Baptism, Growth Track
@@ -3068,10 +3209,12 @@ async function refreshAll(){
   const nsConfigured=SHEET_URLS.nextStepsSummary&&!SHEET_URLS.nextStepsSummary.startsWith('PENDING_')&&SHEET_URLS.nextStepsDetail&&!SHEET_URLS.nextStepsDetail.startsWith('PENDING_');
   const nscConfigured=SHEET_URLS.nextStepCard&&!SHEET_URLS.nextStepCard.startsWith('PENDING_');
   const dtConfigured=SHEET_URLS.dreamTeamKpis&&!SHEET_URLS.dreamTeamKpis.startsWith('PENDING_');
-  const allKeys=[...coreKeys,...gmKeys,...(nsConfigured?['nextStepsSummary','nextStepsDetail']:[]),...(nscConfigured?['nextStepCard']:[]),...(dtConfigured?['dreamTeamKpis']:[])];
+  const obConfigured=SHEET_URLS.onboardingPipeline&&!SHEET_URLS.onboardingPipeline.startsWith('PENDING_');
+  const allKeys=[...coreKeys,...gmKeys,...(nsConfigured?['nextStepsSummary','nextStepsDetail']:[]),...(nscConfigured?['nextStepCard']:[]),...(dtConfigured?['dreamTeamKpis']:[]),...(obConfigured?['onboardingPipeline']:[])];
   if(!nsConfigured){markSheet('nextStepsSummary','skipped');markSheet('nextStepsDetail','skipped');}
   if(!nscConfigured){markSheet('nextStepCard','skipped');}
   if(!dtConfigured){markSheet('dreamTeamKpis','skipped');dtMarkTabDot('pending');}
+  if(!obConfigured){markSheet('onboardingPipeline','skipped');}
   const texts=Object.fromEntries(await Promise.all(allKeys.map(async k=>[k,await safeFetch(k)])));
 
   // --- Core (existing logic), but defensive if a fetch returned null ---
@@ -3112,6 +3255,13 @@ async function refreshAll(){
     catch(e){console.error('Dream Team parse failed',e);dtKpiRaw=null;markSheet('dreamTeamKpis','fail',{msg:'parse error'});dtMarkTabDot('fail');}
   }else{dtKpiRaw=null;}
   dtRenderKPI();
+
+  // Onboarding Pipeline
+  if(obConfigured&&texts.onboardingPipeline){
+    try{obRaw=parseOnboardingPipeline(parseCSV(texts.onboardingPipeline));if(obRaw.length){markSheet('onboardingPipeline','ok',{rows:obRaw.length});}else{markSheet('onboardingPipeline','empty',{rows:0});}}
+    catch(e){console.error('Onboarding Pipeline parse failed',e);obRaw=[];markSheet('onboardingPipeline','fail',{msg:'parse error'});}
+  }else{obRaw=[];}
+  obRender();
 
   // --- Generic ministry panels ---
   for(const k of gmKeys){
