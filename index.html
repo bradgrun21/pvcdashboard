@@ -760,51 +760,54 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
         <button class="ns-tab" onclick="switchNextSteps('dreamteam',this)" id="nstab-dreamteam"><span class="tab-dot pending"></span>Dream Team</button>
       </div>
 
-      <!-- ── First-Time Guests (original Next Steps content) ── -->
+      <!-- ── First-Time Guests (Kids & Youth, U18, 2026+) ── -->
       <div class="ns-panel active" id="nsp-fttg">
       <div class="filter-bar" id="nsFilters">
         <div class="filter-group"><label>Range</label>
-          <button class="fbtn" data-filter="nsr" data-value="90" onclick="setNSF('range','90',this)">Last 90d</button>
-          <button class="fbtn active" data-filter="nsr" data-value="180" onclick="setNSF('range','180',this)">Last 6mo</button>
-          <button class="fbtn" data-filter="nsr" data-value="365" onclick="setNSF('range','365',this)">Last 12mo</button>
+          <button class="fbtn" data-filter="nsr" data-value="28" onclick="setNSF('range','28',this)">Last 4wk</button>
+          <button class="fbtn" data-filter="nsr" data-value="84" onclick="setNSF('range','84',this)">Last 12wk</button>
+          <button class="fbtn active" data-filter="nsr" data-value="ytd" onclick="setNSF('range','ytd',this)">2026 YTD</button>
           <button class="fbtn" data-filter="nsr" data-value="all" onclick="setNSF('range','all',this)">All</button>
         </div>
         <div class="filter-sep"></div>
         <div class="filter-group"><label>From</label><input type="date" id="nsDateStart" onchange="setNSF('ds',this.value)"></div>
         <div class="filter-group"><label>To</label><input type="date" id="nsDateEnd" onchange="setNSF('de',this.value)"></div>
         <div class="filter-sep"></div>
-        <div class="filter-group"><label>Exclude Children</label>
-          <button class="fbtn active" data-filter="nsex" data-value="1" onclick="setNSF('excludeKids','1',this)">Yes</button>
-          <button class="fbtn" data-filter="nsex" data-value="0" onclick="setNSF('excludeKids','0',this)">No</button>
+        <div class="filter-group"><label>Ministry</label>
+          <button class="fbtn active" data-filter="nsb" data-value="all" onclick="setNSF('bucket','all',this)">All</button>
+          <button class="fbtn" data-filter="nsb" data-value="Kids" onclick="setNSF('bucket','Kids',this)">Kids</button>
+          <button class="fbtn" data-filter="nsb" data-value="Youth" onclick="setNSF('bucket','Youth',this)">Youth</button>
+        </div>
+        <div class="filter-sep"></div>
+        <div class="filter-group"><label>Campus</label>
+          <button class="fbtn active" data-filter="nsc" data-value="all" onclick="setNSF('campus','all',this)">All</button>
+          <button class="fbtn" data-filter="nsc" data-value="Mission" onclick="setNSF('campus','Mission',this)">Mission</button>
+          <button class="fbtn" data-filter="nsc" data-value="Edinburg" onclick="setNSF('campus','Edinburg',this)">Edinburg</button>
+          <button class="fbtn" data-filter="nsc" data-value="Spanish" onclick="setNSF('campus','Spanish',this)">Spanish</button>
         </div>
       </div>
       <div class="kpi-row" id="nsKpiRow"></div>
       <div class="charts-section">
         <div class="chart-grid"><div class="card">
-          <h2>First-Time Guests by Sunday</h2>
-          <div class="subtitle">Weekly count of people whose first Sunday check-in was that week</div>
+          <h2>First-Time Guests by Week</h2>
+          <div class="subtitle">Weekly count of U18 FTGs &mdash; Kids (Sunday) + Youth (Wednesday)</div>
           <div class="chart-wrap tall"><canvas id="nsTrendChart"></canvas></div>
-        </div></div>
-        <div class="chart-grid"><div class="card">
-          <h2>Return Rate by Sunday</h2>
-          <div class="subtitle">% of that week's first-timers who returned within the following 4 Sundays</div>
-          <div class="chart-wrap"><canvas id="nsRetentionChart"></canvas></div>
         </div></div>
         <div class="chart-grid-2">
           <div class="card">
-            <h2>Return Distribution</h2>
-            <div class="subtitle">How many of the next 4 Sundays first-timers came back</div>
-            <div class="chart-wrap"><canvas id="nsDistChart"></canvas></div>
+            <h2>FTG by Campus</h2>
+            <div class="subtitle">Totals in selected range</div>
+            <div class="chart-wrap"><canvas id="nsCampusChart"></canvas></div>
           </div>
           <div class="card">
-            <h2>Still Attending (last 30d)</h2>
-            <div class="subtitle">Of first-timers in range</div>
-            <div class="chart-wrap"><canvas id="nsActiveChart"></canvas></div>
+            <h2>FTG by Service</h2>
+            <div class="subtitle">Totals in selected range</div>
+            <div class="chart-wrap"><canvas id="nsServiceChart"></canvas></div>
           </div>
         </div>
       </div>
       <div class="table-section"><div class="table-card">
-        <h2>First-Timer Detail</h2>
+        <h2>FTG Detail &mdash; Date &times; Ministry &times; Campus &times; Service</h2>
         <div class="subtitle">Click headers to sort</div>
         <div class="table-scroll" id="nsTableContainer"></div>
       </div></div>
@@ -1284,8 +1287,8 @@ function toggleSheetStatus(e){
 function closeSheetStatusOnce(){document.getElementById('sheetStatusPopover')?.classList.remove('open');}
 function renderSheetStatus(){
   const body=document.getElementById('sheetStatusBody');if(!body)return;
-  const groups={'Sunday & Services':['missionMain','missionKids','edinburg','ipv','holiday'],'Ministries':['rooted','youth','youngAdults','womens','mens','regen','reengage','ptw','griefshare'],'Next Steps':['nextStepsSummary','nextStepsDetail','baptism','growthtrack','nextStepCard','dreamTeamKpis','onboardingPipeline'],'Events':['eventRegistrations']};
-  const labels={missionMain:'Mission Main',missionKids:'Mission Kids',edinburg:'Edinburg',ipv:'IPV',holiday:'Holiday Services',rooted:'Rooted',youth:'Youth',youngAdults:'Young Adults',womens:"Women's",mens:"Men's",regen:'Re:Generation',reengage:'Re|Engage',ptw:'Practicing the Way',griefshare:'GriefShare',nextStepsSummary:'First-Time Summary',nextStepsDetail:'First-Time Detail',baptism:'Baptism',growthtrack:'Growth Track',nextStepCard:'Next Step Card',dreamTeamKpis:'Dream Team KPIs',onboardingPipeline:'Onboarding Pipeline',eventRegistrations:'Event Registrations'};
+  const groups={'Sunday & Services':['missionMain','missionKids','edinburg','ipv','holiday'],'Ministries':['rooted','youth','youngAdults','womens','mens','regen','reengage','ptw','griefshare'],'Next Steps':['ftg','baptism','growthtrack','nextStepCard','dreamTeamKpis','onboardingPipeline'],'Events':['eventRegistrations']};
+  const labels={missionMain:'Mission Main',missionKids:'Mission Kids',edinburg:'Edinburg',ipv:'IPV',holiday:'Holiday Services',rooted:'Rooted',youth:'Youth',youngAdults:'Young Adults',womens:"Women's",mens:"Men's",regen:'Re:Generation',reengage:'Re|Engage',ptw:'Practicing the Way',griefshare:'GriefShare',ftg:'First-Time Guests (U18)',baptism:'Baptism',growthtrack:'Growth Track',nextStepCard:'Next Step Card',dreamTeamKpis:'Dream Team KPIs',onboardingPipeline:'Onboarding Pipeline',eventRegistrations:'Event Registrations'};
   let h='';
   for(const g in groups){
     h+='<h4>'+g+'</h4>';
@@ -2204,52 +2207,33 @@ function erSort(col){
 }
 
 // ══════════════════════════════════════════════════════════════════════
-//  NEXT STEPS — First-Time Guests (data from Qlik → Google Sheets)
+//  NEXT STEPS — First-Time Guests (Kids & Youth, U18, aggregate)
+//  Source: PCO_FTG.qvd → Qlik "FTG Export (2026+)" table → Google Sheet → CSV
+//  Columns: Bucket (Kids|Youth), Date (M/D/YYYY), Campus (Mission|Edinburg|Spanish),
+//           Service ("9:00 AM" etc.), FTG_Count (integer)
 // ══════════════════════════════════════════════════════════════════════
-let nsSummaryRaw=[],nsDetailRaw=[],nsSummaryFiltered=[],nsDetailFiltered=[],nsCharts={},nsFilters={range:'180',ds:null,de:null,excludeKids:'1'};
+let nsRaw=[],nsFiltered=[],nsCharts={},nsFilters={range:'ytd',ds:null,de:null,bucket:'all',campus:'all'};
 
-function parseNextStepsSummary(rows){
+function parseFTG(rows){
   if(!rows||rows.length<2)return [];
   const h=rows[0].map(s=>String(s||'').trim());
   const ix=(k)=>h.indexOf(k);
-  const iD=ix('First_Visit_Date'),iC=ix('First_Time_Count'),iR=ix('Returned_Within_4_Count'),
-        iRt=ix('Return_Rate_Pct'),iAv=ix('Avg_Sundays_Returned'),iS=ix('Still_Attending_30d');
-  if(iD<0||iC<0)return [];
+  const iB=ix('Bucket'),iD=ix('Date'),iC=ix('Campus'),iS=ix('Service'),iN=ix('FTG_Count');
+  if(iB<0||iD<0||iN<0)return [];
   const out=[];
   for(let i=1;i<rows.length;i++){
     const r=rows[i];if(!r||!r.length)continue;
     const dt=parseDate(r[iD]);if(!dt)continue;
-    out.push({date:dt,key:dateKey(dt),firstTimers:num(r[iC]),returned4:num(r[iR]),returnRate:num(r[iRt]),avgReturned:num(r[iAv]),stillActive:num(r[iS])});
-  }
-  out.sort((a,b)=>a.date-b.date);
-  return out;
-}
-
-function parseNextStepsDetail(rows){
-  if(!rows||rows.length<2)return [];
-  const h=rows[0].map(s=>String(s||'').trim());
-  const ix={};['PCO_Person_ID','Full_Name','First_Visit_Date','Last_Visit_Date','Total_Sunday_Visits','Sundays_Returned_Next_4','Returned_Within_4_Sundays','Currently_Active_30d','Days_Since_First_Visit','PCO_Status','Membership_Type','Is_Child'].forEach(k=>ix[k]=h.indexOf(k));
-  if(ix.First_Visit_Date<0)return [];
-  const out=[];
-  for(let i=1;i<rows.length;i++){
-    const r=rows[i];if(!r||!r.length)continue;
-    const fvd=parseDate(r[ix.First_Visit_Date]);if(!fvd)continue;
-    const isKidRaw=String(r[ix.Is_Child]||'').trim().toLowerCase();
+    const cnt=num(r[iN]);if(!cnt)continue;
     out.push({
-      personId:(r[ix.PCO_Person_ID]||'').trim(),
-      name:(r[ix.Full_Name]||'').trim(),
-      firstVisit:fvd,
-      lastVisit:parseDate(r[ix.Last_Visit_Date]),
-      totalVisits:num(r[ix.Total_Sunday_Visits]),
-      retNext4:num(r[ix.Sundays_Returned_Next_4]),
-      returned:num(r[ix.Returned_Within_4_Sundays])===1,
-      active30:num(r[ix.Currently_Active_30d])===1,
-      daysSince:num(r[ix.Days_Since_First_Visit]),
-      status:(r[ix.PCO_Status]||'').trim(),
-      membership:(r[ix.Membership_Type]||'').trim(),
-      isChild:isKidRaw==='true'||isKidRaw==='1'||isKidRaw==='-1'||isKidRaw==='yes'
+      bucket:(r[iB]||'').trim(),
+      date:dt,
+      campus:(r[iC]||'').trim(),
+      service:(r[iS]||'').trim(),
+      count:cnt
     });
   }
+  out.sort((a,b)=>a.date-b.date);
   return out;
 }
 
@@ -2263,9 +2247,13 @@ function setNSF(k,v,btn){
     if(dsI)dsI.value='';if(deI)deI.value='';
   }else if(k==='ds'){nsFilters.ds=v||null;nsFilters.range='custom';document.querySelectorAll('[data-filter="nsr"]').forEach(b=>b.classList.remove('active'));}
   else if(k==='de'){nsFilters.de=v||null;nsFilters.range='custom';document.querySelectorAll('[data-filter="nsr"]').forEach(b=>b.classList.remove('active'));}
-  else if(k==='excludeKids'){
-    nsFilters.excludeKids=v;
-    document.querySelectorAll('[data-filter="nsex"]').forEach(b=>b.classList.remove('active'));
+  else if(k==='bucket'){
+    nsFilters.bucket=v;
+    document.querySelectorAll('[data-filter="nsb"]').forEach(b=>b.classList.remove('active'));
+    if(btn)btn.classList.add('active');
+  }else if(k==='campus'){
+    nsFilters.campus=v;
+    document.querySelectorAll('[data-filter="nsc"]').forEach(b=>b.classList.remove('active'));
     if(btn)btn.classList.add('active');
   }
   nsApply();
@@ -2275,89 +2263,107 @@ function nsApply(){
   let from=null,to=null;
   if(nsFilters.ds)from=new Date(nsFilters.ds+'T00:00:00');
   if(nsFilters.de)to=new Date(nsFilters.de+'T23:59:59');
-  if(!from&&!to&&nsFilters.range!=='all'&&nsFilters.range!=='custom'){
-    const n=+nsFilters.range;to=new Date();from=new Date(Date.now()-n*86400000);
+  if(!from&&!to){
+    if(nsFilters.range==='ytd'){from=new Date(2026,0,1);}
+    else if(nsFilters.range!=='all'&&nsFilters.range!=='custom'){
+      const n=+nsFilters.range;to=new Date();from=new Date(Date.now()-n*86400000);
+    }
   }
-  nsSummaryFiltered=nsSummaryRaw.filter(r=>(!from||r.date>=from)&&(!to||r.date<=to));
-  nsDetailFiltered=nsDetailRaw.filter(r=>(!from||r.firstVisit>=from)&&(!to||r.firstVisit<=to)&&(nsFilters.excludeKids!=='1'||!r.isChild));
-  nsRenderKPI();nsRenderTrend();nsRenderRetention();nsRenderDist();nsRenderActive();nsRenderTable();
+  nsFiltered=nsRaw.filter(r=>
+    (!from||r.date>=from) &&
+    (!to||r.date<=to) &&
+    (nsFilters.bucket==='all'||r.bucket===nsFilters.bucket) &&
+    (nsFilters.campus==='all'||r.campus===nsFilters.campus)
+  );
+  nsRenderKPI();nsRenderTrend();nsRenderCampus();nsRenderService();nsRenderTable();
 }
 
 function nsRenderKPI(){
   const el=document.getElementById('nsKpiRow');if(!el)return;
-  const det=nsDetailFiltered;
-  if(!nsDetailRaw.length){
-    el.innerHTML='<div class="kpi-card"><div class="kpi-label">Awaiting Data</div><div class="kpi-value total">\u2014</div><div class="kpi-sub">Publish NextSteps_Summary &amp; NextSteps_Detail from Qlik, then update <code>SHEET_URLS</code>.</div></div>';
+  if(!nsRaw.length){
+    el.innerHTML='<div class="kpi-card"><div class="kpi-label">Awaiting Data</div><div class="kpi-value total">\u2014</div><div class="kpi-sub">Publish FTG Export from Qlik, then update <code>SHEET_URLS.ftg</code>.</div></div>';
     return;
   }
-  if(!det.length){
+  if(!nsFiltered.length){
     el.innerHTML='<div class="kpi-card"><div class="kpi-label">No Data In Range</div><div class="kpi-value total">\u2014</div><div class="kpi-sub">Try a wider date range</div></div>';
     return;
   }
-  const total=det.length;
-  const ret=det.filter(r=>r.returned).length;
-  const rate=total>0?(ret/total*100):0;
-  const avgRet=det.reduce((s,r)=>s+r.retNext4,0)/total;
-  const stillActive=det.filter(r=>r.active30).length;
-  const activePct=total>0?(stillActive/total*100):0;
+  const total=nsFiltered.reduce((s,r)=>s+r.count,0);
+  const kids =nsFiltered.filter(r=>r.bucket==='Kids' ).reduce((s,r)=>s+r.count,0);
+  const youth=nsFiltered.filter(r=>r.bucket==='Youth').reduce((s,r)=>s+r.count,0);
+  // Most recent week in filtered
+  const maxDate=nsFiltered.reduce((m,r)=>r.date>m?r.date:m,nsFiltered[0].date);
+  const wkKey=dateKey(maxDate);
+  const lastWk=nsFiltered.filter(r=>dateKey(r.date)===wkKey).reduce((s,r)=>s+r.count,0);
   let html='';
-  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--accent)"></div><div class="kpi-label">First-Timers</div><div class="kpi-value total">${fmtNum(total)}</div><div class="kpi-sub">In selected range</div></div>`;
-  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--positive)"></div><div class="kpi-label">Return Rate (Next 4 Sundays)</div><div class="kpi-value" style="color:var(--positive)">${rate.toFixed(1)}%</div><div class="kpi-sub">${fmtNum(ret)} of ${fmtNum(total)} came back</div></div>`;
-  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--mission)"></div><div class="kpi-label">Avg Sundays Returned</div><div class="kpi-value mission">${avgRet.toFixed(1)}</div><div class="kpi-sub">Out of next 4 Sundays</div></div>`;
-  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--edinburg)"></div><div class="kpi-label">Still Attending (30d)</div><div class="kpi-value edinburg">${fmtNum(stillActive)}</div><div class="kpi-sub">${activePct.toFixed(1)}% of first-timers in range</div></div>`;
+  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--accent)"></div><div class="kpi-label">Total FTG</div><div class="kpi-value total">${fmtNum(total)}</div><div class="kpi-sub">In selected range</div></div>`;
+  html+=`<div class="kpi-card"><div class="accent-bar" style="background:${COLORS.mission}"></div><div class="kpi-label">Kids</div><div class="kpi-value mission">${fmtNum(kids)}</div><div class="kpi-sub">Sunday check-ins &mdash; U18</div></div>`;
+  html+=`<div class="kpi-card"><div class="accent-bar" style="background:${COLORS.edinburg}"></div><div class="kpi-label">Youth</div><div class="kpi-value edinburg">${fmtNum(youth)}</div><div class="kpi-sub">Wednesday check-ins &mdash; U18</div></div>`;
+  html+=`<div class="kpi-card"><div class="accent-bar" style="background:var(--positive)"></div><div class="kpi-label">Most Recent (${fmtDate(maxDate)})</div><div class="kpi-value" style="color:var(--positive)">${fmtNum(lastWk)}</div><div class="kpi-sub">FTGs on that date</div></div>`;
   el.innerHTML=html;
 }
 
+// Weekly trend — two stacked-ish lines: Kids + Youth. Group rows by (bucket, date).
 function nsRenderTrend(){
   const el=document.getElementById('nsTrendChart');if(!el)return;
   if(nsCharts.trend){nsCharts.trend.destroy();nsCharts.trend=null;}
-  if(!nsSummaryFiltered.length)return;
-  const d=nsSummaryFiltered,labels=d.map(r=>r.date),values=d.map(r=>r.firstTimers);
-  nsCharts.trend=new Chart(el,{type:'bar',data:{labels,datasets:[{label:'First-Timers',data:values,backgroundColor:COLORS.mission+'CC',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'First-timers: '+fmtNum(c.parsed.y)}}},scales:{x:{type:'time',time:{unit:'month',tooltipFormat:'MMM d, yyyy'},grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0}}}}});
+  if(!nsFiltered.length)return;
+  const byBucketDate={Kids:{},Youth:{}};
+  const dateSet={};
+  nsFiltered.forEach(r=>{
+    if(!byBucketDate[r.bucket])byBucketDate[r.bucket]={};
+    const k=dateKey(r.date);
+    byBucketDate[r.bucket][k]=(byBucketDate[r.bucket][k]||0)+r.count;
+    dateSet[k]=r.date;
+  });
+  const keys=Object.keys(dateSet).sort();
+  const labels=keys.map(k=>dateSet[k]);
+  const kidsData =keys.map(k=>byBucketDate.Kids?.[k]||0);
+  const youthData=keys.map(k=>byBucketDate.Youth?.[k]||0);
+  const datasets=[];
+  if(nsFilters.bucket!=='Youth')datasets.push({label:'Kids (Sun)',data:kidsData,borderColor:COLORS.mission,backgroundColor:COLORS.mission+'33',tension:.3,fill:false,pointRadius:3,borderWidth:2.5});
+  if(nsFilters.bucket!=='Kids' )datasets.push({label:'Youth (Wed)',data:youthData,borderColor:COLORS.edinburg,backgroundColor:COLORS.edinburg+'33',tension:.3,fill:false,pointRadius:3,borderWidth:2.5});
+  nsCharts.trend=new Chart(el,{type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{type:'time',time:{unit:'week',tooltipFormat:'MMM d, yyyy'},grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0}}}}});
 }
 
-function nsRenderRetention(){
-  const el=document.getElementById('nsRetentionChart');if(!el)return;
-  if(nsCharts.ret){nsCharts.ret.destroy();nsCharts.ret=null;}
-  if(!nsSummaryFiltered.length)return;
-  const d=nsSummaryFiltered,labels=d.map(r=>r.date),values=d.map(r=>r.returnRate);
-  nsCharts.ret=new Chart(el,{type:'line',data:{labels,datasets:[{label:'Return Rate %',data:values,borderColor:COLORS.edinburg,backgroundColor:COLORS.edinburg+'22',tension:.3,fill:true,pointRadius:2.5,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'Return rate: '+c.parsed.y.toFixed(1)+'%'}}},scales:{x:{type:'time',time:{unit:'month',tooltipFormat:'MMM d, yyyy'},grid:{display:false}},y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}}}}});
+function nsRenderCampus(){
+  const el=document.getElementById('nsCampusChart');if(!el)return;
+  if(nsCharts.campus){nsCharts.campus.destroy();nsCharts.campus=null;}
+  if(!nsFiltered.length)return;
+  const tot={Mission:0,Edinburg:0,Spanish:0};
+  nsFiltered.forEach(r=>{if(tot[r.campus]!=null)tot[r.campus]+=r.count;});
+  const labels=Object.keys(tot),values=labels.map(k=>tot[k]);
+  const colors=[COLORS.mission,COLORS.edinburg,COLORS.ipv];
+  nsCharts.campus=new Chart(el,{type:'bar',data:{labels,datasets:[{label:'FTG',data:values,backgroundColor:colors,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtNum(c.parsed.y)+' FTGs'}}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0}}}}});
 }
 
-function nsRenderDist(){
-  const el=document.getElementById('nsDistChart');if(!el)return;
-  if(nsCharts.dist){nsCharts.dist.destroy();nsCharts.dist=null;}
-  const det=nsDetailFiltered;if(!det.length)return;
-  const buckets=[0,0,0,0,0];
-  det.forEach(r=>{const n=Math.max(0,Math.min(4,r.retNext4));buckets[n]++;});
-  const labels=['0 Sundays','1 Sunday','2 Sundays','3 Sundays','4 Sundays'];
-  const colors=['#c0392b','#e67e22','#f1c40f','#7dbdcc','#2e7d5b'];
-  nsCharts.dist=new Chart(el,{type:'bar',data:{labels,datasets:[{label:'People',data:buckets,backgroundColor:colors,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtNum(c.parsed.y)+' people'}}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0}}}}});
-}
-
-function nsRenderActive(){
-  const el=document.getElementById('nsActiveChart');if(!el)return;
-  if(nsCharts.act){nsCharts.act.destroy();nsCharts.act=null;}
-  const det=nsDetailFiltered;if(!det.length)return;
-  const active=det.filter(r=>r.active30).length,inactive=det.length-active;
-  nsCharts.act=new Chart(el,{type:'doughnut',data:{labels:['Still attending (30d)','Not recently seen'],datasets:[{data:[active,inactive],backgroundColor:[COLORS.mission,'#d5d9e0'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{usePointStyle:true,padding:14,font:{size:12}}},tooltip:{callbacks:{label:c=>c.label+': '+fmtNum(c.parsed)}}}}});
+function nsRenderService(){
+  const el=document.getElementById('nsServiceChart');if(!el)return;
+  if(nsCharts.svc){nsCharts.svc.destroy();nsCharts.svc=null;}
+  if(!nsFiltered.length)return;
+  const tot={};
+  nsFiltered.forEach(r=>{const k=r.service||'\u2014';tot[k]=(tot[k]||0)+r.count;});
+  // Sort services by clock time (parse "H:MM AM/PM")
+  const labels=Object.keys(tot).sort((a,b)=>{
+    const p=s=>{const m=/^(\d+):(\d+)\s*(AM|PM)/i.exec(s);if(!m)return 9999;let h=+m[1];const mi=+m[2];if(/pm/i.test(m[3])&&h!==12)h+=12;if(/am/i.test(m[3])&&h===12)h=0;return h*60+mi;};
+    return p(a)-p(b);
+  });
+  const values=labels.map(k=>tot[k]);
+  nsCharts.svc=new Chart(el,{type:'bar',data:{labels,datasets:[{label:'FTG',data:values,backgroundColor:COLORS.mission+'CC',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtNum(c.parsed.x)+' FTGs'}}},scales:{x:{beginAtZero:true,ticks:{precision:0}},y:{grid:{display:false}}}}});
 }
 
 function nsRenderTable(){
   const el=document.getElementById('nsTableContainer');if(!el)return;
-  if(!nsDetailFiltered.length){el.innerHTML='<div style="padding:20px;color:var(--muted);font-size:13px">No first-timer records in range.</div>';return;}
-  const d=[...nsDetailFiltered].sort((a,b)=>b.firstVisit-a.firstVisit);
+  if(!nsFiltered.length){el.innerHTML='<div style="padding:20px;color:var(--muted);font-size:13px">No FTG records in range.</div>';return;}
+  const d=[...nsFiltered].sort((a,b)=>b.date-a.date||a.bucket.localeCompare(b.bucket)||a.campus.localeCompare(b.campus));
   const cols=[
-    {k:'name',l:'Name',n:false,f:r=>r.name||'\u2014',v:r=>(r.name||'').toLowerCase()},
-    {k:'firstVisit',l:'First Visit',n:true,f:r=>fmtDate(r.firstVisit),v:r=>r.firstVisit.getTime()},
-    {k:'retNext4',l:'Returns (Next 4)',n:true,f:r=>String(r.retNext4),v:r=>r.retNext4},
-    {k:'returned',l:'Came Back?',n:false,f:r=>r.returned?'Yes':'No',v:r=>r.returned?1:0},
-    {k:'lastVisit',l:'Last Visit',n:true,f:r=>r.lastVisit?fmtDate(r.lastVisit):'\u2014',v:r=>r.lastVisit?r.lastVisit.getTime():0},
-    {k:'totalVisits',l:'Total Sundays',n:true,f:r=>fmtNum(r.totalVisits),v:r=>r.totalVisits},
-    {k:'active30',l:'Active 30d',n:false,f:r=>r.active30?'Yes':'No',v:r=>r.active30?1:0},
-    {k:'status',l:'PCO Status',n:false,f:r=>r.status||'\u2014',v:r=>r.status||''}
+    {k:'date',   l:'Date',    n:true, f:r=>fmtDate(r.date),v:r=>r.date.getTime()},
+    {k:'bucket', l:'Ministry',n:false,f:r=>r.bucket,       v:r=>r.bucket},
+    {k:'campus', l:'Campus',  n:false,f:r=>r.campus,       v:r=>r.campus},
+    {k:'service',l:'Service', n:false,f:r=>r.service||'\u2014',v:r=>r.service},
+    {k:'count',  l:'FTG',     n:true, f:r=>fmtNum(r.count),v:r=>r.count}
   ];
-  let sc='firstVisit',sd='desc';
+  let sc='date',sd='desc';
   function render(s){
     let h='<table class="data-table"><thead><tr>';
     cols.forEach(c=>{const a=sc===c.k?(sd==='asc'?' \u25B2':' \u25BC'):'';h+='<th'+(c.n?' class="num"':'')+' data-col="'+c.k+'">'+c.l+'<span style="font-size:10px;margin-left:4px">'+a+'</span></th>';});
@@ -3206,12 +3212,12 @@ async function refreshAll(){
   // Kick off every fetch in parallel — each one tracks its own success/failure
   const coreKeys=['missionMain','missionKids','edinburg','ipv','rooted','holiday','youth','youngAdults','eventRegistrations'];
   const gmKeys=['womens','mens','regen','reengage','ptw','griefshare','baptism','growthtrack'];
-  const nsConfigured=SHEET_URLS.nextStepsSummary&&!SHEET_URLS.nextStepsSummary.startsWith('PENDING_')&&SHEET_URLS.nextStepsDetail&&!SHEET_URLS.nextStepsDetail.startsWith('PENDING_');
+  const ftgConfigured=SHEET_URLS.ftg&&!SHEET_URLS.ftg.startsWith('PENDING_');
   const nscConfigured=SHEET_URLS.nextStepCard&&!SHEET_URLS.nextStepCard.startsWith('PENDING_');
   const dtConfigured=SHEET_URLS.dreamTeamKpis&&!SHEET_URLS.dreamTeamKpis.startsWith('PENDING_');
   const obConfigured=SHEET_URLS.onboardingPipeline&&!SHEET_URLS.onboardingPipeline.startsWith('PENDING_');
-  const allKeys=[...coreKeys,...gmKeys,...(nsConfigured?['nextStepsSummary','nextStepsDetail']:[]),...(nscConfigured?['nextStepCard']:[]),...(dtConfigured?['dreamTeamKpis']:[]),...(obConfigured?['onboardingPipeline']:[])];
-  if(!nsConfigured){markSheet('nextStepsSummary','skipped');markSheet('nextStepsDetail','skipped');}
+  const allKeys=[...coreKeys,...gmKeys,...(ftgConfigured?['ftg']:[]),...(nscConfigured?['nextStepCard']:[]),...(dtConfigured?['dreamTeamKpis']:[]),...(obConfigured?['onboardingPipeline']:[])];
+  if(!ftgConfigured){markSheet('ftg','skipped');}
   if(!nscConfigured){markSheet('nextStepCard','skipped');}
   if(!dtConfigured){markSheet('dreamTeamKpis','skipped');dtMarkTabDot('pending');}
   if(!obConfigured){markSheet('onboardingPipeline','skipped');}
@@ -3234,11 +3240,11 @@ async function refreshAll(){
   try{if(texts.youngAdults){yaRaw=parseYoungAdults(parseCSV(texts.youngAdults));yaPopulateFilters();yaApply();markSheet('youngAdults','ok',{rows:yaRaw.length});}}catch(e){console.error('YA parse failed',e);markSheet('youngAdults','fail',{msg:'parse error'});}
   try{if(texts.eventRegistrations){erRaw=parseEventRegistrations(parseCSV(texts.eventRegistrations));erPopulateFilters();markSheet('eventRegistrations','ok',{rows:erRaw.length});}}catch(e){console.error('ER parse failed',e);markSheet('eventRegistrations','fail',{msg:'parse error'});}
 
-  // Next Steps original tables
-  if(nsConfigured&&texts.nextStepsSummary&&texts.nextStepsDetail){
-    try{nsSummaryRaw=parseNextStepsSummary(parseCSV(texts.nextStepsSummary));nsDetailRaw=parseNextStepsDetail(parseCSV(texts.nextStepsDetail));markSheet('nextStepsSummary','ok',{rows:nsSummaryRaw.length});markSheet('nextStepsDetail','ok',{rows:nsDetailRaw.length});}
-    catch(e){console.error('Next Steps parse failed',e);nsSummaryRaw=[];nsDetailRaw=[];markSheet('nextStepsSummary','fail',{msg:'parse error'});}
-  }else{nsSummaryRaw=[];nsDetailRaw=[];}
+  // First-Time Guests (Kids + Youth, U18 aggregate)
+  if(ftgConfigured&&texts.ftg){
+    try{nsRaw=parseFTG(parseCSV(texts.ftg));if(nsRaw.length){markSheet('ftg','ok',{rows:nsRaw.length});}else{markSheet('ftg','empty',{rows:0});}}
+    catch(e){console.error('FTG parse failed',e);nsRaw=[];markSheet('ftg','fail',{msg:'parse error'});}
+  }else{nsRaw=[];}
   nsApply();
 
   // Next Step Card
