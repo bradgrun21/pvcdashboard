@@ -959,7 +959,7 @@ const SHEET_URLS = {
   // Expected columns: Workflow_Name, PCO_Person_ID, Full_Name, Status,
   //   Current_Step, Joined_Date, Completed_Date, Removed_Date,
   //   Last_Scheduled_Date, PCO_Status
-  onboardingPipeline: 'PENDING_QLIK_PUBLISH',
+  onboardingPipeline: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTO8SnQ5knhU093p-rLeXlr_JvU3-WyfwvGEX9qFx799CB_5QaN8NO8Q4TFwrl1hsSktcGALXWn9Rn1/pub?gid=71547669&single=true&output=csv',
   // Generic ministry feeds (same schema: Date,Event,Campus,Semester|Year,Week|Month,Attendance,Dream Team,Total Attendance)
   womens:      'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=29895188&single=true&output=csv',
   mens:        'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=183217494&single=true&output=csv',
@@ -2664,6 +2664,22 @@ let obDrawerWF=null;
 let obDrawerStatusFilter='all';
 const OB_STATUS_COLORS={'Serving':'var(--positive)','Completed':'var(--accent)','In Progress':'var(--edinburg)','Removed':'var(--muted)'};
 
+// Qlik/Excel serial-date epoch is 1899-12-30. Used by the Onboarding Detail
+// CSV when dates come through as numeric (ApplyMap on a dual).
+function parseDateOrSerial(v){
+  if(v==null)return null;
+  const s=String(v).trim();
+  if(!s)return null;
+  // Integer-looking value (no slash) → Qlik/Excel serial
+  if(/^\d{4,6}$/.test(s)){
+    const n=parseInt(s,10);
+    if(n>20000&&n<80000){ // sanity: covers 1955 – 2119
+      return new Date(Date.UTC(1899,11,30)+n*86400000);
+    }
+  }
+  return parseDate(s);
+}
+
 function parseOnboardingPipelineDetail(rows){
   if(!rows||rows.length<2)return [];
   const h=rows[0].map(s=>String(s||'').trim());
@@ -2682,10 +2698,10 @@ function parseOnboardingPipelineDetail(rows){
       name:String(r[iName]||'').trim(),
       status:String(r[iStatus]||'').trim(),
       step:iStep>=0?String(r[iStep]||'').trim():'',
-      joined:iJoined>=0?parseDate(r[iJoined]):null,
-      completed:iComp>=0?parseDate(r[iComp]):null,
-      removed:iRem>=0?parseDate(r[iRem]):null,
-      lsd:iLSD>=0?parseDate(r[iLSD]):null,
+      joined:iJoined>=0?parseDateOrSerial(r[iJoined]):null,
+      completed:iComp>=0?parseDateOrSerial(r[iComp]):null,
+      removed:iRem>=0?parseDateOrSerial(r[iRem]):null,
+      lsd:iLSD>=0?parseDateOrSerial(r[iLSD]):null,
       pcoStatus:iPCO>=0?String(r[iPCO]||'').trim():''
     });
   }
