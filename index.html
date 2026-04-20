@@ -805,6 +805,17 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
             <div class="chart-wrap"><canvas id="nsServiceChart"></canvas></div>
           </div>
         </div>
+        <div class="chart-grid-2" style="margin-top:var(--gap)">
+          <div class="card"><h2>Last 8 Weeks &mdash; Stacked by Service</h2>
+            <div class="card-controls" id="nsWkMinBtns"><button class="cb active" onclick="nsWkMinistry='Kids';nsRenderWeekStack();nsActiveBtn(this,'#nsWkMinBtns')">Kids</button><button class="cb" onclick="nsWkMinistry='Youth';nsRenderWeekStack();nsActiveBtn(this,'#nsWkMinBtns')">Youth</button></div>
+            <div class="card-controls" id="nsWkCampBtns" style="margin-top:6px"><button class="cb active" onclick="nsWkCampus='all';nsRenderWeekStack();nsActiveBtn(this,'#nsWkCampBtns')">All</button><button class="cb" onclick="nsWkCampus='Mission';nsRenderWeekStack();nsActiveBtn(this,'#nsWkCampBtns')">Mission</button><button class="cb" onclick="nsWkCampus='Edinburg';nsRenderWeekStack();nsActiveBtn(this,'#nsWkCampBtns')">Edinburg</button><button class="cb" onclick="nsWkCampus='Spanish';nsRenderWeekStack();nsActiveBtn(this,'#nsWkCampBtns')">Spanish</button></div>
+            <div class="subtitle">One bar per week &mdash; services stacked within</div><div class="chart-wrap tall"><canvas id="nsWeekStackChart"></canvas></div>
+          </div>
+          <div class="card"><h2>By Service &mdash; Last 8 Weeks</h2>
+            <div class="card-controls" id="nsSvcPickBtns"></div>
+            <div class="subtitle">Toggle services to include</div><div class="chart-wrap tall"><canvas id="nsSvcPickChart"></canvas></div>
+          </div>
+        </div>
       </div>
       <div class="table-section"><div class="table-card">
         <h2>FTG Detail &mdash; Date &times; Ministry &times; Campus &times; Service</h2>
@@ -832,6 +843,21 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
             <div id="obTableWrap" style="overflow-x:auto;"></div>
             <div id="obNote" style="margin-top:8px;font-size:11px;color:var(--muted);"></div>
           </div></div>
+
+          <!-- Slide-in drawer for per-workflow people list -->
+          <div id="obDrawerBackdrop" onclick="obCloseDrawer()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:900;"></div>
+          <aside id="obDrawer" style="display:none;flex-direction:column;position:fixed;top:0;right:0;width:min(640px,95vw);height:100vh;background:var(--card);box-shadow:-4px 0 20px rgba(0,0,0,0.15);z-index:901;">
+            <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px;">
+              <div style="flex:1;min-width:0;">
+                <div id="obDrawerTitle" style="font-size:16px;font-weight:600;line-height:1.3;word-wrap:break-word;"></div>
+                <div id="obDrawerSubtitle" style="font-size:12px;color:var(--muted);margin-top:2px;"></div>
+              </div>
+              <button type="button" onclick="obCloseDrawer()" aria-label="Close" style="background:transparent;border:1px solid var(--border);border-radius:4px;width:30px;height:30px;cursor:pointer;font-size:16px;color:var(--muted);line-height:1;">&times;</button>
+            </div>
+            <div id="obDrawerKpiRow" style="display:flex;gap:8px;padding:12px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;"></div>
+            <div id="obDrawerFilters" style="padding:10px 20px 0 20px;display:flex;flex-wrap:wrap;gap:6px;font-size:11px;"></div>
+            <div id="obDrawerBody" style="flex:1;overflow-y:auto;padding:4px 20px 20px 20px;"></div>
+          </aside>
         </div>
       </div>
     </div>
@@ -925,12 +951,15 @@ const SHEET_URLS = {
   // → Google Sheet tab "DreamTeam_KPIs" → Publish to Web as CSV.
   // Expected columns: As_Of_Date, Scheduled_Last_30d, Scheduled_Last_90d, Scheduled_Last_180d
   dreamTeamKpis: 'PENDING_QLIK_PUBLISH',
-  // Onboarding Pipeline — fed by "Onboarding_Pipeline_Summary" table in Qlik
-  // (PCO_Dashboard_v6.qvs, Onboarding section) → Google Sheet tab "Onboarding_Pipeline".
-  // Expected columns: Workflow_Name, Campus, People_Added_Ever, People_Still_Active,
-  //   Ever_Scheduled, Never_Scheduled, Scheduled_Last_30d, Scheduled_Last_90d,
-  //   Scheduled_Last_180d, Served_Pct, As_Of_Date
-  onboardingPipeline: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTO8SnQ5knhU093p-rLeXlr_JvU3-WyfwvGEX9qFx799CB_5QaN8NO8Q4TFwrl1hsSktcGALXWn9Rn1/pub?gid=71547669&single=true&output=csv',
+  // Onboarding Pipeline — fed by "Onboarding_Pipeline_Detail" table in Qlik
+  // (PCO_Dashboard_v6.qvs, Onboarding Detail section) → Google Sheet tab
+  // "Onboarding_Pipeline_Detail". One row per person-per-card.
+  // The per-workflow summary table and KPIs are derived in-browser from
+  // these rows (no separate summary sheet needed).
+  // Expected columns: Workflow_Name, PCO_Person_ID, Full_Name, Status,
+  //   Current_Step, Joined_Date, Completed_Date, Removed_Date,
+  //   Last_Scheduled_Date, PCO_Status
+  onboardingPipeline: 'PENDING_QLIK_PUBLISH',
   // Generic ministry feeds (same schema: Date,Event,Campus,Semester|Year,Week|Month,Attendance,Dream Team,Total Attendance)
   womens:      'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=29895188&single=true&output=csv',
   mens:        'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYgEE4jzpXxnOb1X6qXtP-HNlcELNKAqIcnt3U7QXGM0GSwu5JcCZTTGCqjGNElXoy6YmdYE-yj6xD/pub?gid=183217494&single=true&output=csv',
@@ -2213,6 +2242,11 @@ function erSort(col){
 //           Service ("9:00 AM" etc.), FTG_Count (integer)
 // ══════════════════════════════════════════════════════════════════════
 let nsRaw=[],nsFiltered=[],nsCharts={},nsFilters={range:'ytd',ds:null,de:null,bucket:'all',campus:'all'};
+let nsWkMinistry='Kids',nsWkCampus='all',nsSvcPick={};
+const NS_SVC_C=['#c0392b','#2980b9','#27ae60','#f39c12','#8e44ad','#16a085','#d35400','#34495e'];
+function nsActiveBtn(b,sel){document.querySelectorAll(sel+' .cb').forEach(x=>x.classList.remove('active'));b.classList.add('active');}
+function nsSvcTime(s){const m=/^(\d+):(\d+)\s*(AM|PM)/i.exec(s||'');if(!m)return 9999;let h=+m[1];const mi=+m[2];if(/pm/i.test(m[3])&&h!==12)h+=12;if(/am/i.test(m[3])&&h===12)h=0;return h*60+mi;}
+function nsToggleSvc(s){nsSvcPick[s]=(nsSvcPick[s]===false);nsRenderSvcPick();}
 
 function parseFTG(rows){
   if(!rows||rows.length<2)return [];
@@ -2275,7 +2309,7 @@ function nsApply(){
     (nsFilters.bucket==='all'||r.bucket===nsFilters.bucket) &&
     (nsFilters.campus==='all'||r.campus===nsFilters.campus)
   );
-  nsRenderKPI();nsRenderTrend();nsRenderCampus();nsRenderService();nsRenderTable();
+  nsRenderKPI();nsRenderTrend();nsRenderCampus();nsRenderService();nsRenderWeekStack();nsRenderSvcPick();nsRenderTable();
 }
 
 function nsRenderKPI(){
@@ -2352,6 +2386,53 @@ function nsRenderService(){
   nsCharts.svc=new Chart(el,{type:'bar',data:{labels,datasets:[{label:'FTG',data:values,backgroundColor:COLORS.mission+'CC',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtNum(c.parsed.x)+' FTGs'}}},scales:{x:{beginAtZero:true,ticks:{precision:0}},y:{grid:{display:false}}}}});
 }
 
+// Last-8-weeks stacked bar: one bar per week, services stacked within
+// Ignores the main filter bar; driven by its own Ministry + Campus buttons.
+function nsRenderWeekStack(){
+  const el=document.getElementById('nsWeekStackChart');if(!el)return;
+  if(nsCharts.weekStack){nsCharts.weekStack.destroy();nsCharts.weekStack=null;}
+  const cutoff=new Date(2026,0,1);
+  const base=nsRaw.filter(r=>r.bucket===nsWkMinistry&&r.date>=cutoff&&(nsWkCampus==='all'||r.campus===nsWkCampus));
+  if(!base.length)return;
+  const byDate={},dSet={};
+  base.forEach(r=>{const k=dateKey(r.date);if(!byDate[k])byDate[k]={};const s=r.service||'(unspec)';byDate[k][s]=(byDate[k][s]||0)+r.count;dSet[k]=r.date;});
+  const keys=Object.keys(dSet).sort().slice(-8);
+  if(!keys.length)return;
+  const labels=keys.map(k=>fmtShort(dSet[k]));
+  const svcSet={};keys.forEach(k=>Object.keys(byDate[k]).forEach(s=>svcSet[s]=1));
+  const svcs=Object.keys(svcSet).sort((a,b)=>nsSvcTime(a)-nsSvcTime(b));
+  const ds=svcs.map((s,i)=>({label:s,data:keys.map(k=>byDate[k][s]||0),backgroundColor:NS_SVC_C[i%NS_SVC_C.length]+'CC',borderRadius:3}));
+  nsCharts.weekStack=new Chart(el,{type:'bar',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:10,font:{size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{precision:0}}}}});
+}
+
+// Per-service weekly bars (grouped), last 8 weeks. User toggles which services to show.
+function nsRenderSvcPick(){
+  const el=document.getElementById('nsSvcPickChart');if(!el)return;
+  if(nsCharts.svcPick){nsCharts.svcPick.destroy();nsCharts.svcPick=null;}
+  const cutoff=new Date(2026,0,1);
+  // Ministry follows the main filter so Kids/Youth can be compared separately.
+  const mb=nsFilters.bucket;
+  const base=nsRaw.filter(r=>r.date>=cutoff&&(mb==='all'||r.bucket===mb));
+  if(!base.length)return;
+  // Split by ministry AND service so "9:00 AM" Kids vs an identical Youth time stay distinct.
+  const byDate={},dSet={};
+  base.forEach(r=>{const k=dateKey(r.date);const sk=r.bucket+' \u00B7 '+(r.service||'(unspec)');if(!byDate[k])byDate[k]={};byDate[k][sk]=(byDate[k][sk]||0)+r.count;dSet[k]=r.date;});
+  const keys=Object.keys(dSet).sort().slice(-8);
+  if(!keys.length)return;
+  const labels=keys.map(k=>fmtShort(dSet[k]));
+  const svcSet={};keys.forEach(k=>Object.keys(byDate[k]).forEach(s=>svcSet[s]=1));
+  const svcs=Object.keys(svcSet).sort((a,b)=>{const aa=a.split(' \u00B7 '),bb=b.split(' \u00B7 ');if(aa[0]!==bb[0])return aa[0].localeCompare(bb[0]);return nsSvcTime(aa[1])-nsSvcTime(bb[1]);});
+  // Render toggle buttons
+  const btns=document.getElementById('nsSvcPickBtns');
+  if(btns){
+    btns.innerHTML=svcs.map(s=>{const on=nsSvcPick[s]!==false;const enc=s.replace(/"/g,'&quot;');return `<button class="cb${on?' active':''}" onclick="nsToggleSvc(this.dataset.svc)" data-svc="${enc}">${s}</button>`;}).join('');
+  }
+  const active=svcs.filter(s=>nsSvcPick[s]!==false);
+  if(!active.length)return;
+  const ds=active.map((s,i)=>({label:s,data:keys.map(k=>byDate[k][s]||0),backgroundColor:NS_SVC_C[i%NS_SVC_C.length]+'CC',borderRadius:3}));
+  nsCharts.svcPick=new Chart(el,{type:'bar',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:8,font:{size:10}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtNum(c.parsed.y)}}},scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0}}}}});
+}
+
 function nsRenderTable(){
   const el=document.getElementById('nsTableContainer');if(!el)return;
   if(!nsFiltered.length){el.innerHTML='<div style="padding:20px;color:var(--muted);font-size:13px">No FTG records in range.</div>';return;}
@@ -2417,39 +2498,65 @@ function dtMarkTabDot(state){
 
 // ══════════════════════════════════════════════════════════════════════
 //  DREAM TEAM — Onboarding Pipeline (data from Qlik → Google Sheets)
-//  Source: Onboarding_Pipeline_Summary table in PCO_Dashboard_v6.qvs
-//  Schema: Workflow_Name, Campus, People_Added_Ever, People_Still_Active,
-//          Ever_Scheduled, Never_Scheduled, Scheduled_Last_30d,
-//          Scheduled_Last_90d, Scheduled_Last_180d, Served_Pct, As_Of_Date
+//  Source: Onboarding_Pipeline_Detail table in PCO_Dashboard_v6.qvs
+//  Per-workflow summary rows (obRaw) are derived from detail (obDetailRaw)
+//  in-browser — no separate summary sheet.
 // ══════════════════════════════════════════════════════════════════════
 let obRaw=[];
 let obSort={key:'added',dir:'desc'};
 let obCampusFilter='all';
 
-function parseOnboardingPipeline(rows){
-  if(!rows||rows.length<2)return [];
-  const h=rows[0].map(s=>String(s||'').trim());
-  const ix=k=>h.indexOf(k);
-  const iName=ix('Workflow_Name'),iCampus=ix('Campus'),iAdded=ix('People_Added_Ever'),
-        iActive=ix('People_Still_Active'),iEver=ix('Ever_Scheduled'),iNever=ix('Never_Scheduled'),
-        i30=ix('Scheduled_Last_30d'),i90=ix('Scheduled_Last_90d'),i180=ix('Scheduled_Last_180d'),
-        iPct=ix('Served_Pct'),iAs=ix('As_Of_Date');
-  if(iName<0||iAdded<0||iEver<0)return [];
+// Derive per-workflow summary rows from detail (one row per person-per-card).
+// "Added" = distinct persons with any card on the workflow.
+// "Active" = distinct persons with any non-Removed, non-Completed card.
+// "Ever" / 30d/90d/180d = distinct persons with Last_Scheduled_Date in range.
+function deriveObRaw(detail){
+  if(!detail||!detail.length)return [];
+  const todayMs=Date.now();
+  const d30=todayMs-30*86400000, d90=todayMs-90*86400000, d180=todayMs-180*86400000;
+  // Group by workflow name
+  const groups={};
+  for(const r of detail){
+    if(!r.wf)continue;
+    if(!groups[r.wf])groups[r.wf]={added:new Set(),active:new Set(),ever:new Set(),s30:new Set(),s90:new Set(),s180:new Set()};
+    const g=groups[r.wf];
+    const pid=r.pid||r.name;
+    g.added.add(pid);
+    if(r.status!=='Removed'&&r.status!=='Completed')g.active.add(pid);
+    if(r.lsd){
+      g.ever.add(pid);
+      const t=r.lsd.getTime();
+      if(t>=d30)g.s30.add(pid);
+      if(t>=d90)g.s90.add(pid);
+      if(t>=d180)g.s180.add(pid);
+    }
+  }
+  // Campus inferred from name prefix (same rules as original Qlik Pick())
+  const campusOf=name=>{
+    const p=name.slice(0,2).toUpperCase();
+    if(p==='M:')return 'Mission';
+    if(p==='E:')return 'Edinburg';
+    if(p==='I:')return 'IPV';
+    if(p==='C:')return 'Central';
+    return 'General';
+  };
   const out=[];
-  for(let i=1;i<rows.length;i++){
-    const r=rows[i];if(!r||!r[iName])continue;
+  const today=new Date();
+  for(const name in groups){
+    const g=groups[name];
+    const added=g.added.size, ever=g.ever.size;
     out.push({
-      name:String(r[iName]).trim(),
-      campus:iCampus>=0?String(r[iCampus]||'').trim():'',
-      added:num(r[iAdded]),
-      active:iActive>=0?num(r[iActive]):0,
-      ever:num(r[iEver]),
-      never:iNever>=0?num(r[iNever]):(num(r[iAdded])-num(r[iEver])),
-      d30:i30>=0?num(r[i30]):0,
-      d90:i90>=0?num(r[i90]):0,
-      d180:i180>=0?num(r[i180]):0,
-      pct:iPct>=0?num(r[iPct]):(num(r[iAdded])>0?100*num(r[iEver])/num(r[iAdded]):0),
-      asOf:iAs>=0?parseDate(r[iAs]):null
+      name,
+      campus:campusOf(name),
+      added,
+      active:g.active.size,
+      ever,
+      never:added-ever,
+      d30:g.s30.size,
+      d90:g.s90.size,
+      d180:g.s180.size,
+      pct:added>0?100*ever/added:0,
+      asOf:today
     });
   }
   return out;
@@ -2467,7 +2574,7 @@ function obRenderControls(){
   const opts=['all',...campuses].map(c=>{
     const lbl=c==='all'?'All campuses':c;
     const active=c===obCampusFilter;
-    return `<button type="button" onclick="obSetCampus('${c}')" style="padding:4px 10px;border-radius:4px;border:1px solid var(--border);cursor:pointer;font-size:11px;background:${active?'var(--accent)':'var(--bg-card)'};color:${active?'#fff':'var(--text)'}">${lbl}</button>`;
+    return `<button type="button" onclick="obSetCampus('${c}')" style="padding:4px 10px;border-radius:4px;border:1px solid var(--border);cursor:pointer;font-size:11px;background:${active?'var(--accent)':'var(--card)'};color:${active?'#fff':'var(--text)'}">${lbl}</button>`;
   }).join('');
   el.innerHTML=`<span>Filter:</span>${opts}`;
 }
@@ -2494,7 +2601,7 @@ function obRenderKPI(){
 function obRenderTable(){
   const wrap=document.getElementById('obTableWrap');if(!wrap)return;
   if(!obRaw.length){
-    wrap.innerHTML='<div style="padding:24px 4px;color:var(--muted);font-size:13px;"><em>Awaiting data.</em> Publish the <code>Onboarding_Pipeline</code> sheet from Qlik, then set <code>SHEET_URLS.onboardingPipeline</code>.</div>';
+    wrap.innerHTML='<div style="padding:24px 4px;color:var(--muted);font-size:13px;"><em>Awaiting data.</em> Publish the <code>Onboarding_Pipeline_Detail</code> sheet from Qlik, then set <code>SHEET_URLS.onboardingPipeline</code>.</div>';
     return;
   }
   const d=obFiltered().slice();
@@ -2503,8 +2610,11 @@ function obRenderTable(){
   const th=(k,l,align)=>{const arrow=obSort.key===k?(obSort.dir==='desc'?' \u25BE':' \u25B4'):'';return `<th onclick="obSetSort('${k}')" style="cursor:pointer;text-align:${align||'left'};padding:8px 10px;border-bottom:2px solid var(--border);white-space:nowrap;user-select:none;">${l}${arrow}</th>`;};
   const rows=d.map(r=>{
     const pctBar=Math.max(0,Math.min(100,r.pct||0));
-    return `<tr style="border-bottom:1px solid var(--border)">`+
-      `<td style="padding:6px 10px">${r.name}</td>`+
+    const clickable=obDetailRaw.length>0;
+    const rowStyle=clickable?'border-bottom:1px solid var(--border);cursor:pointer;':'border-bottom:1px solid var(--border);';
+    const onclick=clickable?` onclick="obOpenDrawer(${JSON.stringify(r.name).replace(/\"/g,'&quot;')})"`:'';
+    return `<tr style="${rowStyle}"${onclick}>`+
+      `<td style="padding:6px 10px">${r.name}${clickable?' <span style=\"color:var(--muted);font-size:10px\">&rsaquo;</span>':''}</td>`+
       `<td style="padding:6px 10px">${r.campus||'\u2014'}</td>`+
       `<td style="padding:6px 10px;text-align:right">${fmtNum(r.added)}</td>`+
       `<td style="padding:6px 10px;text-align:right">${fmtNum(r.active)}</td>`+
@@ -2547,6 +2657,129 @@ function obRenderTable(){
 }
 
 function obRender(){obRenderControls();obRenderKPI();obRenderTable();}
+
+// ── Drill-down drawer ────────────────────────────────────────────────
+let obDetailRaw=[];
+let obDrawerWF=null;
+let obDrawerStatusFilter='all';
+const OB_STATUS_COLORS={'Serving':'var(--positive)','Completed':'var(--accent)','In Progress':'var(--edinburg)','Removed':'var(--muted)'};
+
+function parseOnboardingPipelineDetail(rows){
+  if(!rows||rows.length<2)return [];
+  const h=rows[0].map(s=>String(s||'').trim());
+  const ix=k=>h.indexOf(k);
+  const iWF=ix('Workflow_Name'),iPid=ix('PCO_Person_ID'),iName=ix('Full_Name'),
+        iStatus=ix('Status'),iStep=ix('Current_Step'),iJoined=ix('Joined_Date'),
+        iComp=ix('Completed_Date'),iRem=ix('Removed_Date'),iLSD=ix('Last_Scheduled_Date'),
+        iPCO=ix('PCO_Status');
+  if(iWF<0||iName<0||iStatus<0)return [];
+  const out=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];if(!r||!r[iWF])continue;
+    out.push({
+      wf:String(r[iWF]||'').trim(),
+      pid:iPid>=0?String(r[iPid]||'').trim():'',
+      name:String(r[iName]||'').trim(),
+      status:String(r[iStatus]||'').trim(),
+      step:iStep>=0?String(r[iStep]||'').trim():'',
+      joined:iJoined>=0?parseDate(r[iJoined]):null,
+      completed:iComp>=0?parseDate(r[iComp]):null,
+      removed:iRem>=0?parseDate(r[iRem]):null,
+      lsd:iLSD>=0?parseDate(r[iLSD]):null,
+      pcoStatus:iPCO>=0?String(r[iPCO]||'').trim():''
+    });
+  }
+  return out;
+}
+
+function obOpenDrawer(workflowName){
+  obDrawerWF=workflowName;
+  obDrawerStatusFilter='all';
+  const bd=document.getElementById('obDrawerBackdrop');
+  const dr=document.getElementById('obDrawer');
+  if(bd)bd.style.display='block';
+  if(dr){dr.style.display='flex';}
+  obRenderDrawer();
+}
+
+function obCloseDrawer(){
+  const bd=document.getElementById('obDrawerBackdrop');
+  const dr=document.getElementById('obDrawer');
+  if(bd)bd.style.display='none';
+  if(dr)dr.style.display='none';
+  obDrawerWF=null;
+}
+
+function obSetDrawerStatus(s){obDrawerStatusFilter=s;obRenderDrawer();}
+
+function obRenderDrawer(){
+  if(!obDrawerWF)return;
+  const title=document.getElementById('obDrawerTitle');
+  const sub=document.getElementById('obDrawerSubtitle');
+  const kpi=document.getElementById('obDrawerKpiRow');
+  const filters=document.getElementById('obDrawerFilters');
+  const body=document.getElementById('obDrawerBody');
+  if(!title||!body)return;
+  title.textContent=obDrawerWF;
+  const all=obDetailRaw.filter(r=>r.wf===obDrawerWF);
+  const summary=obRaw.find(r=>r.name===obDrawerWF);
+  if(summary){
+    sub.textContent=`${summary.campus||'—'} · ${fmtNum(summary.added)} added · ${fmtNum(summary.ever)} serving (${(summary.pct||0).toFixed(1)}%)`;
+  }else{
+    sub.textContent=`${all.length} people`;
+  }
+  // Status buckets
+  const buckets=['Serving','In Progress','Completed','Removed'];
+  const counts={};buckets.forEach(b=>counts[b]=0);
+  all.forEach(r=>{if(counts[r.status]!=null)counts[r.status]++;});
+  kpi.innerHTML=buckets.map(b=>{
+    const c=OB_STATUS_COLORS[b]||'var(--accent)';
+    return `<div style="flex:1;min-width:90px;border-left:3px solid ${c};padding:6px 10px;background:var(--bg);border-radius:3px;"><div style="font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);">${b}</div><div style="font-size:18px;font-weight:600;color:${c}">${fmtNum(counts[b])}</div></div>`;
+  }).join('');
+  // Filter chips
+  const chips=[['all','All','var(--text)'],...buckets.map(b=>[b,b,OB_STATUS_COLORS[b]])];
+  filters.innerHTML=chips.map(([k,l,c])=>{
+    const active=k===obDrawerStatusFilter;
+    return `<button type="button" onclick="obSetDrawerStatus('${k}')" style="padding:4px 10px;border-radius:4px;border:1px solid ${active?c:'var(--border)'};cursor:pointer;font-size:11px;background:${active?c:'transparent'};color:${active?'#fff':'var(--text)'}">${l}</button>`;
+  }).join('');
+  // People list
+  const filt=obDrawerStatusFilter==='all'?all:all.filter(r=>r.status===obDrawerStatusFilter);
+  // Sort: serving first (most recent first), then in progress (oldest first - been there longest), then others
+  const statusOrder={'Serving':0,'In Progress':1,'Completed':2,'Removed':3};
+  filt.sort((a,b)=>{
+    const d=(statusOrder[a.status]??9)-(statusOrder[b.status]??9);
+    if(d)return d;
+    return (b.joined?b.joined.getTime():0)-(a.joined?a.joined.getTime():0);
+  });
+  if(!filt.length){
+    body.innerHTML='<div style="padding:32px 0;color:var(--muted);font-size:13px;text-align:center;">No people match this filter.</div>';
+    return;
+  }
+  body.innerHTML=filt.map(r=>{
+    const c=OB_STATUS_COLORS[r.status]||'var(--accent)';
+    const daysIn=r.joined?Math.round((Date.now()-r.joined.getTime())/86400000):null;
+    const ageLabel=daysIn!=null?(daysIn>365?Math.round(daysIn/30)+'mo ago':daysIn+'d ago'):'';
+    const lines=[];
+    lines.push(`<span style="color:var(--muted)">Step:</span> ${r.step||'—'}`);
+    if(r.joined)lines.push(`<span style="color:var(--muted)">Joined:</span> ${fmtDate(r.joined)} <span style="color:var(--muted)">(${ageLabel})</span>`);
+    if(r.lsd)lines.push(`<span style="color:var(--muted)">Last scheduled:</span> ${fmtDate(r.lsd)}`);
+    if(r.completed)lines.push(`<span style="color:var(--muted)">Completed:</span> ${fmtDate(r.completed)}`);
+    if(r.removed)lines.push(`<span style="color:var(--muted)">Removed:</span> ${fmtDate(r.removed)}`);
+    return `<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">`+
+      `<div style="width:3px;align-self:stretch;background:${c};border-radius:2px;flex-shrink:0;"></div>`+
+      `<div style="flex:1;min-width:0;">`+
+        `<div style="display:flex;align-items:center;gap:8px;justify-content:space-between;">`+
+          `<div style="font-weight:600;font-size:13px;">${r.name||'(unnamed)'}</div>`+
+          `<span style="font-size:10px;padding:2px 6px;border-radius:3px;background:${c}22;color:${c};font-weight:500;white-space:nowrap">${r.status}</span>`+
+        `</div>`+
+        `<div style="font-size:11.5px;color:var(--text);margin-top:3px;line-height:1.5;">${lines.join(' <span style="color:var(--border)">·</span> ')}</div>`+
+      `</div>`+
+    `</div>`;
+  }).join('');
+}
+
+// Close drawer on Esc
+document.addEventListener('keydown',e=>{if(e.key==='Escape')obCloseDrawer();});
 
 // ══════════════════════════════════════════════════════════════════════
 //  GENERIC MINISTRY RENDERER
@@ -3262,11 +3495,19 @@ async function refreshAll(){
   }else{dtKpiRaw=null;}
   dtRenderKPI();
 
-  // Onboarding Pipeline
+  // Onboarding Pipeline — single detail CSV, summary derived in-browser
   if(obConfigured&&texts.onboardingPipeline){
-    try{obRaw=parseOnboardingPipeline(parseCSV(texts.onboardingPipeline));if(obRaw.length){markSheet('onboardingPipeline','ok',{rows:obRaw.length});}else{markSheet('onboardingPipeline','empty',{rows:0});}}
-    catch(e){console.error('Onboarding Pipeline parse failed',e);obRaw=[];markSheet('onboardingPipeline','fail',{msg:'parse error'});}
-  }else{obRaw=[];}
+    try{
+      obDetailRaw=parseOnboardingPipelineDetail(parseCSV(texts.onboardingPipeline));
+      obRaw=deriveObRaw(obDetailRaw);
+      if(obDetailRaw.length){markSheet('onboardingPipeline','ok',{rows:obDetailRaw.length});}
+      else{markSheet('onboardingPipeline','empty',{rows:0});}
+    }catch(e){
+      console.error('Onboarding Pipeline parse failed',e);
+      obDetailRaw=[];obRaw=[];
+      markSheet('onboardingPipeline','fail',{msg:'parse error'});
+    }
+  }else{obDetailRaw=[];obRaw=[];}
   obRender();
 
   // --- Generic ministry panels ---
